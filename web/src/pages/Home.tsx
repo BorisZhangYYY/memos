@@ -35,7 +35,7 @@ const MoodTrendSection = ({
   const t = useTranslate();
 
   return (
-    <div className="mb-3 w-full max-w-sm rounded-lg border border-border bg-card px-3 py-2 text-card-foreground">
+    <div className="mx-auto mb-3 w-full max-w-2xl rounded-lg border border-border bg-card px-3 py-2 text-card-foreground">
       <div className="mb-1.5 flex items-center justify-between gap-2">
         <span className="flex min-w-0 items-center gap-1.5 text-sm font-medium">
           <ChartLineIcon className="size-4 shrink-0 text-primary" />
