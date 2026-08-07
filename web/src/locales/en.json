@@ -609,6 +609,8 @@
       "enable-memo-comments": "Enable memo comments",
       "enable-memo-location": "Enable memo location",
       "label": "Memo",
+      "mood-emojis": "Mood emoji settings",
+      "mood-emojis-description": "Customize the emoji for each of the 7 mood levels. Leave empty to use defaults.",
       "reaction-placeholder": "e.g. 👍",
       "reactions-description": "Define the reaction options users can apply to memos.",
       "remove-reaction": "Remove reaction",

@@ -22,6 +22,8 @@ import { SettingList, SettingListItem, SettingPanel } from "./SettingList";
 import SettingSection from "./SettingSection";
 import useInstanceSettingUpdater, { buildInstanceSettingName } from "./useInstanceSettingUpdater";
 
+const DEFAULT_MOOD_EMOJIS = ["😫", "😟", "😔", "😐", "😌", "☺️", "😆"];
+
 const MemoRelatedSettings = () => {
   const t = useTranslate();
   const saveInstanceSetting = useInstanceSettingUpdater();
@@ -77,6 +79,14 @@ const MemoRelatedSettings = () => {
     const visStr = convertVisibilityToString(vis);
     const next = allowedVis.includes(visStr) ? allowedVis.filter((v) => v !== visStr) : [...allowedVis, visStr];
     updatePartialSetting({ allowedVisibilities: next });
+  };
+
+  const moodEmojis = memoRelatedSetting.moodEmojis?.length === 7 ? memoRelatedSetting.moodEmojis : DEFAULT_MOOD_EMOJIS;
+
+  const updateMoodEmoji = (index: number, value: string) => {
+    const next = [...moodEmojis];
+    next[index] = value;
+    updatePartialSetting({ moodEmojis: next });
   };
 
   return (
@@ -163,6 +173,16 @@ const MemoRelatedSettings = () => {
             ))}
           </div>
         </SettingPanel>
+      </SettingGroup>
+
+      <SettingGroup title={t("setting.memo.mood-emojis")} description={t("setting.memo.mood-emojis-description")} showSeparator>
+        <SettingList>
+          {moodEmojis.map((emoji: string, i: number) => (
+            <SettingListItem key={i} label={`${t("mood.level")} ${i + 1}`}>
+              <Input className="w-20 font-mono text-center text-lg" value={emoji} onChange={(e) => updateMoodEmoji(i, e.target.value)} />
+            </SettingListItem>
+          ))}
+        </SettingList>
       </SettingGroup>
 
       <div className="w-full flex justify-end">

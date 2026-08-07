@@ -50,7 +50,7 @@ const MoodSelector = ({ moodLevel, onChange, className }: Props) => {
           {emojis.map((emoji, i) => (
             <button
               type="button"
-              key={emoji}
+              key={`${emoji}-${i}`}
               className={cn(
                 "inline-flex w-8 h-8 items-center justify-center rounded-md text-base cursor-pointer text-muted-foreground transition-all hover:bg-accent hover:text-foreground",
                 moodLevel === i + 1 && "bg-secondary text-secondary-foreground",
