@@ -377,6 +377,11 @@ message UserStats {
   // the client's view is set to update_time basis.
   repeated google.protobuf.Timestamp memo_updated_timestamps = 8;
 
+  // Daily mood statistics. Key is date string "YYYY-MM-DD", value is the
+  // average mood level (1-7) of memos with mood on that day. Only days with
+  // at least one mooded memo appear.
+  map<string, float> daily_mood_stats = 9;
+
   // The pinned memos of the user.
   repeated string pinned_memos = 5 [(google.api.resource_reference) = {type: "memos.api.v1/Memo"}];
 

@@ -93,6 +93,8 @@ func (s *APIV1Service) ListAllUserStats(ctx context.Context, request *v1pb.ListA
 
 	userMemoStatMap := make(map[int32]*v1pb.UserStats)
 	pinnedMemoUIDsByUserID := make(map[int32][]string)
+	dailyMoodSumsByUserID := make(map[int32]map[string]float32)
+	dailyMoodCountsByUserID := make(map[int32]map[string]int32)
 	limit := 1000
 	offset := 0
 	memoFind.Limit = &limit
@@ -123,6 +125,8 @@ func (s *APIV1Service) ListAllUserStats(ctx context.Context, request *v1pb.ListA
 						UndoCount: 0,
 					},
 				}
+				dailyMoodSumsByUserID[memo.CreatorID] = make(map[string]float32)
+				dailyMoodCountsByUserID[memo.CreatorID] = make(map[string]int32)
 			}
 
 			stats := userMemoStatMap[memo.CreatorID]
@@ -136,6 +140,9 @@ func (s *APIV1Service) ListAllUserStats(ctx context.Context, request *v1pb.ListA
 			// Count tags and other properties
 			if memo.Payload != nil {
 				incrementTagCounts(stats.TagCount, memo.Payload.Tags)
+				if memo.Payload.MoodLevel > 0 {
+					accumulateDailyMood(dailyMoodSumsByUserID[memo.CreatorID], dailyMoodCountsByUserID[memo.CreatorID], memo)
+				}
 				if memo.Payload.Property != nil {
 					if memo.Payload.Property.HasLink {
 						stats.MemoTypeStats.LinkCount++
@@ -176,6 +183,7 @@ func (s *APIV1Service) ListAllUserStats(ctx context.Context, request *v1pb.ListA
 			return nil, status.Errorf(codes.Internal, "failed to resolve user stats name")
 		}
 		userMemoStat.Name = fmt.Sprintf("%s/stats", BuildUserName(username))
+		userMemoStat.DailyMoodStats = finalizeDailyMood(dailyMoodSumsByUserID[userID], dailyMoodCountsByUserID[userID])
 		for _, memoUID := range pinnedMemoUIDsByUserID[userID] {
 			userMemoStat.PinnedMemos = append(userMemoStat.PinnedMemos, MemoNamePrefix+memoUID)
 		}
@@ -227,6 +235,8 @@ func (s *APIV1Service) GetUserStats(ctx context.Context, request *v1pb.GetUserSt
 	undoCount := int32(0)
 	pinnedMemos := []string{}
 	totalMemoCount := int32(0)
+	dailyMoodSums := make(map[string]float32)
+	dailyMoodCounts := make(map[string]int32)
 
 	limit := 1000
 	offset := 0
@@ -250,6 +260,9 @@ func (s *APIV1Service) GetUserStats(ctx context.Context, request *v1pb.GetUserSt
 			// Count different memo types based on content.
 			if memo.Payload != nil {
 				incrementTagCounts(tagCount, memo.Payload.Tags)
+				if memo.Payload.MoodLevel > 0 {
+					accumulateDailyMood(dailyMoodSums, dailyMoodCounts, memo)
+				}
 				if memo.Payload.Property != nil {
 					if memo.Payload.Property.HasLink {
 						linkCount++
@@ -280,6 +293,7 @@ func (s *APIV1Service) GetUserStats(ctx context.Context, request *v1pb.GetUserSt
 		TagCount:              tagCount,
 		PinnedMemos:           pinnedMemos,
 		TotalMemoCount:        totalMemoCount,
+		DailyMoodStats:        finalizeDailyMood(dailyMoodSums, dailyMoodCounts),
 		MemoTypeStats: &v1pb.UserStats_MemoTypeStats{
 			LinkCount: linkCount,
 			CodeCount: codeCount,
@@ -289,6 +303,25 @@ func (s *APIV1Service) GetUserStats(ctx context.Context, request *v1pb.GetUserSt
 	}
 
 	return userStats, nil
+}
+
+// accumulateDailyMood adds the memo's mood level to the per-date sum and
+// count maps, keyed by the local calendar date of the memo's creation time
+// ("YYYY-MM-DD").
+func accumulateDailyMood(sums map[string]float32, counts map[string]int32, memo *store.Memo) {
+	date := time.Unix(memo.CreatedTs, 0).Format("2006-01-02")
+	sums[date] += float32(memo.Payload.MoodLevel)
+	counts[date]++
+}
+
+// finalizeDailyMood converts per-date sums and counts into a map of average
+// mood levels. Only dates with at least one mooded memo appear in the result.
+func finalizeDailyMood(sums map[string]float32, counts map[string]int32) map[string]float32 {
+	stats := make(map[string]float32, len(sums))
+	for date, sum := range sums {
+		stats[date] = sum / float32(counts[date])
+	}
+	return stats
 }
 
 // incrementTagCounts counts each distinct tag at most once for one memo payload.

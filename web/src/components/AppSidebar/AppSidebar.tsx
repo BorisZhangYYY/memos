@@ -230,7 +230,7 @@ const CollectionSidebarContent = ({ context }: { context: MemoStatsContext }) =>
     enabled: context === "profile" && !!profileMatch?.params.username,
   });
   const statsUserName = context === "home" ? currentUser?.name : context === "profile" ? profileUser?.name : undefined;
-  const { statistics, tags } = useFilteredMemoStats({
+  const { statistics, tags, dailyMoodStats } = useFilteredMemoStats({
     context,
     userName: statsUserName,
     enabled: authInitialized && instanceInitialized && (md || mobileOpen),
@@ -247,7 +247,12 @@ const CollectionSidebarContent = ({ context }: { context: MemoStatsContext }) =>
     <div className="space-y-3.5">
       {context === "profile" && <ProfileMode />}
       <section>
-        <StatisticsView statisticsData={statistics} navigationTarget={filterTarget} onDateSelect={() => setMobileOpen(false)} />
+        <StatisticsView
+          statisticsData={statistics}
+          dailyMoodStats={dailyMoodStats}
+          navigationTarget={filterTarget}
+          onDateSelect={() => setMobileOpen(false)}
+        />
       </section>
       {showViews && <ViewsSection />}
       <TagsSection tagCount={tags} navigationTarget={filterTarget} onSelect={() => setMobileOpen(false)} />

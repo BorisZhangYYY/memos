@@ -10,6 +10,7 @@ export interface UseCalendarMatrixParams {
   weekStartDayOffset: number;
   today: string;
   selectedDate: string;
+  moodData?: CalendarData;
 }
 
 const createCalendarDayCell = (
@@ -18,10 +19,12 @@ const createCalendarDayCell = (
   data: CalendarData,
   today: string,
   selectedDate: string,
+  moodData?: CalendarData,
 ): CalendarDayCell => {
   const isoDate = current.format("YYYY-MM-DD");
   const isCurrentMonth = current.format("YYYY-MM") === monthKey;
   const count = data[isoDate] ?? 0;
+  const moodAvg = moodData?.[isoDate];
 
   return {
     date: isoDate,
@@ -30,6 +33,7 @@ const createCalendarDayCell = (
     isCurrentMonth,
     isToday: isoDate === today,
     isSelected: isoDate === selectedDate,
+    moodAvg,
   };
 };
 
@@ -54,6 +58,7 @@ export const useCalendarMatrix = ({
   weekStartDayOffset,
   today,
   selectedDate,
+  moodData,
 }: UseCalendarMatrixParams): CalendarMatrixResult => {
   return useMemo(() => {
     // Determine the start of the month and its formatted key (YYYY-MM)
@@ -78,7 +83,7 @@ export const useCalendarMatrix = ({
       }
 
       // Create the day cell object with data and status flags
-      const dayCell = createCalendarDayCell(current, monthKey, data, today, selectedDate);
+      const dayCell = createCalendarDayCell(current, monthKey, data, today, selectedDate, moodData);
       weeks[weekIndex].days.push(dayCell);
     }
 
@@ -86,5 +91,5 @@ export const useCalendarMatrix = ({
       weeks,
       weekDays: rotatedWeekDays,
     };
-  }, [month, data, weekDays, weekStartDayOffset, today, selectedDate]);
+  }, [month, data, weekDays, weekStartDayOffset, today, selectedDate, moodData]);
 };

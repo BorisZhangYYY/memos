@@ -4006,6 +4006,15 @@ components:
                         The latest update timestamps of the user's memos (one per memo,
                          mirrors memo_created_timestamps). Used by the activity heatmap when
                          the client's view is set to update_time basis.
+                dailyMoodStats:
+                    type: object
+                    additionalProperties:
+                        type: number
+                        format: float
+                    description: |-
+                        Daily mood statistics. Key is date string "YYYY-MM-DD", value is the
+                         average mood level (1-7) of memos with mood on that day. Only days with
+                         at least one mooded memo appear.
                 pinnedMemos:
                     type: array
                     items:

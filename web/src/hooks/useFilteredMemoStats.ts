@@ -13,6 +13,8 @@ import type { StatisticsData } from "@/types/statistics";
 export interface FilteredMemoStats {
   statistics: StatisticsData;
   tags: Record<string, number>;
+  /** Average mood level (1-7) per day, keyed by "YYYY-MM-DD". Only set for home/profile. */
+  dailyMoodStats: Record<string, number>;
   loading: boolean;
 }
 
@@ -63,6 +65,8 @@ export const useFilteredMemoStats = (options: UseFilteredMemoStatsOptions = {}):
     const loading = isLoadingUserStats || isLoadingAllUserStats;
     let activityStats: Record<string, number> = {};
     let tagCount: Record<string, number> = mergeTagCounts();
+    // Mood averages are only meaningful per user; the calendar shows them in home/profile.
+    let dailyMoodStats: Record<string, number> = {};
 
     if (context === "explore" || context === "archived") {
       const displayDates: string[] = [];
@@ -90,9 +94,10 @@ export const useFilteredMemoStats = (options: UseFilteredMemoStatsOptions = {}):
       if (userStats.tagCount) {
         tagCount = mergeTagCounts(userStats.tagCount);
       }
+      dailyMoodStats = userStats.dailyMoodStats ?? {};
     }
 
-    return { statistics: { activityStats, timeBasis }, tags: tagCount, loading };
+    return { statistics: { activityStats, timeBasis }, tags: tagCount, dailyMoodStats, loading };
   }, [context, userName, userStats, allUserStats, isLoadingUserStats, isLoadingAllUserStats, timeBasis]);
 
   return data;

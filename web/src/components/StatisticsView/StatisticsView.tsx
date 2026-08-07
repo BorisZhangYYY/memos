@@ -8,13 +8,15 @@ import { MonthNavigator } from "./MonthNavigator";
 
 interface Props {
   statisticsData: StatisticsData;
+  /** Average mood level (1-7) per day, keyed by "YYYY-MM-DD"; shown as an emoji on calendar days. */
+  dailyMoodStats?: Record<string, number>;
   onDateSelect?: () => void;
   /** When set, day clicks land on this route with the date filter instead of filtering the current one. */
   navigationTarget?: string;
 }
 
 const StatisticsView = (props: Props) => {
-  const { statisticsData } = props;
+  const { statisticsData, dailyMoodStats } = props;
   const { activityStats, timeBasis } = statisticsData;
   const { filters } = useMemoFilterContext();
   const navigateToDateFilter = useDateFilterNavigation(props.navigationTarget);
@@ -36,6 +38,7 @@ const StatisticsView = (props: Props) => {
             props.onDateSelect?.();
           }}
           timeBasis={timeBasis}
+          moodData={dailyMoodStats}
         />
       </div>
     </div>
