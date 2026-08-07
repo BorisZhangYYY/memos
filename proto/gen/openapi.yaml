@@ -2913,6 +2913,13 @@ components:
                     description: |-
                         mood_emojis are the emoji representations for mood levels 1-7.
                          Index 0 = mood level 1, index 6 = mood level 7. Default emojis are used when empty.
+                moodColors:
+                    type: array
+                    items:
+                        type: string
+                    description: |-
+                        mood_colors are the hex colors for mood levels 1-7 (e.g. "#ef4444").
+                         Index 0 = mood level 1, index 6 = mood level 7. Default palette is used when empty.
             description: Memo-related instance settings and policies.
         InstanceSetting_NotificationSetting:
             type: object

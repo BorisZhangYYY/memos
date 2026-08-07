@@ -184,6 +184,7 @@ func convertInstanceMemoRelatedSettingFromStore(setting *storepb.InstanceMemoRel
 		Reactions:             setting.Reactions,
 		AllowedVisibilities:   setting.AllowedVisibilities,
 		MoodEmojis:            setting.MoodEmojis,
+		MoodColors:            setting.MoodColors,
 	}
 }
 
@@ -197,6 +198,7 @@ func convertInstanceMemoRelatedSettingToStore(setting *v1pb.InstanceSetting_Memo
 		Reactions:             setting.Reactions,
 		AllowedVisibilities:   setting.AllowedVisibilities,
 		MoodEmojis:            setting.MoodEmojis,
+		MoodColors:            setting.MoodColors,
 	}
 }
 

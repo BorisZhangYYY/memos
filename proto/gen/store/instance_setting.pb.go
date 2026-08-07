@@ -772,7 +772,10 @@ type InstanceMemoRelatedSetting struct {
 	AllowedVisibilities []string `protobuf:"bytes,8,rep,name=allowed_visibilities,json=allowedVisibilities,proto3" json:"allowed_visibilities,omitempty"`
 	// mood_emojis are the emoji representations for mood levels 1-7.
 	// Index 0 = mood level 1, index 6 = mood level 7. Default emojis are used when empty.
-	MoodEmojis    []string `protobuf:"bytes,9,rep,name=mood_emojis,json=moodEmojis,proto3" json:"mood_emojis,omitempty"`
+	MoodEmojis []string `protobuf:"bytes,9,rep,name=mood_emojis,json=moodEmojis,proto3" json:"mood_emojis,omitempty"`
+	// mood_colors are the hex colors for mood levels 1-7 (e.g. "#ef4444").
+	// Index 0 = mood level 1, index 6 = mood level 7. Default palette is used when empty.
+	MoodColors    []string `protobuf:"bytes,10,rep,name=mood_colors,json=moodColors,proto3" json:"mood_colors,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -838,6 +841,13 @@ func (x *InstanceMemoRelatedSetting) GetAllowedVisibilities() []string {
 func (x *InstanceMemoRelatedSetting) GetMoodEmojis() []string {
 	if x != nil {
 		return x.MoodEmojis
+	}
+	return nil
+}
+
+func (x *InstanceMemoRelatedSetting) GetMoodColors() []string {
+	if x != nil {
+		return x.MoodColors
 	}
 	return nil
 }
@@ -1376,14 +1386,17 @@ const file_store_instance_setting_proto_rawDesc = "" +
 	"\x06region\x18\x04 \x01(\tR\x06region\x12\x16\n" +
 	"\x06bucket\x18\x05 \x01(\tR\x06bucket\x12$\n" +
 	"\x0euse_path_style\x18\x06 \x01(\bR\fusePathStyle\x127\n" +
-	"\x18insecure_skip_tls_verify\x18\a \x01(\bR\x15insecureSkipTlsVerify\"\x99\x02\n" +
+	"\x18insecure_skip_tls_verify\x18\a \x01(\bR\x15insecureSkipTlsVerify\"\xba\x02\n" +
 	"\x1aInstanceMemoRelatedSetting\x120\n" +
 	"\x14content_length_limit\x18\x03 \x01(\x05R\x12contentLengthLimit\x127\n" +
 	"\x18enable_double_click_edit\x18\x04 \x01(\bR\x15enableDoubleClickEdit\x12\x1c\n" +
 	"\treactions\x18\a \x03(\tR\treactions\x121\n" +
 	"\x14allowed_visibilities\x18\b \x03(\tR\x13allowedVisibilities\x12\x1f\n" +
 	"\vmood_emojis\x18\t \x03(\tR\n" +
-	"moodEmojisJ\x04\b\x02\x10\x03R\x18display_with_update_time\"w\n" +
+	"moodEmojis\x12\x1f\n" +
+	"\vmood_colors\x18\n" +
+	" \x03(\tR\n" +
+	"moodColorsJ\x04\b\x02\x10\x03R\x18display_with_update_time\"w\n" +
 	"\x13InstanceTagMetadata\x12=\n" +
 	"\x10background_color\x18\x01 \x01(\v2\x12.google.type.ColorR\x0fbackgroundColor\x12!\n" +
 	"\fblur_content\x18\x02 \x01(\bR\vblurContent\"\xb0\x01\n" +
