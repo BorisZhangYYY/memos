@@ -25,12 +25,11 @@
 ### Task 1: 注释掉 OAuth2 Identity Provider 功能
 
 **Files:**
-- Modify: `server/router/api/v1/v1.go`
 - Modify: `web/src/components/IdentityProviderButtons.tsx`
 
 **Interfaces:**
-- Consumes: 现有 IDP 服务注册和前端登录页按钮
-- Produces: OAuth2 登录按钮不再显示，后端 IDP 端点仍然存在但前端不暴露
+- Consumes: 现有前端登录页按钮
+- Produces: OAuth2 登录按钮不再显示。后端 IDP 端点（v1.go 注册）保持不动——「注释为主不删代码」，前端不暴露即可
 
 - [ ] **Step 1: 前端注释掉 OAuth2 登录按钮**
 
@@ -123,20 +122,20 @@ git commit -m "feat(proto): add allowed_visibilities to instance memo-related se
 
 - [ ] **Step 1: 在 memo 创建和更新处添加校验**
 
-在 `memo_service.go` 的 `CreateMemo` 和 `UpdateMemo` 函数中，调用 `convertVisibilityToStore` 后添加校验。需要先获取 instance setting，检查 `allowed_visibilities` 是否非空，若非空则检查请求的 visibility 是否在列表中。
+在 `memo_service.go` 的 `CreateMemo` 和 `UpdateMemo` 函数中，调用 `convertVisibilityToStore` 后添加校验。
+
+**注意**：代码库中没有 `GetInstanceSetting(ctx, FindInstanceSetting)` 方法。实际模式（见 `instance_service.go:112-115`）是 `s.Store.GetInstanceMemoRelatedSetting(ctx)`，返回 `*storepb.InstanceMemoRelatedSetting`（`instance_setting.go` driver 实现）。
 
 在 `CreateMemo` 中（`memo_service.go` 约第 80-90 行，`convertVisibilityToStore` 调用之后）：
 
 ```go
 // Validate visibility against allowed list.
-instanceSetting, err := s.Store.GetInstanceSetting(ctx, &store.FindInstanceSetting{
-    Key: store.InstanceSettingKeyMemoRelated,
-})
+instanceSetting, err := s.Store.GetInstanceMemoRelatedSetting(ctx)
 if err != nil {
     return nil, status.Errorf(codes.Internal, "failed to get instance setting")
 }
-if instanceSetting != nil && instanceSetting.MemoRelatedSetting != nil {
-    allowedVis := instanceSetting.MemoRelatedSetting.AllowedVisibilities
+if instanceSetting != nil {
+    allowedVis := instanceSetting.AllowedVisibilities
     if len(allowedVis) > 0 {
         visStr := convertVisibilityToString(create.Visibility)
         allowed := false
@@ -154,6 +153,8 @@ if instanceSetting != nil && instanceSetting.MemoRelatedSetting != nil {
 ```
 
 在 `UpdateMemo` 的 visibility 更新分支（约第 460-465 行）添加相同校验。
+
+注意：`convertVisibilityToString` 若不存在则用现有 conversion helper；`storepb.InstanceSettingKey_MEMO_RELATED` 与 `GetInstanceMemoRelatedSetting` 模式参考 `instance_service.go:112-115`。
 
 - [ ] **Step 2: 运行后端测试**
 
