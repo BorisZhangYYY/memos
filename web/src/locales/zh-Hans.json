@@ -719,6 +719,8 @@
     },
     "memo": {
       "add-reaction": "添加表态",
+      "allowed-visibilities": "允许的可见性级别",
+      "allowed-visibilities-description": "勾选用户可以选择哪些可见性级别。取消勾选的级别将不会在编辑器中显示。",
       "bytes-unit": "字节",
       "configured-reactions": "已配置表态",
       "content-length-limit": "内容长度限制（字节）",

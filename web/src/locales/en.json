@@ -592,6 +592,8 @@
     },
     "memo": {
       "add-reaction": "Add reaction",
+      "allowed-visibilities": "Allowed visibilities",
+      "allowed-visibilities-description": "Select which visibility levels users can choose. Unselected levels will not appear in the editor.",
       "bytes-unit": "bytes",
       "configured-reactions": "Configured reactions",
       "content-length-limit": "Content length limit (Byte)",

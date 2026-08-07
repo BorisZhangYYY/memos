@@ -14,7 +14,9 @@ import {
   InstanceSetting_MemoRelatedSettingSchema,
   InstanceSettingSchema,
 } from "@/types/proto/api/v1/instance_service_pb";
+import { Visibility } from "@/types/proto/api/v1/memo_service_pb";
 import { useTranslate } from "@/utils/i18n";
+import { convertVisibilityToString } from "@/utils/memo";
 import SettingGroup from "./SettingGroup";
 import { SettingList, SettingListItem, SettingPanel } from "./SettingList";
 import SettingSection from "./SettingSection";
@@ -68,6 +70,15 @@ const MemoRelatedSettings = () => {
     });
   };
 
+  const visibilityOptions = [Visibility.PRIVATE, Visibility.PROTECTED, Visibility.PUBLIC];
+  const allowedVis = memoRelatedSetting.allowedVisibilities || [];
+
+  const toggleVisibility = (vis: Visibility) => {
+    const visStr = convertVisibilityToString(vis);
+    const next = allowedVis.includes(visStr) ? allowedVis.filter((v) => v !== visStr) : [...allowedVis, visStr];
+    updatePartialSetting({ allowedVisibilities: next });
+  };
+
   return (
     <SettingSection title={t("setting.memo.label")}>
       <SettingGroup title={t("setting.memo.editing-title")} description={t("setting.memo.editing-description")}>
@@ -94,6 +105,19 @@ const MemoRelatedSettings = () => {
               <span className="text-xs text-muted-foreground">{t("setting.memo.bytes-unit")}</span>
             </div>
           </SettingListItem>
+        </SettingList>
+      </SettingGroup>
+
+      <SettingGroup title={t("setting.memo.allowed-visibilities")} description={t("setting.memo.allowed-visibilities-description")}>
+        <SettingList>
+          {visibilityOptions.map((vis) => {
+            const visStr = convertVisibilityToString(vis);
+            return (
+              <SettingListItem key={visStr} label={t(`memo.visibility.${visStr.toLowerCase() as Lowercase<typeof visStr>}`)}>
+                <Switch checked={allowedVis.includes(visStr)} onCheckedChange={() => toggleVisibility(vis)} />
+              </SettingListItem>
+            );
+          })}
         </SettingList>
       </SettingGroup>
 
