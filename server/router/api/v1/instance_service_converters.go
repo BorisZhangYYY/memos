@@ -182,6 +182,8 @@ func convertInstanceMemoRelatedSettingFromStore(setting *storepb.InstanceMemoRel
 		ContentLengthLimit:    setting.ContentLengthLimit,
 		EnableDoubleClickEdit: setting.EnableDoubleClickEdit,
 		Reactions:             setting.Reactions,
+		AllowedVisibilities:   setting.AllowedVisibilities,
+		MoodEmojis:            setting.MoodEmojis,
 	}
 }
 
@@ -193,6 +195,8 @@ func convertInstanceMemoRelatedSettingToStore(setting *v1pb.InstanceSetting_Memo
 		ContentLengthLimit:    setting.ContentLengthLimit,
 		EnableDoubleClickEdit: setting.EnableDoubleClickEdit,
 		Reactions:             setting.Reactions,
+		AllowedVisibilities:   setting.AllowedVisibilities,
+		MoodEmojis:            setting.MoodEmojis,
 	}
 }
 
