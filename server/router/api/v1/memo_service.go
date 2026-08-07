@@ -36,6 +36,21 @@ func isSSESuppressed(ctx context.Context) bool {
 	return ok && v
 }
 
+// suppressVisibilityValidationKey is a context key used to skip the
+// allowed-visibilities check when creating a memo whose visibility is not
+// user-chosen but inherited (e.g., a comment inheriting its parent memo's
+// visibility in CreateMemoComment).
+type suppressVisibilityValidationKey struct{}
+
+func withSuppressVisibilityValidation(ctx context.Context) context.Context {
+	return context.WithValue(ctx, suppressVisibilityValidationKey{}, true)
+}
+
+func isVisibilityValidationSuppressed(ctx context.Context) bool {
+	v, ok := ctx.Value(suppressVisibilityValidationKey{}).(bool)
+	return ok && v
+}
+
 func (s *APIV1Service) checkMemoReadAccess(ctx context.Context, memo *store.Memo) error {
 	if memo == nil {
 		return status.Errorf(codes.NotFound, "memo not found")
@@ -89,8 +104,12 @@ func (s *APIV1Service) CreateMemo(ctx context.Context, request *v1pb.CreateMemoR
 	}
 
 	// Validate visibility against the allowed list from instance settings.
-	if err := s.validateMemoVisibility(ctx, create.Visibility); err != nil {
-		return nil, err
+	// Comments inherit their visibility from the parent memo instead of being
+	// user-chosen, so the check is skipped for them (see CreateMemoComment).
+	if !isVisibilityValidationSuppressed(ctx) {
+		if err := s.validateMemoVisibility(ctx, create.Visibility); err != nil {
+			return nil, err
+		}
 	}
 
 	// Set custom timestamps if provided in the request.
@@ -459,11 +478,10 @@ func (s *APIV1Service) UpdateMemo(ctx context.Context, request *v1pb.UpdateMemoR
 			update.Payload = memo.Payload
 		} else if path == "visibility" {
 			visibility := convertVisibilityToStore(request.Memo.Visibility)
-			// Validate visibility against the allowed list from instance settings.
-			if err := s.validateMemoVisibility(ctx, visibility); err != nil {
-				return nil, err
-			}
 			if memo.ParentUID != nil {
+				// A comment's visibility is always inherited from its parent
+				// memo, so the requested value is not user-chosen and is not
+				// subject to the allowed visibilities check.
 				parentMemo, err := s.Store.GetMemo(ctx, &store.FindMemo{UID: memo.ParentUID})
 				if err != nil {
 					return nil, status.Errorf(codes.Internal, "failed to get parent memo")
@@ -472,6 +490,11 @@ func (s *APIV1Service) UpdateMemo(ctx context.Context, request *v1pb.UpdateMemoR
 					return nil, status.Errorf(codes.NotFound, "memo not found")
 				}
 				visibility = parentMemo.Visibility
+			} else {
+				// Validate visibility against the allowed list from instance settings.
+				if err := s.validateMemoVisibility(ctx, visibility); err != nil {
+					return nil, err
+				}
 			}
 			update.Visibility = &visibility
 		} else if path == "pinned" {
