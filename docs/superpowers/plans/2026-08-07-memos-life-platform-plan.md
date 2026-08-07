@@ -359,9 +359,9 @@ git commit -m "feat(proto): add mood_level to MemoPayload/Memo and mood_emojis t
 ### Task 7: 数据库迁移
 
 **Files:**
-- Create: `store/migration/sqlite/0.31/00_mood.sql`
-- Create: `store/migration/mysql/0.31/00_mood.sql`
-- Create: `store/migration/postgres/0.31/00_mood.sql`
+- Create: `store/migration/sqlite/0.31/00__mood.sql`
+- Create: `store/migration/mysql/0.31/00__mood.sql`
+- Create: `store/migration/postgres/0.31/00__mood.sql`
 - Modify: `store/migration/sqlite/LATEST.sql`
 - Modify: `store/migration/mysql/LATEST.sql`
 - Modify: `store/migration/postgres/LATEST.sql`
@@ -371,7 +371,7 @@ git commit -m "feat(proto): add mood_level to MemoPayload/Memo and mood_emojis t
 
 - [ ] **Step 1: 创建 SQLite 迁移**
 
-`store/migration/sqlite/0.31/00_mood.sql`：
+`store/migration/sqlite/0.31/00__mood.sql`：
 
 ```sql
 -- mood_level is stored inside the memo payload JSON column.
