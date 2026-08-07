@@ -19,7 +19,7 @@ import { useTranslate } from "@/utils/i18n";
 // The mood trend sits above the memo column grid: it occupies its own row, so
 // multi-column memo layouts never affect it. It is always visible (not
 // collapsible) and kept compact.
-const MoodTrendSection = ({ points }: { points: MoodPoint[] }) => {
+const MoodTrendSection = ({ points, selectedDate }: { points: MoodPoint[]; selectedDate?: string }) => {
   const t = useTranslate();
 
   return (
@@ -28,7 +28,7 @@ const MoodTrendSection = ({ points }: { points: MoodPoint[] }) => {
         <ChartLineIcon className="size-4 text-primary" />
         {t("mood.chart.title")}
       </div>
-      <MoodChart points={points} />
+      <MoodChart points={points} selectedDate={selectedDate} />
     </div>
   );
 };
@@ -43,6 +43,9 @@ const Home = () => {
   // Shares the React Query cache entry with the sidebar's stats view, so the
   // mood chart does not add a request when the sidebar already fetched it.
   const { data: userStats } = useUserStats(user?.name, { enabled: isUserSettingsInitialized });
+  // The calendar's date filter drives the chart: a selected day shows that
+  // day's minute-level curve; no selection shows the trailing 30-day trend.
+  const selectedDate = filters.find((filter) => filter.factor === "displayTime")?.value;
   const moodPoints = useMemo(() => {
     const timestamps = userStats?.memoCreatedTimestamps ?? [];
     const levels = userStats?.moodLevels ?? [];
@@ -68,7 +71,7 @@ const Home = () => {
 
   return (
     <div className="w-full min-h-full bg-background text-foreground">
-      {moodPoints.length > 0 && <MoodTrendSection points={moodPoints} />}
+      {moodPoints.length > 0 && <MoodTrendSection points={moodPoints} selectedDate={selectedDate} />}
       <NewMemoProvider>
         <PagedMemoList
           renderer={(memo: Memo, { compact }) => (

@@ -286,6 +286,7 @@
   },
   "mood": {
     "filter": "Mood",
+    "monthly-average": "Monthly average mood",
     "select": "Select mood",
     "level": "Mood level",
     "level-1": "Very unhappy",
@@ -299,6 +300,7 @@
       "title": "Mood Trend",
       "day": "Day",
       "week": "Week",
+      "trend": "30-day trend",
       "expand": "Expand mood chart",
       "empty": "No mood data for this period"
     }

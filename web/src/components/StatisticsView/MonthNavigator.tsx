@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { addMonths } from "@/lib/calendar-utils";
 import type { MonthNavigatorProps } from "@/types/statistics";
 
-export const MonthNavigator = memo(({ visibleMonth, onMonthChange }: MonthNavigatorProps) => {
+export const MonthNavigator = memo(({ visibleMonth, onMonthChange, monthlyMoodEmoji }: MonthNavigatorProps) => {
   const { i18n, t } = useTranslation();
   const monthLabel = dayjs(visibleMonth).toDate().toLocaleString(i18n.language, { year: "numeric", month: "long" });
   const handlePrevMonth = () => onMonthChange(addMonths(visibleMonth, -1));
@@ -14,8 +14,9 @@ export const MonthNavigator = memo(({ visibleMonth, onMonthChange }: MonthNaviga
 
   return (
     <header className="mb-1.5 flex w-full items-center justify-between gap-3">
-      <h2 className="min-w-0 truncate text-[15px] font-semibold leading-7 tracking-[-0.015em] text-foreground/90 select-none">
+      <h2 className="flex min-w-0 items-center gap-1.5 truncate text-[15px] font-semibold leading-7 tracking-[-0.015em] text-foreground/90 select-none">
         {monthLabel}
+        {monthlyMoodEmoji && <span aria-label={t("mood.monthly-average")}>{monthlyMoodEmoji}</span>}
       </h2>
 
       <nav className="flex shrink-0 items-center gap-1" aria-label={t("common.month-navigation")}>

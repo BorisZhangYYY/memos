@@ -1,7 +1,6 @@
 import dayjs from "dayjs";
 import { useMemo, useState } from "react";
 import { DEFAULT_MOOD_EMOJIS } from "@/components/MemoEditor/Toolbar/MoodSelector";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useInstance } from "@/contexts/InstanceContext";
 import { cn } from "@/lib/utils";
 import { useTranslate } from "@/utils/i18n";
@@ -26,7 +25,10 @@ export interface DayStats {
 }
 
 const MAX_MOOD_LEVEL = 7;
-const WEEK_DAYS = 7;
+/** Days shown in the default trend view when no calendar day is selected. */
+const TREND_WINDOW_DAYS = 30;
+/** One date label per N days on the trend x-axis. */
+const TREND_LABEL_EVERY = 5;
 const DAY_MINUTES = 24 * 60;
 
 const isValidMoodLevel = (level: number) => level >= 1 && level <= MAX_MOOD_LEVEL;
@@ -48,14 +50,14 @@ export const dayViewPoints = (points: MoodPoint[], now: Date): DayViewPoint[] =>
     .sort((a, b) => a.minutes - b.minutes);
 
 /**
- * Daily mood aggregates for the 7 local days ending at `now`. Days without a
- * mood memo are omitted so the line and range band break across them; avg,
- * min and max drive the line and the band respectively.
+ * Daily mood aggregates for the `windowDays` local days ending at `now`. Days
+ * without a mood memo are omitted so the line and range band break across
+ * them; avg, min and max drive the line and the band respectively.
  */
-export const weekViewDays = (points: MoodPoint[], now: Date): DayStats[] => {
+export const aggregateDays = (points: MoodPoint[], now: Date, windowDays: number): DayStats[] => {
   const days: DayStats[] = [];
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  for (let offset = WEEK_DAYS - 1; offset >= 0; offset--) {
+  for (let offset = windowDays - 1; offset >= 0; offset--) {
     const dayStart = new Date(todayStart);
     dayStart.setDate(todayStart.getDate() - offset);
     const levels = points
@@ -75,24 +77,26 @@ export const weekViewDays = (points: MoodPoint[], now: Date): DayStats[] => {
   return days;
 };
 
+/** Backward-compatible alias: the 7-day window used before the trend view. */
+export const weekViewDays = (points: MoodPoint[], now: Date): DayStats[] => aggregateDays(points, now, 7);
+
 const VIEWBOX_WIDTH = 560;
 const VIEWBOX_HEIGHT = 200;
 const PLOT_TOP = 14;
 const PLOT_RIGHT = 14;
-const PLOT_BOTTOM = 26;
-const PLOT_LEFT = 30;
+const PLOT_BOTTOM = 30;
+const PLOT_LEFT = 34;
 const PLOT_WIDTH = VIEWBOX_WIDTH - PLOT_LEFT - PLOT_RIGHT;
 const PLOT_HEIGHT = VIEWBOX_HEIGHT - PLOT_TOP - PLOT_BOTTOM;
 const POINT_RADIUS = 4;
 const HIT_RADIUS = 11;
 
 const xForMinutes = (minutes: number) => PLOT_LEFT + (minutes / DAY_MINUTES) * PLOT_WIDTH;
-const xForDaySlot = (index: number) => PLOT_LEFT + ((index + 0.5) / WEEK_DAYS) * PLOT_WIDTH;
+const xForDaySlot = (index: number, windowDays: number) => PLOT_LEFT + ((index + 0.5) / windowDays) * PLOT_WIDTH;
 const yForLevel = (level: number) => PLOT_TOP + ((MAX_MOOD_LEVEL - level) / (MAX_MOOD_LEVEL - 1)) * PLOT_HEIGHT;
 const formatMinutes = (minutes: number) => `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
 
 const DAY_AXIS_LABEL_MINUTES = [0, 6 * 60, 12 * 60, 18 * 60, 24 * 60];
-const WEEKDAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 const MOOD_LEVEL_KEYS = ["level-1", "level-2", "level-3", "level-4", "level-5", "level-6", "level-7"] as const;
 
 /** Contiguous calendar-day runs with data; the line and band break between runs. */
@@ -119,45 +123,50 @@ interface TooltipState {
   content: string;
 }
 
-type MoodChartView = "day" | "week";
-
 export interface MoodChartProps {
-  /** All mood-tagged memos of the current user; the active view windows them. */
+  /** All mood-tagged memos of the current user; the active window windows them. */
   points: MoodPoint[];
+  /**
+   * Browser-local "YYYY-MM-DD" of the day to show at minute precision (from
+   * the calendar's date filter). When unset, the chart aggregates the
+   * trailing 30-day window by day.
+   */
+  selectedDate?: string;
 }
 
-export const MoodChart = ({ points }: MoodChartProps) => {
+export const MoodChart = ({ points, selectedDate }: MoodChartProps) => {
   const t = useTranslate();
   const { memoRelatedSetting } = useInstance();
   const emojis = memoRelatedSetting?.moodEmojis?.length === MAX_MOOD_LEVEL ? memoRelatedSetting.moodEmojis : DEFAULT_MOOD_EMOJIS;
-  const [view, setView] = useState<MoodChartView>("day");
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
 
-  const dayPoints = useMemo(() => dayViewPoints(points, new Date()), [points]);
-  const weekDays = useMemo(() => weekViewDays(points, new Date()), [points]);
-  const weekRuns = useMemo(() => groupIntoRuns(weekDays), [weekDays]);
-  // The window's first local midnight; the axis labels and every day slot derive
-  // from it, so points always land on their calendar position even when days in
-  // between have no data.
-  const weekWindowStart = useMemo(
+  const now = useMemo(() => new Date(), []);
+
+  // Single-day mode: the selected calendar day at minute precision.
+  const selectedDay = selectedDate ? new Date(`${selectedDate}T00:00:00`) : undefined;
+  const dayPoints = useMemo(() => (selectedDay ? dayViewPoints(points, selectedDay) : []), [points, selectedDay]);
+
+  // Trend mode: the trailing 30-day window aggregated by day.
+  const trendDays = useMemo(() => aggregateDays(points, now, TREND_WINDOW_DAYS), [points, now]);
+  const trendRuns = useMemo(() => groupIntoRuns(trendDays), [trendDays]);
+  const trendWindowStart = useMemo(
     () =>
       dayjs()
         .startOf("day")
-        .subtract(WEEK_DAYS - 1, "day"),
+        .subtract(TREND_WINDOW_DAYS - 1, "day"),
     [],
   );
-  const weekLabels = useMemo(
+  const trendSlotOf = (day: DayStats) => dayjs(day.date).diff(trendWindowStart, "day");
+  const trendLabels = useMemo(
     () =>
-      Array.from({ length: WEEK_DAYS }, (_, index) => {
-        const date = weekWindowStart.add(index, "day");
-        return { label: t(`common.days.${WEEKDAY_KEYS[date.day()]}`), isToday: index === WEEK_DAYS - 1 };
-      }),
-    [t, weekWindowStart],
+      Array.from({ length: TREND_WINDOW_DAYS }, (_, index) => {
+        const date = trendWindowStart.add(index, "day");
+        return { label: date.format("MM-DD"), isToday: index === TREND_WINDOW_DAYS - 1, index };
+      }).filter((entry) => entry.index % TREND_LABEL_EVERY === 0 || entry.isToday),
+    [trendWindowStart],
   );
-  const weekSlotOf = (day: DayStats) => dayjs(day.date).diff(weekWindowStart, "day");
 
-  const viewPoints = view === "day" ? dayPoints : weekDays;
-  const isEmpty = viewPoints.length === 0;
+  const isEmpty = selectedDay ? dayPoints.length === 0 : trendDays.length === 0;
 
   const handlePointHover = (leftPercent: number, topPercent: number, content: string) => {
     setTooltip({ leftPercent: Math.min(92, Math.max(8, leftPercent)), topPercent, content });
@@ -174,7 +183,7 @@ export const MoodChart = ({ points }: MoodChartProps) => {
         strokeOpacity={0.15}
         strokeWidth={1}
       />
-      <text x={PLOT_LEFT - 6} y={yForLevel(level) + 3.5} textAnchor="end" className="fill-muted-foreground text-[10px]" aria-hidden="true">
+      <text x={PLOT_LEFT - 6} y={yForLevel(level) + 4} textAnchor="end" className="fill-muted-foreground text-xs" aria-hidden="true">
         {level}
       </text>
     </g>
@@ -186,20 +195,20 @@ export const MoodChart = ({ points }: MoodChartProps) => {
       x={xForMinutes(minutes)}
       y={VIEWBOX_HEIGHT - 8}
       textAnchor="middle"
-      className="fill-muted-foreground text-[10px]"
+      className="fill-muted-foreground text-xs"
       aria-hidden="true"
     >
       {formatMinutes(minutes)}
     </text>
   ));
 
-  const weekAxisLabels = weekLabels.map(({ label, isToday }, index) => (
+  const trendAxisLabels = trendLabels.map(({ label, isToday, index }) => (
     <text
       key={label}
-      x={xForDaySlot(index)}
+      x={xForDaySlot(index, TREND_WINDOW_DAYS)}
       y={VIEWBOX_HEIGHT - 8}
       textAnchor="middle"
-      className={cn("text-[10px]", isToday ? "fill-primary" : "fill-muted-foreground")}
+      className={cn("text-xs", isToday ? "fill-primary" : "fill-muted-foreground")}
       aria-hidden="true"
     >
       {label}
@@ -245,20 +254,20 @@ export const MoodChart = ({ points }: MoodChartProps) => {
     </>
   );
 
-  const weekSeries = weekRuns.map((run) => (
+  const trendSeries = trendRuns.map((run) => (
     <g key={run[0].date}>
       {run.length > 1 && (
         <>
           <polygon
             points={[
-              ...run.map((day) => `${xForDaySlot(weekSlotOf(day))},${yForLevel(day.max)}`),
-              ...run.map((day) => `${xForDaySlot(weekSlotOf(day))},${yForLevel(day.min)}`).reverse(),
+              ...run.map((day) => `${xForDaySlot(trendSlotOf(day), TREND_WINDOW_DAYS)},${yForLevel(day.max)}`),
+              ...run.map((day) => `${xForDaySlot(trendSlotOf(day), TREND_WINDOW_DAYS)},${yForLevel(day.min)}`).reverse(),
             ].join(" ")}
             className="fill-primary"
             fillOpacity={0.12}
           />
           <polyline
-            points={run.map((day) => `${xForDaySlot(weekSlotOf(day))},${yForLevel(day.avg)}`).join(" ")}
+            points={run.map((day) => `${xForDaySlot(trendSlotOf(day), TREND_WINDOW_DAYS)},${yForLevel(day.avg)}`).join(" ")}
             fill="none"
             className="stroke-primary"
             strokeWidth={2}
@@ -268,7 +277,7 @@ export const MoodChart = ({ points }: MoodChartProps) => {
         </>
       )}
       {run.map((day) => {
-        const x = xForDaySlot(weekSlotOf(day));
+        const x = xForDaySlot(trendSlotOf(day), TREND_WINDOW_DAYS);
         const y = yForLevel(day.avg);
         return (
           <g key={day.date}>
@@ -296,39 +305,20 @@ export const MoodChart = ({ points }: MoodChartProps) => {
 
   return (
     <div className="w-full">
-      <div className="mb-2 flex justify-end">
-        <Tabs
-          value={view}
-          onValueChange={(value) => {
-            setTooltip(null);
-            setView(value as MoodChartView);
-          }}
-        >
-          <TabsList className="gap-0.5">
-            <TabsTrigger value="day" className="px-2.5 py-1 text-xs">
-              {t("mood.chart.day")}
-            </TabsTrigger>
-            <TabsTrigger value="week" className="px-2.5 py-1 text-xs">
-              {t("mood.chart.week")}
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
-
       {isEmpty ? (
-        <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">{t("mood.chart.empty")}</div>
+        <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">{t("mood.chart.empty")}</div>
       ) : (
         <div className="relative">
           <svg
             viewBox={`0 0 ${VIEWBOX_WIDTH} ${VIEWBOX_HEIGHT}`}
             className="h-auto w-full"
             role="img"
-            aria-label={`${t("mood.chart.title")} ${view === "day" ? t("mood.chart.day") : t("mood.chart.week")}`}
+            aria-label={`${t("mood.chart.title")} ${selectedDay ? t("mood.chart.day") : t("mood.chart.trend")}`}
             onMouseLeave={() => setTooltip(null)}
           >
             {gridLines}
-            {view === "day" ? dayAxisLabels : weekAxisLabels}
-            {view === "day" ? daySeries : weekSeries}
+            {selectedDay ? dayAxisLabels : trendAxisLabels}
+            {selectedDay ? daySeries : trendSeries}
           </svg>
           {tooltip && (
             <div
