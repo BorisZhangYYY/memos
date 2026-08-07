@@ -284,6 +284,10 @@
     "code-block": "Code block",
     "content-syntax": "Content syntax"
   },
+  "mood": {
+    "select": "Select mood",
+    "level": "Mood level"
+  },
   "memo": {
     "archived-at": "Archived at",
     "click-to-hide-sensitive-content": "Click to hide sensitive content",

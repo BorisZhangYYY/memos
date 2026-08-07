@@ -12,6 +12,8 @@ export interface EditorState {
     attachments: Attachment[];
     relations: MemoRelation[];
     location?: Location;
+    /** Mood level of the memo, 1-7. 0 means unset. */
+    moodLevel: number;
   };
   ui: {
     isFocusMode: boolean;
@@ -52,6 +54,7 @@ const defaultState: EditorState = {
     attachments: [],
     relations: [],
     location: undefined,
+    moodLevel: 0,
   },
   ui: {
     isFocusMode: false,
