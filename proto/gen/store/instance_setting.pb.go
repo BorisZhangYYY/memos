@@ -767,9 +767,11 @@ type InstanceMemoRelatedSetting struct {
 	// enable_double_click_edit enables editing on double click.
 	EnableDoubleClickEdit bool `protobuf:"varint,4,opt,name=enable_double_click_edit,json=enableDoubleClickEdit,proto3" json:"enable_double_click_edit,omitempty"`
 	// reactions is the list of reactions.
-	Reactions     []string `protobuf:"bytes,7,rep,name=reactions,proto3" json:"reactions,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Reactions []string `protobuf:"bytes,7,rep,name=reactions,proto3" json:"reactions,omitempty"`
+	// allowed_visibilities restricts which visibility levels users can select.
+	AllowedVisibilities []string `protobuf:"bytes,8,rep,name=allowed_visibilities,json=allowedVisibilities,proto3" json:"allowed_visibilities,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *InstanceMemoRelatedSetting) Reset() {
@@ -819,6 +821,13 @@ func (x *InstanceMemoRelatedSetting) GetEnableDoubleClickEdit() bool {
 func (x *InstanceMemoRelatedSetting) GetReactions() []string {
 	if x != nil {
 		return x.Reactions
+	}
+	return nil
+}
+
+func (x *InstanceMemoRelatedSetting) GetAllowedVisibilities() []string {
+	if x != nil {
+		return x.AllowedVisibilities
 	}
 	return nil
 }
@@ -1357,11 +1366,12 @@ const file_store_instance_setting_proto_rawDesc = "" +
 	"\x06region\x18\x04 \x01(\tR\x06region\x12\x16\n" +
 	"\x06bucket\x18\x05 \x01(\tR\x06bucket\x12$\n" +
 	"\x0euse_path_style\x18\x06 \x01(\bR\fusePathStyle\x127\n" +
-	"\x18insecure_skip_tls_verify\x18\a \x01(\bR\x15insecureSkipTlsVerify\"\xc5\x01\n" +
+	"\x18insecure_skip_tls_verify\x18\a \x01(\bR\x15insecureSkipTlsVerify\"\xf8\x01\n" +
 	"\x1aInstanceMemoRelatedSetting\x120\n" +
 	"\x14content_length_limit\x18\x03 \x01(\x05R\x12contentLengthLimit\x127\n" +
 	"\x18enable_double_click_edit\x18\x04 \x01(\bR\x15enableDoubleClickEdit\x12\x1c\n" +
-	"\treactions\x18\a \x03(\tR\treactionsJ\x04\b\x02\x10\x03R\x18display_with_update_time\"w\n" +
+	"\treactions\x18\a \x03(\tR\treactions\x121\n" +
+	"\x14allowed_visibilities\x18\b \x03(\tR\x13allowedVisibilitiesJ\x04\b\x02\x10\x03R\x18display_with_update_time\"w\n" +
 	"\x13InstanceTagMetadata\x12=\n" +
 	"\x10background_color\x18\x01 \x01(\v2\x12.google.type.ColorR\x0fbackgroundColor\x12!\n" +
 	"\fblur_content\x18\x02 \x01(\bR\vblurContent\"\xb0\x01\n" +

@@ -115,6 +115,8 @@ message InstanceMemoRelatedSetting {
   bool enable_double_click_edit = 4;
   // reactions is the list of reactions.
   repeated string reactions = 7;
+  // allowed_visibilities restricts which visibility levels users can select.
+  repeated string allowed_visibilities = 8;
 }
 
 message InstanceTagMetadata {

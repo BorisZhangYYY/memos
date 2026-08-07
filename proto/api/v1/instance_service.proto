@@ -203,6 +203,9 @@ message InstanceSetting {
     bool enable_double_click_edit = 4;
     // reactions is the list of reactions.
     repeated string reactions = 7;
+    // allowed_visibilities restricts which visibility levels users can select.
+    // Values are PRIVATE, PROTECTED, PUBLIC. Empty means all levels are allowed.
+    repeated string allowed_visibilities = 8;
   }
 
   // Metadata for a tag.
