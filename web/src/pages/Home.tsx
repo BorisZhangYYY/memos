@@ -1,6 +1,6 @@
 import { timestampDate } from "@bufbuild/protobuf/wkt";
-import { ChartLineIcon, ChevronDownIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { ChartLineIcon } from "lucide-react";
+import { useMemo } from "react";
 import MemoEditor from "@/components/MemoEditor";
 import { deriveDefaultCreateTimeFromFilters } from "@/components/MemoEditor/utils/deriveDefaultCreateTime";
 import MemoView from "@/components/MemoView";
@@ -12,35 +12,23 @@ import { NewMemoProvider } from "@/contexts/NewMemoContext";
 import { useMemoFilters, useMemoSorting } from "@/hooks";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { useUserStats } from "@/hooks/useUserQueries";
-import { cn } from "@/lib/utils";
 import { State } from "@/types/proto/api/v1/common_pb";
 import { Memo } from "@/types/proto/api/v1/memo_service_pb";
 import { useTranslate } from "@/utils/i18n";
 
+// The mood trend sits above the memo column grid: it occupies its own row, so
+// multi-column memo layouts never affect it. It is always visible (not
+// collapsible) and kept compact.
 const MoodTrendSection = ({ points }: { points: MoodPoint[] }) => {
   const t = useTranslate();
-  const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="mx-auto mb-3 w-full max-w-2xl rounded-lg border border-border bg-card px-4 py-3 text-card-foreground">
-      <button
-        type="button"
-        aria-expanded={expanded}
-        aria-label={t("mood.chart.expand")}
-        onClick={() => setExpanded((isExpanded) => !isExpanded)}
-        className="flex w-full items-center justify-between gap-2"
-      >
-        <span className="flex items-center gap-1.5 text-sm font-medium">
-          <ChartLineIcon className="size-4 text-primary" />
-          {t("mood.chart.title")}
-        </span>
-        <ChevronDownIcon className={cn("size-4 text-muted-foreground transition-transform", expanded && "rotate-180")} />
-      </button>
-      {expanded && (
-        <div className="mt-3">
-          <MoodChart points={points} />
-        </div>
-      )}
+    <div className="mb-3 w-full max-w-sm rounded-lg border border-border bg-card px-3 py-2 text-card-foreground">
+      <div className="mb-1.5 flex items-center gap-1.5 text-sm font-medium">
+        <ChartLineIcon className="size-4 text-primary" />
+        {t("mood.chart.title")}
+      </div>
+      <MoodChart points={points} />
     </div>
   );
 };
