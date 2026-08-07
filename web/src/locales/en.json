@@ -612,7 +612,11 @@
     "memo": {
       "add-reaction": "Add reaction",
       "allowed-visibilities": "Allowed visibilities",
-      "allowed-visibilities-description": "Select which visibility levels users can choose. Leave all unchecked to allow all levels.",
+      "allowed-visibilities-description": "Choose which visibility levels users can publish to. Disabling a level hides all existing memos at that level (including their mood and other info); disabling Public also disables the Explore page. Private is always allowed.",
+      "visibility-policy": "Visibility policy",
+      "visibility-policy.all": "Allow all levels",
+      "visibility-policy.no-public": "Disable Public",
+      "visibility-policy.private-only": "Disable Protected and Public",
       "bytes-unit": "bytes",
       "configured-reactions": "Configured reactions",
       "content-length-limit": "Content length limit (Byte)",

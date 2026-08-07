@@ -739,7 +739,11 @@
     "memo": {
       "add-reaction": "添加表态",
       "allowed-visibilities": "允许的可见性级别",
-      "allowed-visibilities-description": "勾选用户可以选择哪些可见性级别。全部未勾选表示允许所有级别。",
+      "allowed-visibilities-description": "选择用户可发布的可见性级别。禁用某个级别后，已发布的对应 memo 将全部隐藏（含心情等信息）；禁用 Public 时，发现页入口也会被禁用。Private 始终允许。",
+      "visibility-policy": "可见性策略",
+      "visibility-policy.all": "允许所有级别",
+      "visibility-policy.no-public": "禁用 Public",
+      "visibility-policy.private-only": "禁用 Protected 和 Public",
       "bytes-unit": "字节",
       "configured-reactions": "已配置表态",
       "content-length-limit": "内容长度限制（字节）",

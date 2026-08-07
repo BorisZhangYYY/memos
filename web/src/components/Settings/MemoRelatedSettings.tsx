@@ -6,6 +6,7 @@ import { toast } from "react-hot-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useInstance } from "@/contexts/InstanceContext";
 import {
@@ -14,15 +15,43 @@ import {
   InstanceSetting_MemoRelatedSettingSchema,
   InstanceSettingSchema,
 } from "@/types/proto/api/v1/instance_service_pb";
-import { Visibility } from "@/types/proto/api/v1/memo_service_pb";
 import { useTranslate } from "@/utils/i18n";
-import { convertVisibilityToString } from "@/utils/memo";
 import SettingGroup from "./SettingGroup";
 import { SettingList, SettingListItem, SettingPanel } from "./SettingList";
 import SettingSection from "./SettingSection";
 import useInstanceSettingUpdater, { buildInstanceSettingName } from "./useInstanceSettingUpdater";
 
 const DEFAULT_MOOD_EMOJIS = ["😫", "😟", "😔", "😐", "😌", "☺️", "😆"];
+
+type VisibilityPolicy = "all" | "no-public" | "private-only";
+
+// Maps the stored allowed_visibilities list back to the single policy choice.
+// An empty list means all levels are allowed. PUBLIC implies PROTECTED is
+// allowed too (enforced server-side), so any list containing PUBLIC maps to
+// the "all" policy.
+const getVisibilityPolicy = (allowed: string[] | undefined): VisibilityPolicy => {
+  if (!allowed || allowed.length === 0) return "all";
+  if (allowed.includes("PUBLIC")) return "all";
+  if (allowed.includes("PROTECTED")) return "no-public";
+  return "private-only";
+};
+
+const allowedVisibilitiesForPolicy = (policy: VisibilityPolicy): string[] => {
+  switch (policy) {
+    case "all":
+      return [];
+    case "no-public":
+      return ["PRIVATE", "PROTECTED"];
+    case "private-only":
+      return ["PRIVATE"];
+  }
+};
+
+const visibilityPolicyOptions = (t: ReturnType<typeof useTranslate>) => [
+  { value: "all", label: t("setting.memo.visibility-policy.all") },
+  { value: "no-public", label: t("setting.memo.visibility-policy.no-public") },
+  { value: "private-only", label: t("setting.memo.visibility-policy.private-only") },
+];
 
 const MemoRelatedSettings = () => {
   const t = useTranslate();
@@ -79,13 +108,13 @@ const MemoRelatedSettings = () => {
     });
   };
 
-  const visibilityOptions = [Visibility.PRIVATE, Visibility.PROTECTED, Visibility.PUBLIC];
-  const allowedVis = memoRelatedSetting.allowedVisibilities || [];
+  // Visibility policy is a single choice: all levels, or progressively more
+  // restricted. Disabling PUBLIC keeps PROTECTED allowed; disabling PROTECTED
+  // also disables PUBLIC.
+  const visibilityPolicy = getVisibilityPolicy(memoRelatedSetting.allowedVisibilities);
 
-  const toggleVisibility = (vis: Visibility) => {
-    const visStr = convertVisibilityToString(vis);
-    const next = allowedVis.includes(visStr) ? allowedVis.filter((v) => v !== visStr) : [...allowedVis, visStr];
-    updatePartialSetting({ allowedVisibilities: next });
+  const setVisibilityPolicy = (policy: VisibilityPolicy) => {
+    updatePartialSetting({ allowedVisibilities: allowedVisibilitiesForPolicy(policy) });
   };
 
   const moodEmojis = memoRelatedSetting.moodEmojis?.length === 7 ? memoRelatedSetting.moodEmojis : DEFAULT_MOOD_EMOJIS;
@@ -136,14 +165,24 @@ const MemoRelatedSettings = () => {
 
       <SettingGroup title={t("setting.memo.allowed-visibilities")} description={t("setting.memo.allowed-visibilities-description")}>
         <SettingList>
-          {visibilityOptions.map((vis) => {
-            const visStr = convertVisibilityToString(vis);
-            return (
-              <SettingListItem key={visStr} label={t(`memo.visibility.${visStr.toLowerCase() as Lowercase<typeof visStr>}`)}>
-                <Switch checked={allowedVis.includes(visStr)} onCheckedChange={() => toggleVisibility(vis)} />
-              </SettingListItem>
-            );
-          })}
+          <SettingListItem label={t("setting.memo.visibility-policy")}>
+            <Select
+              value={visibilityPolicy}
+              items={visibilityPolicyOptions(t)}
+              onValueChange={(value) => setVisibilityPolicy(value as VisibilityPolicy)}
+            >
+              <SelectTrigger size="sm" className="w-64" aria-label={t("setting.memo.visibility-policy")}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {visibilityPolicyOptions(t).map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </SettingListItem>
         </SettingList>
       </SettingGroup>
 
