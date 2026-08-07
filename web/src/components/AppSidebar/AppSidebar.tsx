@@ -61,6 +61,7 @@ import type { Shortcut } from "@/types/proto/api/v1/shortcut_service_pb";
 import { User_Role, UserNotification_Status } from "@/types/proto/api/v1/user_service_pb";
 import { useTranslate } from "@/utils/i18n";
 import MemosLogo from "../MemosLogo";
+import MoodFilterSection from "./MoodFilterSection";
 import { getSidebarRouteKind } from "./routes";
 import SidebarRow, { SIDEBAR_ROW_CLASSES, SIDEBAR_ROW_ICON_CLASSES } from "./SidebarRow";
 import SidebarSectionHeader from "./SidebarSectionHeader";
@@ -250,6 +251,7 @@ const CollectionSidebarContent = ({ context }: { context: MemoStatsContext }) =>
       </section>
       {showViews && <ViewsSection />}
       <TagsSection tagCount={tags} navigationTarget={filterTarget} onSelect={() => setMobileOpen(false)} />
+      <MoodFilterSection navigationTarget={filterTarget} onSelect={() => setMobileOpen(false)} />
     </div>
   );
 };

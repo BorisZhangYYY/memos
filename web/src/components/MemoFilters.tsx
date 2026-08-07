@@ -6,6 +6,7 @@ import {
   CodeIcon,
   EyeIcon,
   HashIcon,
+  HeartIcon,
   LinkIcon,
   LucideIcon,
   SearchIcon,
@@ -13,8 +14,19 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FilterFactor, getMemoFilterKey, MemoFilter, useMemoFilterContext } from "@/contexts/MemoFilterContext";
+import { MOOD_LEVEL_KEYS, parseMoodLevelRange } from "@/hooks/useMemoFilters";
 import { cn } from "@/lib/utils";
 import { useTranslate } from "@/utils/i18n";
+
+const getMoodLevelLabel = (value: string, t: ReturnType<typeof useTranslate>): string => {
+  const range = parseMoodLevelRange(value);
+  if (!range) return value;
+
+  const minLabel = t(MOOD_LEVEL_KEYS[range.min - 1]);
+  const maxLabel = t(MOOD_LEVEL_KEYS[range.max - 1]);
+  const levels = range.min === range.max ? minLabel : `${minLabel} - ${maxLabel}`;
+  return `${t("mood.filter")}: ${levels}`;
+};
 
 interface FilterConfig {
   icon: LucideIcon;
@@ -53,6 +65,10 @@ const FILTER_CONFIGS: Record<FilterFactor, FilterConfig> = {
   "property.hasCode": {
     icon: CodeIcon,
     getLabel: (_, t) => t("memo.filters.has-code"),
+  },
+  moodLevel: {
+    icon: HeartIcon,
+    getLabel: getMoodLevelLabel,
   },
 };
 

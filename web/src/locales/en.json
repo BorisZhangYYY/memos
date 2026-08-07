@@ -285,8 +285,16 @@
     "content-syntax": "Content syntax"
   },
   "mood": {
+    "filter": "Mood",
     "select": "Select mood",
-    "level": "Mood level"
+    "level": "Mood level",
+    "level-1": "Very unhappy",
+    "level-2": "A bit unhappy",
+    "level-3": "Unhappy",
+    "level-4": "Neutral",
+    "level-5": "Happy",
+    "level-6": "Quite happy",
+    "level-7": "Very happy"
   },
   "memo": {
     "archived-at": "Archived at",

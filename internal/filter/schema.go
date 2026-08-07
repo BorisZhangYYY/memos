@@ -33,6 +33,7 @@ const (
 	FieldKindScalar       FieldKind = "scalar"
 	FieldKindBoolColumn   FieldKind = "bool_column"
 	FieldKindJSONBool     FieldKind = "json_bool"
+	FieldKindJSONInt      FieldKind = "json_int"
 	FieldKindJSONList     FieldKind = "json_list"
 	FieldKindVirtualAlias FieldKind = "virtual_alias"
 )
@@ -227,6 +228,13 @@ func NewSchema() Schema {
 				CompareNeq: true,
 			},
 		},
+		"mood_level": {
+			Name:     "mood_level",
+			Kind:     FieldKindJSONInt,
+			Type:     FieldTypeInt,
+			Column:   Column{Table: "memo", Name: "payload"},
+			JSONPath: []string{"moodLevel"},
+		},
 	}
 
 	envOptions := []cel.EnvOption{
@@ -243,6 +251,7 @@ func NewSchema() Schema {
 		cel.Variable("has_link", cel.BoolType),
 		cel.Variable("has_code", cel.BoolType),
 		cel.Variable("has_incomplete_tasks", cel.BoolType),
+		cel.Variable("mood_level", cel.IntType),
 		cel.Variable("now", cel.TimestampType),
 		ext.Sets(),
 		cel.ASTValidators(cel.ValidateRegexLiterals()),

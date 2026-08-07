@@ -4,6 +4,18 @@ import { type MemoFilter, useMemoFilterContext } from "@/contexts/MemoFilterCont
 import { BUILTIN_TASKS_VIEW_FILTER, BUILTIN_TASKS_VIEW_ID, getShortcutId } from "@/lib/memo-views";
 import { buildMemoCreatorFilter } from "@/lib/resource-names";
 import { Visibility } from "@/types/proto/api/v1/memo_service_pb";
+import { type Translations } from "@/utils/i18n";
+
+/** i18n keys for the seven mood levels, index 0 = level 1. */
+export const MOOD_LEVEL_KEYS: readonly Translations[] = [
+  "mood.level-1",
+  "mood.level-2",
+  "mood.level-3",
+  "mood.level-4",
+  "mood.level-5",
+  "mood.level-6",
+  "mood.level-7",
+];
 
 const getVisibilityName = (visibility: Visibility): string => {
   switch (visibility) {
@@ -19,6 +31,19 @@ const getVisibilityName = (visibility: Visibility): string => {
 };
 
 const escapeFilterValue = (value: string): string => JSON.stringify(value);
+
+/** moodLevel filter values are stored as "min-max" (inclusive, 1-7). */
+export const formatMoodLevelValue = (min: number, max: number): string => `${min}-${max}`;
+
+export const parseMoodLevelRange = (value: string): { min: number; max: number } | undefined => {
+  const match = /^(\d{1,2})-(\d{1,2})$/.exec(value);
+  if (!match) return undefined;
+
+  const min = Number(match[1]);
+  const max = Number(match[2]);
+  if (min < 1 || max > 7 || min > max) return undefined;
+  return { min, max };
+};
 
 const getLocalDayTimestampRange = (value: string): { startTimestamp: number; endTimestamp: number } | undefined => {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
@@ -96,6 +121,11 @@ export const buildMemoFilter = ({
       const range = getLocalDayTimestampRange(filter.value);
       if (range) {
         conditions.push(`created_ts >= timestamp(${range.startTimestamp}) && created_ts < timestamp(${range.endTimestamp})`);
+      }
+    } else if (filter.factor === "moodLevel") {
+      const moodRange = parseMoodLevelRange(filter.value);
+      if (moodRange) {
+        conditions.push(`mood_level >= ${moodRange.min} && mood_level <= ${moodRange.max}`);
       }
     }
   }

@@ -244,8 +244,16 @@
     "content-syntax": "内容语法"
   },
   "mood": {
+    "filter": "心情",
     "select": "选择心情",
-    "level": "心情等级"
+    "level": "心情等级",
+    "level-1": "非常不愉快",
+    "level-2": "有点不愉快",
+    "level-3": "不愉快",
+    "level-4": "不悲不喜",
+    "level-5": "愉快",
+    "level-6": "有点愉快",
+    "level-7": "非常愉快"
   },
   "memo": {
     "archived-at": "归档于",
