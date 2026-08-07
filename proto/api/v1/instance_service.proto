@@ -206,6 +206,9 @@ message InstanceSetting {
     // allowed_visibilities restricts which visibility levels users can select.
     // Values are PRIVATE, PROTECTED, PUBLIC. Empty means all levels are allowed.
     repeated string allowed_visibilities = 8;
+    // mood_emojis are the emoji representations for mood levels 1-7.
+    // Index 0 = mood level 1, index 6 = mood level 7. Default emojis are used when empty.
+    repeated string mood_emojis = 9;
   }
 
   // Metadata for a tag.

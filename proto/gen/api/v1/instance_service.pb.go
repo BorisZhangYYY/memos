@@ -1037,8 +1037,11 @@ type InstanceSetting_MemoRelatedSetting struct {
 	// allowed_visibilities restricts which visibility levels users can select.
 	// Values are PRIVATE, PROTECTED, PUBLIC. Empty means all levels are allowed.
 	AllowedVisibilities []string `protobuf:"bytes,8,rep,name=allowed_visibilities,json=allowedVisibilities,proto3" json:"allowed_visibilities,omitempty"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
+	// mood_emojis are the emoji representations for mood levels 1-7.
+	// Index 0 = mood level 1, index 6 = mood level 7. Default emojis are used when empty.
+	MoodEmojis    []string `protobuf:"bytes,9,rep,name=mood_emojis,json=moodEmojis,proto3" json:"mood_emojis,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *InstanceSetting_MemoRelatedSetting) Reset() {
@@ -1095,6 +1098,13 @@ func (x *InstanceSetting_MemoRelatedSetting) GetReactions() []string {
 func (x *InstanceSetting_MemoRelatedSetting) GetAllowedVisibilities() []string {
 	if x != nil {
 		return x.AllowedVisibilities
+	}
+	return nil
+}
+
+func (x *InstanceSetting_MemoRelatedSetting) GetMoodEmojis() []string {
+	if x != nil {
+		return x.MoodEmojis
 	}
 	return nil
 }
@@ -1823,7 +1833,7 @@ const file_api_v1_instance_service_proto_rawDesc = "" +
 	"\x06commit\x18\b \x01(\tR\x06commit\x12\x1f\n" +
 	"\vneeds_setup\x18\t \x01(\bR\n" +
 	"needsSetup\"\x1b\n" +
-	"\x19GetInstanceProfileRequest\"\xb9\x1c\n" +
+	"\x19GetInstanceProfileRequest\"\xda\x1c\n" +
 	"\x0fInstanceSetting\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12W\n" +
 	"\x0fgeneral_setting\x18\x02 \x01(\v2,.memos.api.v1.InstanceSetting.GeneralSettingH\x00R\x0egeneralSetting\x12W\n" +
@@ -1863,12 +1873,14 @@ const file_api_v1_instance_service_proto_rawDesc = "" +
 	"\x18STORAGE_TYPE_UNSPECIFIED\x10\x00\x12\f\n" +
 	"\bDATABASE\x10\x01\x12\t\n" +
 	"\x05LOCAL\x10\x02\x12\x06\n" +
-	"\x02S3\x10\x03\x1a\xf0\x01\n" +
+	"\x02S3\x10\x03\x1a\x91\x02\n" +
 	"\x12MemoRelatedSetting\x120\n" +
 	"\x14content_length_limit\x18\x03 \x01(\x05R\x12contentLengthLimit\x127\n" +
 	"\x18enable_double_click_edit\x18\x04 \x01(\bR\x15enableDoubleClickEdit\x12\x1c\n" +
 	"\treactions\x18\a \x03(\tR\treactions\x121\n" +
-	"\x14allowed_visibilities\x18\b \x03(\tR\x13allowedVisibilitiesJ\x04\b\x02\x10\x03R\x18display_with_update_time\x1ao\n" +
+	"\x14allowed_visibilities\x18\b \x03(\tR\x13allowedVisibilities\x12\x1f\n" +
+	"\vmood_emojis\x18\t \x03(\tR\n" +
+	"moodEmojisJ\x04\b\x02\x10\x03R\x18display_with_update_time\x1ao\n" +
 	"\vTagMetadata\x12=\n" +
 	"\x10background_color\x18\x01 \x01(\v2\x12.google.type.ColorR\x0fbackgroundColor\x12!\n" +
 	"\fblur_content\x18\x02 \x01(\bR\vblurContent\x1a\xba\x01\n" +

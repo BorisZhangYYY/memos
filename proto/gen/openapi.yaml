@@ -2906,6 +2906,13 @@ components:
                     description: |-
                         allowed_visibilities restricts which visibility levels users can select.
                          Values are PRIVATE, PROTECTED, PUBLIC. Empty means all levels are allowed.
+                moodEmojis:
+                    type: array
+                    items:
+                        type: string
+                    description: |-
+                        mood_emojis are the emoji representations for mood levels 1-7.
+                         Index 0 = mood level 1, index 6 = mood level 7. Default emojis are used when empty.
             description: Memo-related instance settings and policies.
         InstanceSetting_NotificationSetting:
             type: object
@@ -3323,6 +3330,10 @@ components:
                     allOf:
                         - $ref: '#/components/schemas/Location'
                     description: Optional. The location of the memo.
+                moodLevel:
+                    type: integer
+                    description: Optional. The mood level of the memo, 1-7. 0 means unset.
+                    format: int32
         MemoRelation:
             required:
                 - memo
