@@ -136,16 +136,25 @@ export const MoodChart = ({ points }: MoodChartProps) => {
   const dayPoints = useMemo(() => dayViewPoints(points, new Date()), [points]);
   const weekDays = useMemo(() => weekViewDays(points, new Date()), [points]);
   const weekRuns = useMemo(() => groupIntoRuns(weekDays), [weekDays]);
-  // Runs are contiguous slices of weekDays, so each day's slot index is stable.
-  const weekSlotByDate = useMemo(() => new Map(weekDays.map((day, index) => [day.date, index])), [weekDays]);
+  // The window's first local midnight; the axis labels and every day slot derive
+  // from it, so points always land on their calendar position even when days in
+  // between have no data.
+  const weekWindowStart = useMemo(
+    () =>
+      dayjs()
+        .startOf("day")
+        .subtract(WEEK_DAYS - 1, "day"),
+    [],
+  );
   const weekLabels = useMemo(
     () =>
       Array.from({ length: WEEK_DAYS }, (_, index) => {
-        const date = dayjs().subtract(WEEK_DAYS - 1 - index, "day");
+        const date = weekWindowStart.add(index, "day");
         return { label: t(`common.days.${WEEKDAY_KEYS[date.day()]}`), isToday: index === WEEK_DAYS - 1 };
       }),
-    [t],
+    [t, weekWindowStart],
   );
+  const weekSlotOf = (day: DayStats) => dayjs(day.date).diff(weekWindowStart, "day");
 
   const viewPoints = view === "day" ? dayPoints : weekDays;
   const isEmpty = viewPoints.length === 0;
@@ -242,14 +251,14 @@ export const MoodChart = ({ points }: MoodChartProps) => {
         <>
           <polygon
             points={[
-              ...run.map((day) => `${xForDaySlot(weekSlotByDate.get(day.date) ?? 0)},${yForLevel(day.max)}`),
-              ...run.map((day) => `${xForDaySlot(weekSlotByDate.get(day.date) ?? 0)},${yForLevel(day.min)}`).reverse(),
+              ...run.map((day) => `${xForDaySlot(weekSlotOf(day))},${yForLevel(day.max)}`),
+              ...run.map((day) => `${xForDaySlot(weekSlotOf(day))},${yForLevel(day.min)}`).reverse(),
             ].join(" ")}
             className="fill-primary"
             fillOpacity={0.12}
           />
           <polyline
-            points={run.map((day) => `${xForDaySlot(weekSlotByDate.get(day.date) ?? 0)},${yForLevel(day.avg)}`).join(" ")}
+            points={run.map((day) => `${xForDaySlot(weekSlotOf(day))},${yForLevel(day.avg)}`).join(" ")}
             fill="none"
             className="stroke-primary"
             strokeWidth={2}
@@ -259,7 +268,7 @@ export const MoodChart = ({ points }: MoodChartProps) => {
         </>
       )}
       {run.map((day) => {
-        const x = xForDaySlot(weekSlotByDate.get(day.date) ?? 0);
+        const x = xForDaySlot(weekSlotOf(day));
         const y = yForLevel(day.avg);
         return (
           <g key={day.date}>

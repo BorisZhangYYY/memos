@@ -70,4 +70,27 @@ describe("<MoodChart> week view", () => {
     fireEvent.mouseEnter(hitCircles(container)[0]);
     expect(screen.getByRole("tooltip").textContent).toContain("4.0 (3–5)");
   });
+
+  it("keeps points on their calendar slots when earlier days in the window have no data", () => {
+    const points = [daysAgoPoint(1, 9, 0, 6), todayPoint(9, 0, 7)];
+    const { container } = render(<MoodChart points={points} />);
+
+    fireEvent.click(screen.getByRole("tab", { name: "mood.chart.week" }));
+
+    // ViewBox geometry mirrors MoodChart's constants: PLOT_LEFT=30, PLOT_WIDTH=516.
+    const xForDaySlot = (index: number) => 30 + ((index + 0.5) / 7) * 516;
+    // Yesterday is slot 5 and today is slot 6 — never the left-shifted 0/1 that a
+    // "index among days with data" mapping would produce for a gapped week.
+    // Each point renders two circles (visible mark + hit target) at the same cx.
+    const pointXs = [...new Set([...container.querySelectorAll("circle")].map((circle) => Number(circle.getAttribute("cx"))))];
+    expect(pointXs).toHaveLength(2);
+    expect(pointXs[0]).toBeCloseTo(xForDaySlot(5), 1);
+    expect(pointXs[1]).toBeCloseTo(xForDaySlot(6), 1);
+    expect(pointXs[0]).not.toBeCloseTo(xForDaySlot(0), 1);
+
+    // The axis labels sit on the same slots as the points above them.
+    const labelXs = screen.getAllByText(/^common\.days\./).map((label) => Number(label.getAttribute("x")));
+    expect(labelXs.at(-2)).toBeCloseTo(xForDaySlot(5), 1);
+    expect(labelXs.at(-1)).toBeCloseTo(xForDaySlot(6), 1);
+  });
 });
