@@ -98,8 +98,8 @@ describe("<MoodChart> trend view (7/30-day window)", () => {
     const points = [daysAgoPoint(1, 9, 0, 6), todayPoint(9, 0, 7)];
     const { container } = render(<MoodChart points={points} window_={30} onWindowChange={() => {}} />);
 
-    // ViewBox geometry mirrors MoodChart's constants: PLOT_LEFT=44, PLOT_WIDTH=502, window=30.
-    const xForDaySlot = (index: number) => 44 + ((index + 0.5) / 30) * 502;
+    // ViewBox geometry mirrors MoodChart's constants: PLOT_LEFT=38, PLOT_WIDTH=508, window=30.
+    const xForDaySlot = (index: number) => 38 + ((index + 0.5) / 30) * 508;
     // Yesterday is slot 28 and today is slot 29 — never the left-shifted 0/1 that a
     // "index among days with data" mapping would produce for a gapped window.
     // Each point renders two circles (visible mark + hit target) at the same cx.

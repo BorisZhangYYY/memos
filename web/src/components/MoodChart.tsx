@@ -83,7 +83,7 @@ const VIEWBOX_HEIGHT = 240;
 const PLOT_TOP = 20;
 const PLOT_RIGHT = 14;
 const PLOT_BOTTOM = 44;
-const PLOT_LEFT = 44;
+const PLOT_LEFT = 38;
 // Note: SVG text sizes are viewBox user units; the chart scales down to its
 // container, so axis labels use text-[18px] (viewBox units) to render at
 // roughly 12px visually at the typical ~0.69 container scale.
@@ -195,7 +195,7 @@ export const MoodChart = ({ points, selectedDate, window_ }: MoodChartProps) => 
         strokeOpacity={0.15}
         strokeWidth={1}
       />
-      <text x={PLOT_LEFT - 8} y={yForLevel(level) + 6} textAnchor="end" className="fill-muted-foreground text-[18px]" aria-hidden="true">
+      <text x={PLOT_LEFT - 6} y={yForLevel(level) + 6} textAnchor="end" className="fill-muted-foreground text-[18px]" aria-hidden="true">
         {level}
       </text>
     </g>
