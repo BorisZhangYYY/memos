@@ -89,6 +89,15 @@ const MemoRelatedSettings = () => {
   };
 
   const moodEmojis = memoRelatedSetting.moodEmojis?.length === 7 ? memoRelatedSetting.moodEmojis : DEFAULT_MOOD_EMOJIS;
+  const moodLevelLabels = [
+    t("mood.level-1"),
+    t("mood.level-2"),
+    t("mood.level-3"),
+    t("mood.level-4"),
+    t("mood.level-5"),
+    t("mood.level-6"),
+    t("mood.level-7"),
+  ];
 
   const updateMoodEmoji = (index: number, value: string) => {
     const next = [...moodEmojis];
@@ -185,7 +194,7 @@ const MemoRelatedSettings = () => {
       <SettingGroup title={t("setting.memo.mood-emojis")} description={t("setting.memo.mood-emojis-description")} showSeparator>
         <SettingList>
           {moodEmojis.map((emoji: string, i: number) => (
-            <SettingListItem key={i} label={`${t("mood.level")} ${i + 1}`}>
+            <SettingListItem key={i} label={moodLevelLabels[i]}>
               <Input className="w-20 font-mono text-center text-lg" value={emoji} onChange={(e) => updateMoodEmoji(i, e.target.value)} />
             </SettingListItem>
           ))}
