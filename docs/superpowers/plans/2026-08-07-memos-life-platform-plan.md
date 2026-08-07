@@ -492,26 +492,34 @@ moodLevel: number; // 0 = unset, 1-7
 
 - [ ] **Step 4: 创建 MoodSelector 组件**
 
-创建 `web/src/components/MemoEditor/Toolbar/MoodSelector.tsx`：
+创建 `web/src/components/MemoEditor/Toolbar/MoodSelector.tsx`，完全参考 `ReactionSelector.tsx` 的模式（Base UI + 语义色 + 从 instance setting 读取）：
 
 ```tsx
 import { HeartIcon } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useInstance } from "@/contexts/InstanceContext";
+import { cn } from "@/lib/utils";
 import { useTranslate } from "@/utils/i18n";
 
 const DEFAULT_MOOD_EMOJIS = ["😫", "😟", "😔", "😐", "😌", "☺️", "😆"];
 
-interface MoodSelectorProps {
+interface Props {
   moodLevel: number;
   onChange: (moodLevel: number) => void;
+  className?: string;
 }
 
-export default function MoodSelector({ moodLevel, onChange }: MoodSelectorProps) {
+const MoodSelector = ({ moodLevel, onChange, className }: Props) => {
   const t = useTranslate();
   const [open, setOpen] = useState(false);
-  const emojis = DEFAULT_MOOD_EMOJIS; // TODO: read from instance settings later
+  const { memoRelatedSetting } = useInstance();
+  const emojis =
+    memoRelatedSetting?.moodEmojis?.length === 7 ? memoRelatedSetting.moodEmojis : DEFAULT_MOOD_EMOJIS;
+
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+  };
 
   const handleSelect = (level: number) => {
     onChange(moodLevel === level ? 0 : level); // toggle off if same level
@@ -519,31 +527,37 @@ export default function MoodSelector({ moodLevel, onChange }: MoodSelectorProps)
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          className={moodLevel > 0 ? "text-rose-500 bg-rose-50 hover:bg-rose-100" : "text-muted-foreground"}
-          aria-label={t("mood.select")}
-        >
-          {moodLevel > 0 ? (
-            <span className="text-base">{emojis[moodLevel - 1]}</span>
-          ) : (
-            <HeartIcon className="size-4" />
-          )}
-        </Button>
+    <Popover open={open} onOpenChange={handleOpenChange}>
+      <PopoverTrigger
+        nativeButton={false}
+        render={
+          <span
+            className={cn(
+              "flex h-7 w-7 items-center justify-center rounded-full border cursor-pointer transition-all hover:opacity-80",
+              moodLevel > 0 && "bg-secondary text-secondary-foreground",
+              className,
+            )}
+          />
+        }
+        aria-label={t("mood.select")}
+      >
+        {moodLevel > 0 ? (
+          <span className="text-sm">{emojis[moodLevel - 1]}</span>
+        ) : (
+          <HeartIcon className="size-4 text-muted-foreground" />
+        )}
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-2" align="start">
+      <PopoverContent align="start" sideOffset={6} className="w-auto p-1">
         <div className="flex gap-1">
           {emojis.map((emoji, i) => (
             <button
-              key={i}
               type="button"
+              key={emoji}
+              className={cn(
+                "inline-flex w-8 h-8 items-center justify-center rounded-md text-base cursor-pointer text-muted-foreground transition-all hover:bg-accent hover:text-foreground",
+                moodLevel === i + 1 && "bg-secondary text-secondary-foreground",
+              )}
               onClick={() => handleSelect(i + 1)}
-              className={`size-9 flex items-center justify-center rounded-lg text-xl transition-all hover:bg-accent hover:scale-110 ${
-                moodLevel === i + 1 ? "bg-rose-100 scale-110" : ""
-              }`}
               aria-label={`${t("mood.level")} ${i + 1}`}
             >
               {emoji}
@@ -553,8 +567,16 @@ export default function MoodSelector({ moodLevel, onChange }: MoodSelectorProps)
       </PopoverContent>
     </Popover>
   );
-}
+};
+
+export default MoodSelector;
 ```
+
+注意：
+- 使用 Base UI 的 `nativeButton={false}` + `render` prop（与 `ReactionSelector` 一致），不用 Radix 的 `asChild`
+- 选中态用语义色 `bg-secondary text-secondary-foreground`，不用原始粉色
+- 心情 emoji 从 `memoRelatedSetting.moodEmojis` 读取（与 ReactionSelector 读 `reactions` 同模式），无需 TODO
+- 如果后续想区分未选中/选中态颜色，在主题 tokens 中新增（如 `--mood-active`），不用内联色值
 
 - [ ] **Step 5: 集成到 EditorToolbar**
 
