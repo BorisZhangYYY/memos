@@ -10,8 +10,6 @@ export interface CalendarDayCell {
   isCurrentMonth: boolean;
   isToday: boolean;
   isSelected: boolean;
-  /** Average mood level (1-7) of the day's memos; undefined when the day has no mood data. */
-  moodAvg?: number;
 }
 
 export interface CalendarDayRow {

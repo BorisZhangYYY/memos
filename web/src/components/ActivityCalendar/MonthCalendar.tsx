@@ -61,7 +61,6 @@ export const MonthCalendar = memo((props: MonthCalendarProps) => {
     weekStartDayOffset: generalSetting.weekStartDayOffset,
     today,
     selectedDate: selectedDate ?? "",
-    moodData,
   });
 
   const flatDays = useMemo(() => weeks.flatMap((week) => week.days), [weeks]);

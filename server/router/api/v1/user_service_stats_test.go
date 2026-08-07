@@ -22,7 +22,7 @@ func createAuthorMemo(t *testing.T, ctx context.Context, svc *APIV1Service, cont
 	require.NoError(t, err)
 }
 
-func TestGetUserStats_DailyMoodStats(t *testing.T) {
+func TestGetUserStats_MoodLevels(t *testing.T) {
 	ctx := context.Background()
 	svc := newIntegrationService(t)
 
@@ -32,13 +32,17 @@ func TestGetUserStats_DailyMoodStats(t *testing.T) {
 	require.NoError(t, err)
 	authorCtx := userCtx(ctx, author.ID)
 
-	// Two mooded memos today average to 4; one plain memo is excluded.
+	// Pin the reference time before creating memos so date bucketing can't
+	// drift across midnight.
+	now := time.Now()
+
+	// Three memos today: moods 3 and 5, one without a mood (0).
 	createAuthorMemo(t, authorCtx, svc, "meh day", 3)
 	createAuthorMemo(t, authorCtx, svc, "better", 5)
 	createAuthorMemo(t, authorCtx, svc, "no mood", 0)
 
 	// A single mooded memo two days ago carries its own mood.
-	pastCreatedTs := time.Now().AddDate(0, 0, -2).Unix()
+	pastCreatedTs := now.AddDate(0, 0, -2).Unix()
 	_, err = svc.Store.CreateMemo(ctx, &store.Memo{
 		UID:        "moody-past",
 		CreatorID:  author.ID,
@@ -53,14 +57,23 @@ func TestGetUserStats_DailyMoodStats(t *testing.T) {
 	stats, err := svc.GetUserStats(authorCtx, &v1pb.GetUserStatsRequest{Name: "users/author"})
 	require.NoError(t, err)
 
-	today := time.Now().Format("2006-01-02")
-	pastDay := time.Unix(pastCreatedTs, 0).Format("2006-01-02")
-	assert.Equal(t, float32(4), stats.DailyMoodStats[today], "average of mood 3 and 5 is 4")
-	assert.Equal(t, float32(7), stats.DailyMoodStats[pastDay])
-	assert.Len(t, stats.DailyMoodStats, 2, "days without mooded memos must not appear")
+	// mood_levels mirrors memo_created_timestamps one-to-one.
+	require.Len(t, stats.MoodLevels, len(stats.MemoCreatedTimestamps))
+	require.Len(t, stats.MoodLevels, 4)
+
+	// Group moods by the browser-visible date derived from each timestamp.
+	moodsByDate := map[string][]int32{}
+	for i, ts := range stats.MemoCreatedTimestamps {
+		date := ts.AsTime().Format("2006-01-02")
+		moodsByDate[date] = append(moodsByDate[date], stats.MoodLevels[i])
+	}
+	today := now.Format("2006-01-02")
+	pastDay := now.AddDate(0, 0, -2).Format("2006-01-02")
+	assert.ElementsMatch(t, []int32{0, 3, 5}, moodsByDate[today])
+	assert.ElementsMatch(t, []int32{7}, moodsByDate[pastDay])
 }
 
-func TestListAllUserStats_DailyMoodStats(t *testing.T) {
+func TestListAllUserStats_MoodLevels(t *testing.T) {
 	ctx := context.Background()
 	svc := newIntegrationService(t)
 
@@ -77,7 +90,7 @@ func TestListAllUserStats_DailyMoodStats(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, response.Stats, 1)
 
-	today := time.Now().Format("2006-01-02")
-	// 1 and 6 average to 3.5.
-	assert.InDelta(t, 3.5, float64(response.Stats[0].DailyMoodStats[today]), 0.001)
+	stats := response.Stats[0]
+	require.Len(t, stats.MoodLevels, len(stats.MemoCreatedTimestamps))
+	assert.ElementsMatch(t, []int32{1, 6}, stats.MoodLevels)
 }
