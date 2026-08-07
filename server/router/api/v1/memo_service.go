@@ -51,6 +51,40 @@ func isVisibilityValidationSuppressed(ctx context.Context) bool {
 	return ok && v
 }
 
+// resolveAllowedVisibilities returns the visibilities currently allowed by the
+// instance's memo-related setting. An empty allowed_visibilities list means all
+// levels are permitted.
+func (s *APIV1Service) resolveAllowedVisibilities(ctx context.Context) ([]store.Visibility, error) {
+	setting, err := s.Store.GetInstanceMemoRelatedSetting(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if setting == nil || len(setting.AllowedVisibilities) == 0 {
+		return []store.Visibility{store.Private, store.Protected, store.Public}, nil
+	}
+	allowed := []store.Visibility{}
+	for _, value := range setting.AllowedVisibilities {
+		switch store.Visibility(value) {
+		case store.Private:
+			allowed = append(allowed, store.Private)
+		case store.Protected:
+			allowed = append(allowed, store.Protected)
+		case store.Public:
+			allowed = append(allowed, store.Public)
+		}
+	}
+	return allowed, nil
+}
+
+func containsVisibility(visibilities []store.Visibility, target store.Visibility) bool {
+	for _, v := range visibilities {
+		if v == target {
+			return true
+		}
+	}
+	return false
+}
+
 func (s *APIV1Service) checkMemoReadAccess(ctx context.Context, memo *store.Memo) error {
 	if memo == nil {
 		return status.Errorf(codes.NotFound, "memo not found")
@@ -65,6 +99,16 @@ func (s *APIV1Service) checkMemoReadAccess(ctx context.Context, memo *store.Memo
 		if user == nil || memo.CreatorID != user.ID {
 			return status.Errorf(codes.NotFound, "memo not found")
 		}
+	}
+
+	// A memo whose visibility level has been disabled by the instance setting is
+	// hidden entirely, as if it did not exist.
+	allowedVis, err := s.resolveAllowedVisibilities(ctx)
+	if err != nil {
+		return status.Errorf(codes.Internal, "failed to get instance setting")
+	}
+	if !containsVisibility(allowedVis, memo.Visibility) {
+		return status.Errorf(codes.NotFound, "memo not found")
 	}
 
 	if memo.Visibility != store.Public {
@@ -242,14 +286,44 @@ func (s *APIV1Service) ListMemos(ctx context.Context, request *v1pb.ListMemosReq
 		memoFind.Filters = append(memoFind.Filters, request.Filter)
 	}
 
+	// Resolve which visibility levels the instance currently allows. Disabled
+	// levels hide every memo at that level (including the current user's own),
+	// and anonymous access only remains possible while PUBLIC is allowed.
+	allowedVis, err := s.resolveAllowedVisibilities(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get instance setting")
+	}
+	sharedVis := []store.Visibility{}
+	for _, v := range allowedVis {
+		if v != store.Private {
+			sharedVis = append(sharedVis, v)
+		}
+	}
+
 	if currentUser == nil {
-		memoFind.VisibilityList = []store.Visibility{store.Public}
+		if containsVisibility(allowedVis, store.Public) {
+			memoFind.VisibilityList = []store.Visibility{store.Public}
+		} else {
+			// PUBLIC is disabled: anonymous users see nothing.
+			return &v1pb.ListMemosResponse{}, nil
+		}
 	} else {
 		if memoFind.CreatorID == nil {
-			filter := fmt.Sprintf(`creator_id == %d || visibility in ["PUBLIC", "PROTECTED"]`, currentUser.ID)
+			// Own memos are filtered by the allowed list (a disabled level hides
+			// the user's own memos too); other users' memos are only reachable
+			// through the shared (non-PRIVATE) levels.
+			quoted := make([]string, 0, len(allowedVis))
+			for _, v := range allowedVis {
+				quoted = append(quoted, fmt.Sprintf("%q", v.String()))
+			}
+			sharedQuoted := make([]string, 0, len(sharedVis))
+			for _, v := range sharedVis {
+				sharedQuoted = append(sharedQuoted, fmt.Sprintf("%q", v.String()))
+			}
+			filter := fmt.Sprintf(`(creator_id == %d && visibility in [%s]) || visibility in [%s]`, currentUser.ID, strings.Join(quoted, ", "), strings.Join(sharedQuoted, ", "))
 			memoFind.Filters = append(memoFind.Filters, filter)
 		} else if *memoFind.CreatorID != currentUser.ID {
-			memoFind.VisibilityList = []store.Visibility{store.Public, store.Protected}
+			memoFind.VisibilityList = sharedVis
 		}
 	}
 

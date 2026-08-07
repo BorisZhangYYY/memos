@@ -19,10 +19,36 @@ func validateInstanceSetting(setting *v1pb.InstanceSetting) error {
 	if err != nil {
 		return err
 	}
-	if key != storepb.InstanceSettingKey_TAGS.String() {
+	switch storepb.InstanceSettingKey(storepb.InstanceSettingKey_value[key]) {
+	case storepb.InstanceSettingKey_MEMO_RELATED:
+		return validateInstanceMemoRelatedSetting(setting.GetMemoRelatedSetting())
+	case storepb.InstanceSettingKey_TAGS:
+		return validateInstanceTagsSetting(setting.GetTagsSetting())
+	default:
 		return nil
 	}
-	return validateInstanceTagsSetting(setting.GetTagsSetting())
+}
+
+// validateInstanceMemoRelatedSetting enforces the visibility hierarchy: PUBLIC is
+// a superset of PROTECTED, so PUBLIC cannot be allowed while PROTECTED is not.
+// Private is always allowed.
+func validateInstanceMemoRelatedSetting(setting *v1pb.InstanceSetting_MemoRelatedSetting) error {
+	if setting == nil {
+		return nil
+	}
+	allowed := map[string]bool{}
+	for _, v := range setting.AllowedVisibilities {
+		allowed[v] = true
+	}
+	if allowed["PUBLIC"] && !allowed["PROTECTED"] {
+		return errors.New("PROTECTED must be allowed when PUBLIC is allowed")
+	}
+	for _, v := range setting.AllowedVisibilities {
+		if v != "PRIVATE" && v != "PROTECTED" && v != "PUBLIC" {
+			return errors.Errorf("invalid visibility level %q", v)
+		}
+	}
+	return nil
 }
 
 func (s *APIV1Service) prepareInstanceAISettingForUpdate(ctx context.Context, setting *storepb.InstanceAISetting) error {
