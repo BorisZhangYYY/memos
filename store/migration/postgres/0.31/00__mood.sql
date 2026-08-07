@@ -1,0 +1,3 @@
+-- mood_level is stored inside the memo payload JSON column.
+-- No schema change needed - the field defaults to 0 in application code.
+-- This migration exists to document the schema version bump.
