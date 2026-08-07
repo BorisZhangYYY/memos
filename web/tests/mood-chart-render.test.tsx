@@ -55,10 +55,12 @@ describe("<MoodChart> day view (selectedDate)", () => {
   });
 });
 
-describe("<MoodChart> trend view (30-day window)", () => {
-  it("shows an empty state when the 30-day window has no mood records", () => {
+describe("<MoodChart> trend view (7/30-day window)", () => {
+  it("shows an empty state when the trend window has no mood records", () => {
     const { container } = render(<MoodChart points={[daysAgoPoint(31, 9, 0, 5)]} />);
 
+    // Default is today's view; switch to the 30-day window first.
+    fireEvent.click(screen.getByRole("tab", { name: "mood.chart.trend" }));
     expect(screen.getByText("mood.chart.empty")).toBeInTheDocument();
     expect(container.querySelector("svg")).toBeNull();
   });
@@ -71,6 +73,7 @@ describe("<MoodChart> trend view (30-day window)", () => {
       todayPoint(9, 0, 7),
     ];
     const { container } = render(<MoodChart points={points} />);
+    fireEvent.click(screen.getByRole("tab", { name: "mood.chart.trend" }));
 
     // 3 consecutive days with data form one run: one band polygon and one average line.
     expect(container.querySelector("polygon")).not.toBeNull();
@@ -84,6 +87,7 @@ describe("<MoodChart> trend view (30-day window)", () => {
   it("keeps points on their calendar slots when earlier days in the window have no data", () => {
     const points = [daysAgoPoint(1, 9, 0, 6), todayPoint(9, 0, 7)];
     const { container } = render(<MoodChart points={points} />);
+    fireEvent.click(screen.getByRole("tab", { name: "mood.chart.trend" }));
 
     // ViewBox geometry mirrors MoodChart's constants: PLOT_LEFT=34, PLOT_WIDTH=512, window=30.
     const xForDaySlot = (index: number) => 34 + ((index + 0.5) / 30) * 512;

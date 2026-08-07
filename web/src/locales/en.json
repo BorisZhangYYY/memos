@@ -298,9 +298,10 @@
     "level-7": "Very happy",
     "chart": {
       "title": "Mood Trend",
+      "today": "Today",
       "day": "Day",
-      "week": "Week",
-      "trend": "30-day trend",
+      "week": "Last 7 days",
+      "trend": "Last 30 days",
       "expand": "Expand mood chart",
       "empty": "No mood data for this period"
     }

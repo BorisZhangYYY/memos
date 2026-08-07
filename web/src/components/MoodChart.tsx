@@ -1,6 +1,7 @@
 import dayjs from "dayjs";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DEFAULT_MOOD_EMOJIS } from "@/components/MemoEditor/Toolbar/MoodSelector";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useInstance } from "@/contexts/InstanceContext";
 import { cn } from "@/lib/utils";
 import { useTranslate } from "@/utils/i18n";
@@ -25,9 +26,7 @@ export interface DayStats {
 }
 
 const MAX_MOOD_LEVEL = 7;
-/** Days shown in the default trend view when no calendar day is selected. */
-const TREND_WINDOW_DAYS = 30;
-/** One date label per N days on the trend x-axis. */
+/** One date label per N days on the 30-day trend x-axis. */
 const TREND_LABEL_EVERY = 5;
 const DAY_MINUTES = 24 * 60;
 
@@ -134,39 +133,58 @@ export interface MoodChartProps {
   selectedDate?: string;
 }
 
+/** Chart window choices: today's minute-level curve, or a trailing-day trend. */
+type ChartWindow = "today" | 7 | 30;
+
+const WINDOW_OPTIONS: Array<{ value: ChartWindow; labelKey: "mood.chart.today" | "mood.chart.week" | "mood.chart.trend" }> = [
+  { value: "today", labelKey: "mood.chart.today" },
+  { value: 7, labelKey: "mood.chart.week" },
+  { value: 30, labelKey: "mood.chart.trend" },
+];
+
 export const MoodChart = ({ points, selectedDate }: MoodChartProps) => {
   const t = useTranslate();
   const { memoRelatedSetting } = useInstance();
   const emojis = memoRelatedSetting?.moodEmojis?.length === MAX_MOOD_LEVEL ? memoRelatedSetting.moodEmojis : DEFAULT_MOOD_EMOJIS;
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
+  // Defaults to today's curve; the calendar's date selection also forces it.
+  const [window_, setWindow] = useState<ChartWindow>("today");
 
   const now = useMemo(() => new Date(), []);
 
-  // Single-day mode: the selected calendar day at minute precision.
-  const selectedDay = selectedDate ? new Date(`${selectedDate}T00:00:00`) : undefined;
-  const dayPoints = useMemo(() => (selectedDay ? dayViewPoints(points, selectedDay) : []), [points, selectedDay]);
+  // Selecting a calendar day shows that day's minute-level curve.
+  useEffect(() => {
+    if (selectedDate) {
+      setWindow("today");
+    }
+  }, [selectedDate]);
 
-  // Trend mode: the trailing 30-day window aggregated by day.
-  const trendDays = useMemo(() => aggregateDays(points, now, TREND_WINDOW_DAYS), [points, now]);
+  // Single-day mode: the selected calendar day (or today) at minute precision.
+  const dayAnchor = selectedDate ? new Date(`${selectedDate}T00:00:00`) : now;
+  const dayPoints = useMemo(() => dayViewPoints(points, dayAnchor), [points, dayAnchor]);
+
+  // Trend mode: the trailing N-day window aggregated by day.
+  const windowDays = window_ === "today" ? 0 : window_;
+  const trendDays = useMemo(() => (windowDays > 0 ? aggregateDays(points, now, windowDays) : []), [points, now, windowDays]);
   const trendRuns = useMemo(() => groupIntoRuns(trendDays), [trendDays]);
   const trendWindowStart = useMemo(
     () =>
       dayjs()
         .startOf("day")
-        .subtract(TREND_WINDOW_DAYS - 1, "day"),
-    [],
+        .subtract(Math.max(1, windowDays) - 1, "day"),
+    [windowDays],
   );
   const trendSlotOf = (day: DayStats) => dayjs(day.date).diff(trendWindowStart, "day");
-  const trendLabels = useMemo(
-    () =>
-      Array.from({ length: TREND_WINDOW_DAYS }, (_, index) => {
-        const date = trendWindowStart.add(index, "day");
-        return { label: date.format("MM-DD"), isToday: index === TREND_WINDOW_DAYS - 1, index };
-      }).filter((entry) => entry.index % TREND_LABEL_EVERY === 0 || entry.isToday),
-    [trendWindowStart],
-  );
+  const trendLabels = useMemo(() => {
+    // Denser labels for short windows; sparse for the 30-day trend.
+    const labelEvery = windowDays <= 7 ? 2 : TREND_LABEL_EVERY;
+    return Array.from({ length: windowDays }, (_, index) => {
+      const date = trendWindowStart.add(index, "day");
+      return { label: date.format("MM-DD"), isToday: index === windowDays - 1, index };
+    }).filter((entry) => entry.index % labelEvery === 0 || entry.isToday);
+  }, [trendWindowStart, windowDays]);
 
-  const isEmpty = selectedDay ? dayPoints.length === 0 : trendDays.length === 0;
+  const isEmpty = window_ === "today" ? dayPoints.length === 0 : trendDays.length === 0;
 
   const handlePointHover = (leftPercent: number, topPercent: number, content: string) => {
     setTooltip({ leftPercent: Math.min(92, Math.max(8, leftPercent)), topPercent, content });
@@ -205,7 +223,7 @@ export const MoodChart = ({ points, selectedDate }: MoodChartProps) => {
   const trendAxisLabels = trendLabels.map(({ label, isToday, index }) => (
     <text
       key={label}
-      x={xForDaySlot(index, TREND_WINDOW_DAYS)}
+      x={xForDaySlot(index, windowDays)}
       y={VIEWBOX_HEIGHT - 8}
       textAnchor="middle"
       className={cn("text-xs", isToday ? "fill-primary" : "fill-muted-foreground")}
@@ -260,14 +278,14 @@ export const MoodChart = ({ points, selectedDate }: MoodChartProps) => {
         <>
           <polygon
             points={[
-              ...run.map((day) => `${xForDaySlot(trendSlotOf(day), TREND_WINDOW_DAYS)},${yForLevel(day.max)}`),
-              ...run.map((day) => `${xForDaySlot(trendSlotOf(day), TREND_WINDOW_DAYS)},${yForLevel(day.min)}`).reverse(),
+              ...run.map((day) => `${xForDaySlot(trendSlotOf(day), windowDays)},${yForLevel(day.max)}`),
+              ...run.map((day) => `${xForDaySlot(trendSlotOf(day), windowDays)},${yForLevel(day.min)}`).reverse(),
             ].join(" ")}
             className="fill-primary"
             fillOpacity={0.12}
           />
           <polyline
-            points={run.map((day) => `${xForDaySlot(trendSlotOf(day), TREND_WINDOW_DAYS)},${yForLevel(day.avg)}`).join(" ")}
+            points={run.map((day) => `${xForDaySlot(trendSlotOf(day), windowDays)},${yForLevel(day.avg)}`).join(" ")}
             fill="none"
             className="stroke-primary"
             strokeWidth={2}
@@ -277,7 +295,7 @@ export const MoodChart = ({ points, selectedDate }: MoodChartProps) => {
         </>
       )}
       {run.map((day) => {
-        const x = xForDaySlot(trendSlotOf(day), TREND_WINDOW_DAYS);
+        const x = xForDaySlot(trendSlotOf(day), windowDays);
         const y = yForLevel(day.avg);
         return (
           <g key={day.date}>
@@ -303,8 +321,28 @@ export const MoodChart = ({ points, selectedDate }: MoodChartProps) => {
     </g>
   ));
 
+  const activeOption = WINDOW_OPTIONS.find((option) => option.value === window_);
+
   return (
     <div className="w-full">
+      <div className="mb-2 flex justify-end">
+        <Tabs
+          value={String(window_)}
+          onValueChange={(value) => {
+            setTooltip(null);
+            setWindow(value === "today" ? "today" : (Number(value) as 7 | 30));
+          }}
+        >
+          <TabsList className="gap-0.5">
+            {WINDOW_OPTIONS.map((option) => (
+              <TabsTrigger key={String(option.value)} value={String(option.value)} className="px-2 py-0.5 text-xs">
+                {t(option.labelKey)}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      </div>
+
       {isEmpty ? (
         <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">{t("mood.chart.empty")}</div>
       ) : (
@@ -313,12 +351,12 @@ export const MoodChart = ({ points, selectedDate }: MoodChartProps) => {
             viewBox={`0 0 ${VIEWBOX_WIDTH} ${VIEWBOX_HEIGHT}`}
             className="h-auto w-full"
             role="img"
-            aria-label={`${t("mood.chart.title")} ${selectedDay ? t("mood.chart.day") : t("mood.chart.trend")}`}
+            aria-label={`${t("mood.chart.title")} ${t(activeOption?.labelKey ?? "mood.chart.today")}`}
             onMouseLeave={() => setTooltip(null)}
           >
             {gridLines}
-            {selectedDay ? dayAxisLabels : trendAxisLabels}
-            {selectedDay ? daySeries : trendSeries}
+            {window_ === "today" ? dayAxisLabels : trendAxisLabels}
+            {window_ === "today" ? daySeries : trendSeries}
           </svg>
           {tooltip && (
             <div
