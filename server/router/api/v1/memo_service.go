@@ -88,6 +88,11 @@ func (s *APIV1Service) CreateMemo(ctx context.Context, request *v1pb.CreateMemoR
 		Visibility: convertVisibilityToStore(request.Memo.Visibility),
 	}
 
+	// Validate visibility against the allowed list from instance settings.
+	if err := s.validateMemoVisibility(ctx, create.Visibility); err != nil {
+		return nil, err
+	}
+
 	// Set custom timestamps if provided in the request.
 	if request.Memo.CreateTime != nil && request.Memo.CreateTime.IsValid() {
 		createdTs := request.Memo.CreateTime.AsTime().Unix()
@@ -451,6 +456,10 @@ func (s *APIV1Service) UpdateMemo(ctx context.Context, request *v1pb.UpdateMemoR
 			update.Payload = memo.Payload
 		} else if path == "visibility" {
 			visibility := convertVisibilityToStore(request.Memo.Visibility)
+			// Validate visibility against the allowed list from instance settings.
+			if err := s.validateMemoVisibility(ctx, visibility); err != nil {
+				return nil, err
+			}
 			if memo.ParentUID != nil {
 				parentMemo, err := s.Store.GetMemo(ctx, &store.FindMemo{UID: memo.ParentUID})
 				if err != nil {
@@ -598,6 +607,27 @@ func (s *APIV1Service) getContentLengthLimit(ctx context.Context) (int, error) {
 		return 0, status.Errorf(codes.Internal, "failed to get instance memo related setting")
 	}
 	return int(instanceMemoRelatedSetting.ContentLengthLimit), nil
+}
+
+// validateMemoVisibility checks that the given visibility is in the allowed
+// list of the instance memo related setting. An empty allowed list means all
+// visibilities are allowed.
+func (s *APIV1Service) validateMemoVisibility(ctx context.Context, visibility store.Visibility) error {
+	instanceMemoRelatedSetting, err := s.Store.GetInstanceMemoRelatedSetting(ctx)
+	if err != nil {
+		return status.Errorf(codes.Internal, "failed to get instance setting")
+	}
+	allowedVisibilities := instanceMemoRelatedSetting.AllowedVisibilities
+	if len(allowedVisibilities) == 0 {
+		return nil
+	}
+	visStr := visibility.String()
+	for _, allowed := range allowedVisibilities {
+		if allowed == visStr {
+			return nil
+		}
+	}
+	return status.Errorf(codes.InvalidArgument, "visibility %q is not allowed", visStr)
 }
 
 // DispatchMemoCreatedWebhook dispatches webhook when memo is created.
