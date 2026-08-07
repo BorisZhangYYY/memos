@@ -47,6 +47,10 @@ vi.mock("@/hooks/useCurrentUser", () => ({
   default: () => ({ name: "users/1" }),
 }));
 
+vi.mock("@/hooks/useUserQueries", () => ({
+  useUserStats: () => ({ data: undefined }),
+}));
+
 vi.mock("@/utils/i18n", () => ({
   useTranslate: () => (key: string) => key,
 }));

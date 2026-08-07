@@ -294,7 +294,14 @@
     "level-4": "Neutral",
     "level-5": "Happy",
     "level-6": "Quite happy",
-    "level-7": "Very happy"
+    "level-7": "Very happy",
+    "chart": {
+      "title": "Mood Trend",
+      "day": "Day",
+      "week": "Week",
+      "expand": "Expand mood chart",
+      "empty": "No mood data for this period"
+    }
   },
   "memo": {
     "archived-at": "Archived at",
