@@ -59,13 +59,20 @@ const MemoRelatedSettings = () => {
       return;
     }
 
+    // Normalize mood emojis so cleared inputs fall back to defaults instead of persisting blank entries.
+    const normalizedSetting = create(InstanceSetting_MemoRelatedSettingSchema, {
+      ...memoRelatedSetting,
+      moodEmojis: memoRelatedSetting.moodEmojis?.map((emoji, i) => emoji || DEFAULT_MOOD_EMOJIS[i]),
+    });
+    setMemoRelatedSetting(normalizedSetting);
+
     await saveInstanceSetting({
       key: InstanceSetting_Key.MEMO_RELATED,
       setting: create(InstanceSettingSchema, {
         name: buildInstanceSettingName(InstanceSetting_Key.MEMO_RELATED),
         value: {
           case: "memoRelatedSetting",
-          value: memoRelatedSetting,
+          value: normalizedSetting,
         },
       }),
       errorContext: "Update memo-related settings",
