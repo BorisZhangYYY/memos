@@ -14,18 +14,16 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FilterFactor, getMemoFilterKey, MemoFilter, useMemoFilterContext } from "@/contexts/MemoFilterContext";
-import { MOOD_LEVEL_KEYS, parseMoodLevelRange } from "@/hooks/useMemoFilters";
+import { MOOD_LEVEL_KEYS, parseMoodLevelList } from "@/hooks/useMemoFilters";
 import { cn } from "@/lib/utils";
 import { useTranslate } from "@/utils/i18n";
 
 const getMoodLevelLabel = (value: string, t: ReturnType<typeof useTranslate>): string => {
-  const range = parseMoodLevelRange(value);
-  if (!range) return value;
+  const levels = parseMoodLevelList(value);
+  if (!levels) return value;
 
-  const minLabel = t(MOOD_LEVEL_KEYS[range.min - 1]);
-  const maxLabel = t(MOOD_LEVEL_KEYS[range.max - 1]);
-  const levels = range.min === range.max ? minLabel : `${minLabel} - ${maxLabel}`;
-  return `${t("mood.filter")}: ${levels}`;
+  const labels = levels.map((level) => t(MOOD_LEVEL_KEYS[level - 1]));
+  return `${t("mood.filter")}: ${labels.join(" / ")}`;
 };
 
 interface FilterConfig {

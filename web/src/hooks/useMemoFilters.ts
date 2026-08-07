@@ -32,17 +32,20 @@ const getVisibilityName = (visibility: Visibility): string => {
 
 const escapeFilterValue = (value: string): string => JSON.stringify(value);
 
-/** moodLevel filter values are stored as "min-max" (inclusive, 1-7). */
-export const formatMoodLevelValue = (min: number, max: number): string => `${min}-${max}`;
+/** moodLevel filter values are stored as a comma-separated list of levels, e.g. "1,4,5". */
+export const formatMoodLevelList = (levels: number[]): string => [...levels].sort((a, b) => a - b).join(",");
 
-export const parseMoodLevelRange = (value: string): { min: number; max: number } | undefined => {
-  const match = /^(\d{1,2})-(\d{1,2})$/.exec(value);
-  if (!match) return undefined;
+export const parseMoodLevelList = (value: string): number[] | undefined => {
+  const parts = value.split(",");
+  if (parts.length === 0) return undefined;
 
-  const min = Number(match[1]);
-  const max = Number(match[2]);
-  if (min < 1 || max > 7 || min > max) return undefined;
-  return { min, max };
+  const levels: number[] = [];
+  for (const part of parts) {
+    const level = Number(part);
+    if (!Number.isInteger(level) || level < 1 || level > 7) return undefined;
+    levels.push(level);
+  }
+  return [...new Set(levels)].sort((a, b) => a - b);
 };
 
 const getLocalDayTimestampRange = (value: string): { startTimestamp: number; endTimestamp: number } | undefined => {
@@ -123,9 +126,11 @@ export const buildMemoFilter = ({
         conditions.push(`created_ts >= timestamp(${range.startTimestamp}) && created_ts < timestamp(${range.endTimestamp})`);
       }
     } else if (filter.factor === "moodLevel") {
-      const moodRange = parseMoodLevelRange(filter.value);
-      if (moodRange) {
-        conditions.push(`mood_level >= ${moodRange.min} && mood_level <= ${moodRange.max}`);
+      const moodLevels = parseMoodLevelList(filter.value);
+      if (moodLevels && moodLevels.length > 0) {
+        // CEL has no `in` operator for the JSON int field kind, so multi-select
+        // moods compile to a disjunction of equality checks.
+        conditions.push(`(${moodLevels.map((level) => `mood_level == ${level}`).join(" || ")})`);
       }
     }
   }
