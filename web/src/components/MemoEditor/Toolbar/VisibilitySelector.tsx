@@ -1,22 +1,35 @@
 import { CheckIcon, ChevronDownIcon } from "lucide-react";
+import { useMemo } from "react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import VisibilityIcon from "@/components/VisibilityIcon";
+import { useInstance } from "@/contexts/InstanceContext";
 import { cn } from "@/lib/utils";
 import { Visibility } from "@/types/proto/api/v1/memo_service_pb";
 import { useTranslate } from "@/utils/i18n";
+import { convertVisibilityToString } from "@/utils/memo";
 import type { VisibilitySelectorProps } from "../types";
 
 const VisibilitySelector = (props: VisibilitySelectorProps) => {
   const { value, onChange } = props;
   const compact = props.size === "compact";
   const t = useTranslate();
+  const { memoRelatedSetting } = useInstance();
+  const allowedVis = memoRelatedSetting.allowedVisibilities || [];
 
-  const visibilityOptions = [
-    { value: Visibility.PRIVATE, label: t("memo.visibility.private"), description: t("memo.visibility.private-description") },
-    { value: Visibility.PROTECTED, label: t("memo.visibility.protected"), description: t("memo.visibility.protected-description") },
-    { value: Visibility.PUBLIC, label: t("memo.visibility.public"), description: t("memo.visibility.public-description") },
-  ] as const;
+  // An empty allowlist means every visibility level is allowed.
+  const visibilityOptions = useMemo(
+    () =>
+      [
+        { value: Visibility.PRIVATE, label: t("memo.visibility.private"), description: t("memo.visibility.private-description") },
+        { value: Visibility.PROTECTED, label: t("memo.visibility.protected"), description: t("memo.visibility.protected-description") },
+        { value: Visibility.PUBLIC, label: t("memo.visibility.public"), description: t("memo.visibility.public-description") },
+      ].filter((option) => allowedVis.length === 0 || allowedVis.includes(convertVisibilityToString(option.value))),
+    [allowedVis, t],
+  );
 
+  // If the current value is not in the allowlist (e.g. the admin restricted
+  // visibilities after this memo was created), keep showing its icon with an
+  // empty label rather than forcing a change; no option will appear selected.
   const currentLabel = visibilityOptions.find((option) => option.value === value)?.label || "";
 
   return (

@@ -2,6 +2,7 @@ import { create } from "@bufbuild/protobuf";
 import { useMemo } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
+import { useInstance } from "@/contexts/InstanceContext";
 import { useUpdateUserGeneralSetting } from "@/hooks/useUserQueries";
 import { Visibility } from "@/types/proto/api/v1/memo_service_pb";
 import { UserSetting_GeneralSetting, UserSetting_GeneralSettingSchema } from "@/types/proto/api/v1/user_service_pb";
@@ -19,6 +20,8 @@ const PreferencesSection = () => {
   const t = useTranslate();
   const { currentUser, userGeneralSetting: generalSetting, refetchSettings } = useAuth();
   const { mutate: updateUserGeneralSetting } = useUpdateUserGeneralSetting(currentUser?.name);
+  const { memoRelatedSetting } = useInstance();
+  const allowedVis = memoRelatedSetting.allowedVisibilities || [];
 
   const handleLocaleSelectChange = (locale: Locale) => {
     // Apply locale immediately for instant UI feedback and persist to localStorage
@@ -34,13 +37,18 @@ const PreferencesSection = () => {
     );
   };
 
+  // An empty allowlist means every visibility level is allowed. If the user's
+  // current default visibility is not in the allowlist, leave it untouched;
+  // the backend validates on save.
   const visibilityOptions = useMemo(
     () =>
-      [Visibility.PRIVATE, Visibility.PROTECTED, Visibility.PUBLIC].map((v) => {
-        const value = convertVisibilityToString(v);
-        return { value, label: t(`memo.visibility.${value.toLowerCase() as Lowercase<typeof value>}`) };
-      }),
-    [t],
+      [Visibility.PRIVATE, Visibility.PROTECTED, Visibility.PUBLIC]
+        .filter((v) => allowedVis.length === 0 || allowedVis.includes(convertVisibilityToString(v)))
+        .map((v) => {
+          const value = convertVisibilityToString(v);
+          return { value, label: t(`memo.visibility.${value.toLowerCase() as Lowercase<typeof value>}`) };
+        }),
+    [allowedVis, t],
   );
 
   const handleDefaultMemoVisibilityChanged = (value: string) => {
