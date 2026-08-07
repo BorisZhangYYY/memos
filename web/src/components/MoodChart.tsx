@@ -1,7 +1,6 @@
 import dayjs from "dayjs";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { DEFAULT_MOOD_EMOJIS } from "@/components/MemoEditor/Toolbar/MoodSelector";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useInstance } from "@/contexts/InstanceContext";
 import { cn } from "@/lib/utils";
 import { useTranslate } from "@/utils/i18n";
@@ -80,11 +79,11 @@ export const aggregateDays = (points: MoodPoint[], now: Date, windowDays: number
 export const weekViewDays = (points: MoodPoint[], now: Date): DayStats[] => aggregateDays(points, now, 7);
 
 const VIEWBOX_WIDTH = 560;
-const VIEWBOX_HEIGHT = 200;
-const PLOT_TOP = 14;
+const VIEWBOX_HEIGHT = 240;
+const PLOT_TOP = 16;
 const PLOT_RIGHT = 14;
-const PLOT_BOTTOM = 30;
-const PLOT_LEFT = 34;
+const PLOT_BOTTOM = 36;
+const PLOT_LEFT = 36;
 const PLOT_WIDTH = VIEWBOX_WIDTH - PLOT_LEFT - PLOT_RIGHT;
 const PLOT_HEIGHT = VIEWBOX_HEIGHT - PLOT_TOP - PLOT_BOTTOM;
 const POINT_RADIUS = 4;
@@ -122,42 +121,34 @@ interface TooltipState {
   content: string;
 }
 
-export interface MoodChartProps {
-  /** All mood-tagged memos of the current user; the active window windows them. */
-  points: MoodPoint[];
-  /**
-   * Browser-local "YYYY-MM-DD" of the day to show at minute precision (from
-   * the calendar's date filter). When unset, the chart aggregates the
-   * trailing 30-day window by day.
-   */
-  selectedDate?: string;
-}
-
 /** Chart window choices: today's minute-level curve, or a trailing-day trend. */
-type ChartWindow = "today" | 7 | 30;
+export type ChartWindow = "today" | 7 | 30;
 
-const WINDOW_OPTIONS: Array<{ value: ChartWindow; labelKey: "mood.chart.today" | "mood.chart.week" | "mood.chart.trend" }> = [
+export const WINDOW_OPTIONS: Array<{ value: ChartWindow; labelKey: "mood.chart.today" | "mood.chart.week" | "mood.chart.trend" }> = [
   { value: "today", labelKey: "mood.chart.today" },
   { value: 7, labelKey: "mood.chart.week" },
   { value: 30, labelKey: "mood.chart.trend" },
 ];
 
-export const MoodChart = ({ points, selectedDate }: MoodChartProps) => {
+export interface MoodChartProps {
+  /** All mood-tagged memos of the current user; the active window windows them. */
+  points: MoodPoint[];
+  /**
+   * Browser-local "YYYY-MM-DD" of the day to show at minute precision (from
+   * the calendar's date filter). When unset, the chart shows today.
+   */
+  selectedDate?: string;
+  /** Active chart window (controlled by the parent's header filter). */
+  window_: ChartWindow;
+}
+
+export const MoodChart = ({ points, selectedDate, window_ }: MoodChartProps) => {
   const t = useTranslate();
   const { memoRelatedSetting } = useInstance();
   const emojis = memoRelatedSetting?.moodEmojis?.length === MAX_MOOD_LEVEL ? memoRelatedSetting.moodEmojis : DEFAULT_MOOD_EMOJIS;
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
-  // Defaults to today's curve; the calendar's date selection also forces it.
-  const [window_, setWindow] = useState<ChartWindow>("today");
 
   const now = useMemo(() => new Date(), []);
-
-  // Selecting a calendar day shows that day's minute-level curve.
-  useEffect(() => {
-    if (selectedDate) {
-      setWindow("today");
-    }
-  }, [selectedDate]);
 
   // Single-day mode: the selected calendar day (or today) at minute precision.
   const dayAnchor = selectedDate ? new Date(`${selectedDate}T00:00:00`) : now;
@@ -325,24 +316,6 @@ export const MoodChart = ({ points, selectedDate }: MoodChartProps) => {
 
   return (
     <div className="w-full">
-      <div className="mb-2 flex justify-end">
-        <Tabs
-          value={String(window_)}
-          onValueChange={(value) => {
-            setTooltip(null);
-            setWindow(value === "today" ? "today" : (Number(value) as 7 | 30));
-          }}
-        >
-          <TabsList className="gap-0.5">
-            {WINDOW_OPTIONS.map((option) => (
-              <TabsTrigger key={String(option.value)} value={String(option.value)} className="px-2 py-0.5 text-xs">
-                {t(option.labelKey)}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-      </div>
-
       {isEmpty ? (
         <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">{t("mood.chart.empty")}</div>
       ) : (

@@ -33,9 +33,11 @@ const todayString = () => {
 
 const hitCircles = (container: HTMLElement) => container.querySelectorAll('circle[fill="transparent"]');
 
-describe("<MoodChart> day view (selectedDate)", () => {
-  it("renders points for the selected day and shows a hover tooltip with time and mood level", () => {
-    const { container } = render(<MoodChart points={[todayPoint(10, 30, 5), todayPoint(14, 15, 6)]} selectedDate={todayString()} />);
+describe("<MoodChart> today view (default window)", () => {
+  it("renders today's points and shows a hover tooltip with time and mood level", () => {
+    const { container } = render(
+      <MoodChart points={[todayPoint(10, 30, 5), todayPoint(14, 15, 6)]} window_="today" onWindowChange={() => {}} />,
+    );
 
     expect(container.querySelector("svg")).not.toBeNull();
     // 2 visible point marks + 2 invisible hit targets.
@@ -47,8 +49,19 @@ describe("<MoodChart> day view (selectedDate)", () => {
     expect(screen.getByRole("tooltip").textContent).toContain("mood.level-5");
   });
 
-  it("shows an empty state instead of the svg when the selected day has no mood records", () => {
-    const { container } = render(<MoodChart points={[daysAgoPoint(1, 9, 0, 5)]} selectedDate={todayString()} />);
+  it("shows a selected calendar day's curve via selectedDate", () => {
+    const { container } = render(
+      <MoodChart points={[todayPoint(10, 30, 5)]} selectedDate={todayString()} window_="today" onWindowChange={() => {}} />,
+    );
+
+    expect(container.querySelector("svg")).not.toBeNull();
+    expect(hitCircles(container).length).toBe(1);
+  });
+
+  it("shows an empty state instead of the svg when today has no mood records", () => {
+    const { container } = render(
+      <MoodChart points={[daysAgoPoint(1, 9, 0, 5)]} window_="today" onWindowChange={() => {}} />,
+    );
 
     expect(screen.getByText("mood.chart.empty")).toBeInTheDocument();
     expect(container.querySelector("svg")).toBeNull();
@@ -56,11 +69,9 @@ describe("<MoodChart> day view (selectedDate)", () => {
 });
 
 describe("<MoodChart> trend view (7/30-day window)", () => {
-  it("shows an empty state when the trend window has no mood records", () => {
-    const { container } = render(<MoodChart points={[daysAgoPoint(31, 9, 0, 5)]} />);
+  it("shows an empty state when the 30-day window has no mood records", () => {
+    const { container } = render(<MoodChart points={[daysAgoPoint(31, 9, 0, 5)]} window_={30} onWindowChange={() => {}} />);
 
-    // Default is today's view; switch to the 30-day window first.
-    fireEvent.click(screen.getByRole("tab", { name: "mood.chart.trend" }));
     expect(screen.getByText("mood.chart.empty")).toBeInTheDocument();
     expect(container.querySelector("svg")).toBeNull();
   });
@@ -72,8 +83,7 @@ describe("<MoodChart> trend view (7/30-day window)", () => {
       daysAgoPoint(1, 9, 0, 6),
       todayPoint(9, 0, 7),
     ];
-    const { container } = render(<MoodChart points={points} />);
-    fireEvent.click(screen.getByRole("tab", { name: "mood.chart.trend" }));
+    const { container } = render(<MoodChart points={points} window_={30} onWindowChange={() => {}} />);
 
     // 3 consecutive days with data form one run: one band polygon and one average line.
     expect(container.querySelector("polygon")).not.toBeNull();
@@ -86,11 +96,10 @@ describe("<MoodChart> trend view (7/30-day window)", () => {
 
   it("keeps points on their calendar slots when earlier days in the window have no data", () => {
     const points = [daysAgoPoint(1, 9, 0, 6), todayPoint(9, 0, 7)];
-    const { container } = render(<MoodChart points={points} />);
-    fireEvent.click(screen.getByRole("tab", { name: "mood.chart.trend" }));
+    const { container } = render(<MoodChart points={points} window_={30} onWindowChange={() => {}} />);
 
-    // ViewBox geometry mirrors MoodChart's constants: PLOT_LEFT=34, PLOT_WIDTH=512, window=30.
-    const xForDaySlot = (index: number) => 34 + ((index + 0.5) / 30) * 512;
+    // ViewBox geometry mirrors MoodChart's constants: PLOT_LEFT=36, PLOT_WIDTH=510, window=30.
+    const xForDaySlot = (index: number) => 36 + ((index + 0.5) / 30) * 510;
     // Yesterday is slot 28 and today is slot 29 — never the left-shifted 0/1 that a
     // "index among days with data" mapping would produce for a gapped window.
     // Each point renders two circles (visible mark + hit target) at the same cx.
