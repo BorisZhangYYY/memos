@@ -81,7 +81,8 @@ export const weekViewDays = (points: MoodPoint[], now: Date): DayStats[] => aggr
 const VIEWBOX_WIDTH = 560;
 const VIEWBOX_HEIGHT = 240;
 const PLOT_TOP = 20;
-const PLOT_RIGHT = 14;
+// Right padding must fit half an 18px axis label ("08-08" ≈ 45 units wide).
+const PLOT_RIGHT = 30;
 const PLOT_BOTTOM = 44;
 const PLOT_LEFT = 38;
 // Note: SVG text sizes are viewBox user units; the chart scales down to its
