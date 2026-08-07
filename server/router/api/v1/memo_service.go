@@ -116,6 +116,9 @@ func (s *APIV1Service) CreateMemo(ctx context.Context, request *v1pb.CreateMemoR
 	if request.Memo.Location != nil {
 		create.Payload.Location = convertLocationToStore(request.Memo.Location)
 	}
+	if request.Memo.MoodLevel > 0 {
+		create.Payload.MoodLevel = request.Memo.MoodLevel
+	}
 
 	memo, err := s.Store.CreateMemo(ctx, create)
 	if err != nil {
@@ -490,6 +493,10 @@ func (s *APIV1Service) UpdateMemo(ctx context.Context, request *v1pb.UpdateMemoR
 		} else if path == "location" {
 			payload := memo.Payload
 			payload.Location = convertLocationToStore(request.Memo.Location)
+			update.Payload = payload
+		} else if path == "mood_level" {
+			payload := memo.Payload
+			payload.MoodLevel = request.Memo.MoodLevel
 			update.Payload = payload
 		} else if path == "attachments" {
 			if err := s.setMemoAttachmentsInternal(ctx, user, memo, request.Memo.Attachments); err != nil {
