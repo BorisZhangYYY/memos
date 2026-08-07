@@ -80,10 +80,13 @@ export const weekViewDays = (points: MoodPoint[], now: Date): DayStats[] => aggr
 
 const VIEWBOX_WIDTH = 560;
 const VIEWBOX_HEIGHT = 240;
-const PLOT_TOP = 16;
+const PLOT_TOP = 20;
 const PLOT_RIGHT = 14;
-const PLOT_BOTTOM = 36;
-const PLOT_LEFT = 36;
+const PLOT_BOTTOM = 44;
+const PLOT_LEFT = 44;
+// Note: SVG text sizes are viewBox user units; the chart scales down to its
+// container, so axis labels use text-[18px] (viewBox units) to render at
+// roughly 12px visually at the typical ~0.69 container scale.
 const PLOT_WIDTH = VIEWBOX_WIDTH - PLOT_LEFT - PLOT_RIGHT;
 const PLOT_HEIGHT = VIEWBOX_HEIGHT - PLOT_TOP - PLOT_BOTTOM;
 const POINT_RADIUS = 4;
@@ -192,7 +195,7 @@ export const MoodChart = ({ points, selectedDate, window_ }: MoodChartProps) => 
         strokeOpacity={0.15}
         strokeWidth={1}
       />
-      <text x={PLOT_LEFT - 6} y={yForLevel(level) + 4} textAnchor="end" className="fill-muted-foreground text-xs" aria-hidden="true">
+      <text x={PLOT_LEFT - 8} y={yForLevel(level) + 6} textAnchor="end" className="fill-muted-foreground text-[18px]" aria-hidden="true">
         {level}
       </text>
     </g>
@@ -202,9 +205,9 @@ export const MoodChart = ({ points, selectedDate, window_ }: MoodChartProps) => 
     <text
       key={minutes}
       x={xForMinutes(minutes)}
-      y={VIEWBOX_HEIGHT - 8}
+      y={VIEWBOX_HEIGHT - 10}
       textAnchor="middle"
-      className="fill-muted-foreground text-xs"
+      className="fill-muted-foreground text-[18px]"
       aria-hidden="true"
     >
       {formatMinutes(minutes)}
@@ -215,9 +218,9 @@ export const MoodChart = ({ points, selectedDate, window_ }: MoodChartProps) => 
     <text
       key={label}
       x={xForDaySlot(index, windowDays)}
-      y={VIEWBOX_HEIGHT - 8}
+      y={VIEWBOX_HEIGHT - 10}
       textAnchor="middle"
-      className={cn("text-xs", isToday ? "fill-primary" : "fill-muted-foreground")}
+      className={cn("text-[18px]", isToday ? "fill-primary" : "fill-muted-foreground")}
       aria-hidden="true"
     >
       {label}
