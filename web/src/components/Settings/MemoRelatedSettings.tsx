@@ -241,26 +241,26 @@ const MemoRelatedSettings = () => {
       </SettingGroup>
 
       <SettingGroup title={t("setting.memo.mood-settings")} description={t("setting.memo.mood-settings-description")} showSeparator>
-        <SettingList>
+        <div className="flex items-stretch gap-2">
           {moodEmojis.map((emoji: string, i: number) => (
-            <SettingListItem key={i} label={moodLevelLabels[i]}>
-              <div className="flex items-center gap-2">
-                <Input className="w-16 font-mono text-center text-lg" value={emoji} onChange={(e) => updateMoodEmoji(i, e.target.value)} />
-                <label
-                  className="relative size-8 cursor-pointer overflow-hidden rounded-md border border-border"
-                  aria-label={`${moodLevelLabels[i]} color`}
-                >
-                  <input
-                    type="color"
-                    className="absolute -inset-1 size-10 cursor-pointer"
-                    value={moodColors[i]}
-                    onChange={(e) => updateMoodColor(i, e.target.value)}
-                  />
-                </label>
-              </div>
-            </SettingListItem>
+            <div key={i} className="flex flex-1 flex-col items-center gap-1.5 rounded-lg border p-2" style={{ borderColor: moodColors[i] }}>
+              <span className="max-w-full truncate text-[11px] leading-4 text-muted-foreground">{moodLevelLabels[i]}</span>
+              <Input
+                className="h-9 w-12 p-0 font-mono text-center text-lg"
+                value={emoji}
+                aria-label={`${moodLevelLabels[i]} emoji`}
+                onChange={(e) => updateMoodEmoji(i, e.target.value)}
+              />
+              <input
+                type="color"
+                className="mood-swatch size-7"
+                value={moodColors[i]}
+                aria-label={`${moodLevelLabels[i]} color`}
+                onChange={(e) => updateMoodColor(i, e.target.value)}
+              />
+            </div>
           ))}
-        </SettingList>
+        </div>
       </SettingGroup>
 
       <div className="w-full flex justify-end">

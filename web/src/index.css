@@ -30,4 +30,29 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Native color inputs render as a plain circular swatch (used by mood
+     settings) instead of the browser's default swatch-plus-strip control. */
+  input[type="color"].mood-swatch {
+    -webkit-appearance: none;
+    appearance: none;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  input[type="color"].mood-swatch::-webkit-color-swatch-wrapper {
+    padding: 0;
+  }
+
+  input[type="color"].mood-swatch::-webkit-color-swatch {
+    border: none;
+    border-radius: 9999px;
+  }
+
+  input[type="color"].mood-swatch::-moz-color-swatch {
+    border: none;
+    border-radius: 9999px;
+  }
 }

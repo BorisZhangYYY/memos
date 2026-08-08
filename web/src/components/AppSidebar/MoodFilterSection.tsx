@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useInstance } from "@/contexts/InstanceContext";
 import { replaceFiltersByFactor, stringifyFilters, useMemoFilterContext } from "@/contexts/MemoFilterContext";
 import { formatMoodLevelList, MOOD_LEVEL_KEYS, parseMoodLevelList } from "@/hooks/useMemoFilters";
+import { getMoodPalette } from "@/lib/mood";
 import { cn } from "@/lib/utils";
 import { useTranslate } from "@/utils/i18n";
 import { DEFAULT_MOOD_EMOJIS } from "../MemoEditor/Toolbar/MoodSelector";
@@ -21,6 +22,7 @@ const MoodFilterSection = ({ navigationTarget, onSelect }: Props) => {
   const { filters, setFilters, getFiltersByFactor } = useMemoFilterContext();
   const { memoRelatedSetting } = useInstance();
   const emojis = memoRelatedSetting?.moodEmojis?.length === 7 ? memoRelatedSetting.moodEmojis : DEFAULT_MOOD_EMOJIS;
+  const moodColors = getMoodPalette(memoRelatedSetting?.moodColors);
 
   // Multiple levels can be selected at once; the filter value is a comma-separated list.
   const activeFilter = getFiltersByFactor("moodLevel")[0];
@@ -81,9 +83,10 @@ const MoodFilterSection = ({ navigationTarget, onSelect }: Props) => {
               aria-label={`${t(MOOD_LEVEL_KEYS[i])} (${level})`}
               aria-pressed={active || undefined}
               className={cn(
-                "inline-flex size-6 items-center justify-center rounded-md text-sm cursor-pointer text-muted-foreground transition-all hover:bg-accent hover:text-foreground",
-                active && "bg-accent text-foreground",
+                "inline-flex size-6 items-center justify-center rounded-md text-sm cursor-pointer transition-all hover:opacity-80",
+                active && "text-foreground",
               )}
+              style={{ border: `1px solid ${moodColors[i]}`, backgroundColor: active ? `${moodColors[i]}1f` : "transparent" }}
               onClick={() => handleToggle(level)}
             >
               {emoji}

@@ -7,3 +7,6 @@ export const getMoodColor = (level: number, customColors?: string[]): string | u
   const colors = customColors?.length === 7 ? customColors : DEFAULT_MOOD_COLORS;
   return colors[level - 1];
 };
+
+/** The full seven-color palette (custom when fully configured, else the default). */
+export const getMoodPalette = (customColors?: string[]): string[] => (customColors?.length === 7 ? customColors : DEFAULT_MOOD_COLORS);
