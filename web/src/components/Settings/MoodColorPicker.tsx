@@ -43,12 +43,14 @@ const MoodColorPicker = ({ value, onChange, ariaLabel }: Props) => {
     setHexInput(value);
   }, [value]);
 
-  const handleHexSubmit = () => {
-    const normalized = hexInput.trim().replace(/^#?/, "#");
+  // Apply any valid hex as the user types, so custom colors take effect
+  // immediately without a confirm step.
+  const handleHexChange = (raw: string) => {
+    setHexInput(raw);
+    const normalized = raw.trim().replace(/^#?/, "#");
     if (/^#[0-9a-fA-F]{6}$/.test(normalized)) {
       onChange(normalized);
     }
-    setOpen(false);
   };
 
   return (
@@ -93,20 +95,14 @@ const MoodColorPicker = ({ value, onChange, ariaLabel }: Props) => {
             value={hexInput}
             placeholder="#rrggbb"
             aria-label={t("setting.memo.custom-color")}
-            onChange={(e) => setHexInput(e.target.value)}
+            onChange={(e) => handleHexChange(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
-                handleHexSubmit();
+                setOpen(false);
               }
             }}
           />
-          <button
-            type="button"
-            className="shrink-0 cursor-pointer rounded-md border border-border/60 px-2 py-1 text-xs text-foreground transition-colors hover:bg-accent"
-            onClick={handleHexSubmit}
-          >
-            {t("common.confirm")}
-          </button>
+          <span className="size-5 shrink-0 rounded-sm border border-border/60" style={{ backgroundColor: value }} aria-hidden="true" />
         </div>
       </PopoverContent>
     </Popover>
