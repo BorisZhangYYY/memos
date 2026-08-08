@@ -766,6 +766,8 @@
       "mood-settings": "心情设置",
       "mood-settings-description": "自定义 7 个心情档位的表情符号和颜色。留空使用默认值。",
       "custom-color": "自定义颜色",
+      "color-panel": "颜色面板",
+      "color-hue": "色相条",
       "reactions-required": "反应列表不能为空"
     },
     "webhook": {
