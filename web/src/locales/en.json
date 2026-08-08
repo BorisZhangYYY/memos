@@ -633,6 +633,7 @@
       "label": "Memo",
       "mood-settings": "Mood settings",
       "mood-settings-description": "Customize the emoji and color for each of the 7 mood levels. Leave empty to use defaults.",
+      "custom-color": "Custom color",
       "reaction-placeholder": "e.g. 👍",
       "reactions-description": "Define the reaction options users can apply to memos.",
       "remove-reaction": "Remove reaction",

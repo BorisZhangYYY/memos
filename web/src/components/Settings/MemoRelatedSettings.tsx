@@ -17,6 +17,7 @@ import {
   InstanceSettingSchema,
 } from "@/types/proto/api/v1/instance_service_pb";
 import { useTranslate } from "@/utils/i18n";
+import MoodColorPicker from "./MoodColorPicker";
 import SettingGroup from "./SettingGroup";
 import { SettingList, SettingListItem, SettingPanel } from "./SettingList";
 import SettingSection from "./SettingSection";
@@ -251,12 +252,10 @@ const MemoRelatedSettings = () => {
                 aria-label={`${moodLevelLabels[i]} emoji`}
                 onChange={(e) => updateMoodEmoji(i, e.target.value)}
               />
-              <input
-                type="color"
-                className="mood-swatch size-7"
+              <MoodColorPicker
                 value={moodColors[i]}
-                aria-label={`${moodLevelLabels[i]} color`}
-                onChange={(e) => updateMoodColor(i, e.target.value)}
+                onChange={(color) => updateMoodColor(i, color)}
+                ariaLabel={`${moodLevelLabels[i]} color`}
               />
             </div>
           ))}
