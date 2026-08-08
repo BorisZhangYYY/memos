@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useInstance } from "@/contexts/InstanceContext";
+import { DEFAULT_MOOD_COLORS } from "@/lib/mood";
 import {
   InstanceSetting_Key,
   InstanceSetting_MemoRelatedSetting,
@@ -22,8 +23,6 @@ import SettingSection from "./SettingSection";
 import useInstanceSettingUpdater, { buildInstanceSettingName } from "./useInstanceSettingUpdater";
 
 const DEFAULT_MOOD_EMOJIS = ["😫", "😟", "😔", "😐", "😌", "☺️", "😆"];
-// Default palette for the seven mood levels, worst to best.
-const DEFAULT_MOOD_COLORS = ["#ef4444", "#f97316", "#f59e0b", "#a8a29e", "#22c55e", "#06b6d4", "#8b5cf6"];
 
 type VisibilityPolicy = "all" | "no-public" | "private-only";
 
