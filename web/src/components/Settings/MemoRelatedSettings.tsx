@@ -22,6 +22,8 @@ import SettingSection from "./SettingSection";
 import useInstanceSettingUpdater, { buildInstanceSettingName } from "./useInstanceSettingUpdater";
 
 const DEFAULT_MOOD_EMOJIS = ["😫", "😟", "😔", "😐", "😌", "☺️", "😆"];
+// Default palette for the seven mood levels, worst to best.
+const DEFAULT_MOOD_COLORS = ["#ef4444", "#f97316", "#f59e0b", "#a8a29e", "#22c55e", "#06b6d4", "#8b5cf6"];
 
 type VisibilityPolicy = "all" | "no-public" | "private-only";
 
@@ -88,10 +90,12 @@ const MemoRelatedSettings = () => {
       return;
     }
 
-    // Normalize mood emojis so cleared inputs fall back to defaults instead of persisting blank entries.
+    // Normalize mood emojis and colors so cleared inputs fall back to defaults
+    // instead of persisting blank entries.
     const normalizedSetting = create(InstanceSetting_MemoRelatedSettingSchema, {
       ...memoRelatedSetting,
       moodEmojis: memoRelatedSetting.moodEmojis?.map((emoji, i) => emoji || DEFAULT_MOOD_EMOJIS[i]),
+      moodColors: memoRelatedSetting.moodColors?.map((color, i) => color || DEFAULT_MOOD_COLORS[i]),
     });
     setMemoRelatedSetting(normalizedSetting);
 
@@ -118,6 +122,7 @@ const MemoRelatedSettings = () => {
   };
 
   const moodEmojis = memoRelatedSetting.moodEmojis?.length === 7 ? memoRelatedSetting.moodEmojis : DEFAULT_MOOD_EMOJIS;
+  const moodColors = memoRelatedSetting.moodColors?.length === 7 ? memoRelatedSetting.moodColors : DEFAULT_MOOD_COLORS;
   const moodLevelLabels = [
     t("mood.level-1"),
     t("mood.level-2"),
@@ -132,6 +137,12 @@ const MemoRelatedSettings = () => {
     const next = [...moodEmojis];
     next[index] = value;
     updatePartialSetting({ moodEmojis: next });
+  };
+
+  const updateMoodColor = (index: number, value: string) => {
+    const next = [...moodColors];
+    next[index] = value;
+    updatePartialSetting({ moodColors: next });
   };
 
   return (
@@ -230,11 +241,24 @@ const MemoRelatedSettings = () => {
         </SettingPanel>
       </SettingGroup>
 
-      <SettingGroup title={t("setting.memo.mood-emojis")} description={t("setting.memo.mood-emojis-description")} showSeparator>
+      <SettingGroup title={t("setting.memo.mood-settings")} description={t("setting.memo.mood-settings-description")} showSeparator>
         <SettingList>
           {moodEmojis.map((emoji: string, i: number) => (
             <SettingListItem key={i} label={moodLevelLabels[i]}>
-              <Input className="w-20 font-mono text-center text-lg" value={emoji} onChange={(e) => updateMoodEmoji(i, e.target.value)} />
+              <div className="flex items-center gap-2">
+                <Input className="w-16 font-mono text-center text-lg" value={emoji} onChange={(e) => updateMoodEmoji(i, e.target.value)} />
+                <label
+                  className="relative size-8 cursor-pointer overflow-hidden rounded-md border border-border"
+                  aria-label={`${moodLevelLabels[i]} color`}
+                >
+                  <input
+                    type="color"
+                    className="absolute -inset-1 size-10 cursor-pointer"
+                    value={moodColors[i]}
+                    onChange={(e) => updateMoodColor(i, e.target.value)}
+                  />
+                </label>
+              </div>
             </SettingListItem>
           ))}
         </SettingList>

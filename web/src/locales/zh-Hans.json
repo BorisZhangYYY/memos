@@ -763,8 +763,8 @@
       "remove-reaction": "移除表态",
       "title": "备忘录相关设置",
       "label": "备忘录",
-      "mood-emojis": "心情 Emoji 配置",
-      "mood-emojis-description": "自定义 7 个心情档位的表情符号。留空使用默认值。",
+      "mood-settings": "心情设置",
+      "mood-settings-description": "自定义 7 个心情档位的表情符号和颜色。留空使用默认值。",
       "reactions-required": "反应列表不能为空"
     },
     "webhook": {
