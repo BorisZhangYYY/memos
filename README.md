@@ -21,6 +21,17 @@ Memos is an open-source, self-hosted note-taking app built for quick capture. It
 - **Deploy anywhere** — Run a single Go binary or Docker container with SQLite, MySQL, or PostgreSQL.
 - **Integrate freely** — Build on the REST and gRPC APIs or adapt the MIT-licensed source to your needs.
 
+## Fork Release（个人生活平台版）
+
+This fork adds a **mood tracking system** (per-memo 1-7 mood, calendar averages,
+trend chart, filtering, colored memo cards), a **visibility policy** (disable
+Public/Protected levels to hide published memos and the Explore page), and a
+**free HSV color picker** for mood emoji customization. Docker images are
+published to `ghcr.io/boriszhangyyy/memos` only.
+
+See [docs/fork-deploy.md](docs/fork-deploy.md) for installation, upgrade,
+MCP agent setup, and the full list of differences from upstream.
+
 ## Quick Start
 
 Want to explore Memos first? Open the [live demo](https://demo.usememos.com/).
