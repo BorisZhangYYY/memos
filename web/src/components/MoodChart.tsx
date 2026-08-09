@@ -321,7 +321,9 @@ export const MoodChart = ({ points, selectedDate, window_ }: MoodChartProps) => 
   return (
     <div className="w-full">
       {isEmpty ? (
-        <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">{t("mood.chart.empty")}</div>
+        // Match the chart's aspect ratio (VIEWBOX 560x240) so the empty state
+        // occupies the same height as a rendered chart.
+        <div className="flex aspect-[7/3] w-full items-center justify-center text-sm text-muted-foreground">{t("mood.chart.empty")}</div>
       ) : (
         <div className="relative">
           <svg
