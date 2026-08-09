@@ -1,9 +1,8 @@
 name: Release Please
 
 on:
-  push:
-    branches:
-      - main
+  # Fork releases use the manual flow (CHANGELOG + git tag); release-please is
+  # only available on demand.
   workflow_dispatch:
 
 permissions:
