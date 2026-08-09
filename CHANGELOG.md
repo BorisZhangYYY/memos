@@ -1,5 +1,51 @@
 # Changelog
 
+## [0.31.0](https://github.com/BorisZhangYYY/memos/compare/v0.30.0...v0.31.0) (2026-08-08)
+
+### Summary
+
+This fork release turns Memos into a personal life-tracking platform with a full
+mood system: memos can carry a 1-7 mood level set from the editor toolbar,
+calendars show daily and monthly mood averages, and a trend chart renders today's
+minute-level curve or trailing 7/30-day aggregates. Moods also power a
+multi-select sidebar filter, colored memo card borders with an emoji marker, and
+customizable per-level emoji and colors in a new Mood settings section. Instance
+admins can now restrict publishable visibilities through a single policy choice,
+which hides existing memos at disabled levels, removes the Explore entry, and is
+enforced end-to-end including comments.
+
+### Features
+
+* **Mood tracking:** attach a 1-7 mood level to any memo from a Heart button in
+  the editor toolbar; mood is stored in the memo payload and exposed through the
+  API and MCP tools automatically. ([e2f5de85](https://github.com/BorisZhangYYY/memos/commit/e2f5de85)) ([319baecb](https://github.com/BorisZhangYYY/memos/commit/319baecb)) ([2578d56d](https://github.com/BorisZhangYYY/memos/commit/2578d56d))
+* **Calendar:** each calendar day shows the average mood emoji, and the month
+  title shows the monthly average. ([8f3eb4ca](https://github.com/BorisZhangYYY/memos/commit/8f3eb4ca)) ([e6351588](https://github.com/BorisZhangYYY/memos/commit/e6351588))
+* **Mood trend chart:** an always-visible chart above the memo column grid with
+  Today / Last 7 days / Last 30 days windows, minute-level curves for a selected
+  calendar day, and daily average lines with min-max range bands. ([adcd1ac0](https://github.com/BorisZhangYYY/memos/commit/adcd1ac0)) ([f8c1829b](https://github.com/BorisZhangYYY/memos/commit/f8c1829b))
+* **Mood filtering:** multi-select mood emoji filter in the sidebar with per-level
+  color rings, backed by a new JSON-int CEL filter field. ([e04c55a4](https://github.com/BorisZhangYYY/memos/commit/e04c55a4)) ([5ad7b975](https://github.com/BorisZhangYYY/memos/commit/5ad7b975))
+* **Memo cards:** mooded memos show an emoji marker on the left edge and a border
+  tinted with the mood level's color. ([76418e6d](https://github.com/BorisZhangYYY/memos/commit/76418e6d))
+* **Mood settings:** single-row editor for the seven mood levels with emoji input
+  and a Memos-styled free HSV color picker (preset swatches + saturation/value
+  panel + hue strip + hex input). ([aa1aaceb](https://github.com/BorisZhangYYY/memos/commit/aa1aaceb)) ([c7e54d4b](https://github.com/BorisZhangYYY/memos/commit/c7e54d4b))
+* **Visibility policy:** single-choice instance setting (allow all / disable
+  Public / disable Protected and Public); disabled levels hide all existing memos
+  at that level, hide the Explore entry, and are enforced on create/update and
+  comment operations. ([ea914459](https://github.com/BorisZhangYYY/memos/commit/ea914459)) ([fe1de920](https://github.com/BorisZhangYYY/memos/commit/fe1de920))
+
+### Bug Fixes
+
+* Persist `allowed_visibilities`, `mood_emojis`, and `mood_colors` through the
+  instance setting converters. ([959d9103](https://github.com/BorisZhangYYY/memos/commit/959d9103))
+* Exempt comment create/update from the allowed-visibilities check so comments on
+  existing memos keep working when levels are restricted. ([03ad238b](https://github.com/BorisZhangYYY/memos/commit/03ad238b))
+* Match the empty mood chart height to the rendered chart aspect ratio, widen the
+  right padding so edge date labels are not clipped, and bucket daily mood stats
+  in browser-local time. ([dfabf4c3](https://github.com/BorisZhangYYY/memos/commit/dfabf4c3)) ([f88f4e9f](https://github.com/BorisZhangYYY/memos/commit/f88f4e9f)) ([8f3eb4ca](https://github.com/BorisZhangYYY/memos/commit/8f3eb4ca))
+
 ## [0.30.0](https://github.com/usememos/memos/compare/v0.29.1...v0.30.0) (2026-07-26)
 
 
