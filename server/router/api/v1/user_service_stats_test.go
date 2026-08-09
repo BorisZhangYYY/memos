@@ -14,7 +14,7 @@ import (
 )
 
 // createAuthorMemo creates a memo through the API as the given user context.
-func createAuthorMemo(t *testing.T, ctx context.Context, svc *APIV1Service, content string, moodLevel int32) {
+func createAuthorMemo(ctx context.Context, t *testing.T, svc *APIV1Service, content string, moodLevel int32) {
 	t.Helper()
 	_, err := svc.CreateMemo(ctx, &v1pb.CreateMemoRequest{
 		Memo: &v1pb.Memo{Content: content, MoodLevel: moodLevel},
@@ -37,19 +37,19 @@ func TestGetUserStats_MoodLevels(t *testing.T) {
 	now := time.Now()
 
 	// Three memos today: moods 3 and 5, one without a mood (0).
-	createAuthorMemo(t, authorCtx, svc, "meh day", 3)
-	createAuthorMemo(t, authorCtx, svc, "better", 5)
-	createAuthorMemo(t, authorCtx, svc, "no mood", 0)
+	createAuthorMemo(authorCtx, t, svc, "meh day", 3)
+	createAuthorMemo(authorCtx, t, svc, "better", 5)
+	createAuthorMemo(authorCtx, t, svc, "no mood", 0)
 
 	// A single mooded memo two days ago carries its own mood.
-	pastCreatedTs := now.AddDate(0, 0, -2).Unix()
+	pastCreatedTsSec := now.AddDate(0, 0, -2).Unix()
 	_, err = svc.Store.CreateMemo(ctx, &store.Memo{
 		UID:        "moody-past",
 		CreatorID:  author.ID,
 		Content:    "great day",
 		Visibility: store.Public,
-		CreatedTs:  pastCreatedTs,
-		UpdatedTs:  pastCreatedTs,
+		CreatedTs:  pastCreatedTsSec,
+		UpdatedTs:  pastCreatedTsSec,
 		Payload:    &storepb.MemoPayload{MoodLevel: 7},
 	})
 	require.NoError(t, err)
@@ -83,8 +83,8 @@ func TestListAllUserStats_MoodLevels(t *testing.T) {
 	require.NoError(t, err)
 	authorCtx := userCtx(ctx, author.ID)
 
-	createAuthorMemo(t, authorCtx, svc, "sad", 1)
-	createAuthorMemo(t, authorCtx, svc, "happy", 6)
+	createAuthorMemo(authorCtx, t, svc, "sad", 1)
+	createAuthorMemo(authorCtx, t, svc, "happy", 6)
 
 	response, err := svc.ListAllUserStats(authorCtx, &v1pb.ListAllUserStatsRequest{})
 	require.NoError(t, err)

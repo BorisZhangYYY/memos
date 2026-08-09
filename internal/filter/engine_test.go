@@ -481,10 +481,10 @@ func TestRenderMoodLevelComparisonPerDialect(t *testing.T) {
 	require.NoError(t, err)
 
 	cases := []struct {
-		dialect   DialectName
+		dialect    DialectName
 		expression string
-		fragments []string
-		args      []any
+		fragments  []string
+		args       []any
 	}{
 		{DialectSQLite, `mood_level >= 5`, []string{"JSON_EXTRACT(`memo`.`payload`, '$.moodLevel') >= ?"}, []any{int64(5)}},
 		{DialectMySQL, `mood_level >= 5`, []string{"JSON_EXTRACT(`memo`.`payload`, '$.moodLevel') >= ?"}, []any{int64(5)}},

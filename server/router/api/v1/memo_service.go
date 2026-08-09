@@ -71,6 +71,8 @@ func (s *APIV1Service) resolveAllowedVisibilities(ctx context.Context) ([]store.
 			allowed = append(allowed, store.Protected)
 		case store.Public:
 			allowed = append(allowed, store.Public)
+		default:
+			// Unknown levels are ignored.
 		}
 	}
 	return allowed, nil
@@ -162,8 +164,8 @@ func (s *APIV1Service) CreateMemo(ctx context.Context, request *v1pb.CreateMemoR
 		create.CreatedTs = createdTs
 	}
 	if request.Memo.UpdateTime != nil && request.Memo.UpdateTime.IsValid() {
-		updatedTs := request.Memo.UpdateTime.AsTime().Unix()
-		create.UpdatedTs = updatedTs
+		updatedTsSec := request.Memo.UpdateTime.AsTime().Unix()
+		create.UpdatedTs = updatedTsSec
 	}
 
 	contentLengthLimit, err := s.getContentLengthLimit(ctx)
@@ -580,11 +582,11 @@ func (s *APIV1Service) UpdateMemo(ctx context.Context, request *v1pb.UpdateMemoR
 			createdTs := request.Memo.CreateTime.AsTime().Unix()
 			update.CreatedTs = &createdTs
 		} else if path == "update_time" {
-			updatedTs := time.Now().Unix()
+			updatedTsSec := time.Now().Unix()
 			if request.Memo.UpdateTime != nil {
-				updatedTs = request.Memo.UpdateTime.AsTime().Unix()
+				updatedTsSec = request.Memo.UpdateTime.AsTime().Unix()
 			}
-			update.UpdatedTs = &updatedTs
+			update.UpdatedTs = &updatedTsSec
 		} else if path == "display_time" {
 			return nil, status.Errorf(codes.InvalidArgument, "display_time is not supported")
 		} else if path == "location" {

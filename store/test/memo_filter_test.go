@@ -726,7 +726,7 @@ func TestMemoFilterMoodLevel(t *testing.T) {
 // =============================================================================
 // Timestamp Field Tests
 // Schema: created_ts, updated_ts (timestamp, all comparison operators)
-// Time helpers: now variable, timestamp(...), duration(...)
+// Time helpers: nowSec variable, timestamp(...), duration(...)
 // =============================================================================
 
 func TestMemoFilterCreatedTsComparison(t *testing.T) {
@@ -734,19 +734,19 @@ func TestMemoFilterCreatedTsComparison(t *testing.T) {
 	tc := NewMemoFilterTestContext(t)
 	defer tc.Close()
 
-	now := time.Now().Unix()
+	nowSec := time.Now().Unix()
 	tc.CreateMemo(NewMemoBuilder("memo-ts", tc.User.ID).Content("Timestamp test"))
 
 	// Test: created_ts < future (should match)
-	memos := tc.ListWithFilter(`created_ts < timestamp(` + formatInt64(now+3600) + `)`)
+	memos := tc.ListWithFilter(`created_ts < timestamp(` + formatInt64(nowSec+3600) + `)`)
 	require.Len(t, memos, 1)
 
 	// Test: created_ts > past (should match)
-	memos = tc.ListWithFilter(`created_ts > timestamp(` + formatInt64(now-3600) + `)`)
+	memos = tc.ListWithFilter(`created_ts > timestamp(` + formatInt64(nowSec-3600) + `)`)
 	require.Len(t, memos, 1)
 
 	// Test: created_ts > future (should not match)
-	memos = tc.ListWithFilter(`created_ts > timestamp(` + formatInt64(now+3600) + `)`)
+	memos = tc.ListWithFilter(`created_ts > timestamp(` + formatInt64(nowSec+3600) + `)`)
 	require.Len(t, memos, 0)
 }
 
@@ -757,12 +757,12 @@ func TestMemoFilterCreatedTsWithNow(t *testing.T) {
 
 	tc.CreateMemo(NewMemoBuilder("memo-ts-test", tc.User.ID).Content("Timestamp test"))
 
-	// Test: created_ts < now + 5s (buffer for container clock drift)
-	memos := tc.ListWithFilter(`created_ts < now + duration("5s")`)
+	// Test: created_ts < nowSec + 5s (buffer for container clock drift)
+	memos := tc.ListWithFilter(`created_ts < nowSec + duration("5s")`)
 	require.Len(t, memos, 1)
 
-	// Test: created_ts > now + 5s (should not match)
-	memos = tc.ListWithFilter(`created_ts > now + duration("5s")`)
+	// Test: created_ts > nowSec + 5s (should not match)
+	memos = tc.ListWithFilter(`created_ts > nowSec + duration("5s")`)
 	require.Len(t, memos, 0)
 }
 
@@ -773,16 +773,16 @@ func TestMemoFilterCreatedTsArithmetic(t *testing.T) {
 
 	tc.CreateMemo(NewMemoBuilder("memo-ts-arith", tc.User.ID).Content("Timestamp arithmetic test"))
 
-	// Test: created_ts >= now - 1h (memos created in last hour)
-	memos := tc.ListWithFilter(`created_ts >= now - duration("1h")`)
+	// Test: created_ts >= nowSec - 1h (memos created in last hour)
+	memos := tc.ListWithFilter(`created_ts >= nowSec - duration("1h")`)
 	require.Len(t, memos, 1)
 
-	// Test: created_ts < now - 24h (memos older than 1 day - should be empty)
-	memos = tc.ListWithFilter(`created_ts < now - duration("24h")`)
+	// Test: created_ts < nowSec - 24h (memos older than 1 day - should be empty)
+	memos = tc.ListWithFilter(`created_ts < nowSec - duration("24h")`)
 	require.Len(t, memos, 0)
 
-	// Test: chained duration arithmetic - created_ts >= now - 30m - 30m
-	memos = tc.ListWithFilter(`created_ts >= now - duration("30m") - duration("30m")`)
+	// Test: chained duration arithmetic - created_ts >= nowSec - 30m - 30m
+	memos = tc.ListWithFilter(`created_ts >= nowSec - duration("30m") - duration("30m")`)
 	require.Len(t, memos, 1)
 }
 
@@ -801,12 +801,12 @@ func TestMemoFilterUpdatedTs(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	// Test: updated_ts >= now - 60s (updated in last minute)
-	memos := tc.ListWithFilter(`updated_ts >= now - duration("60s")`)
+	// Test: updated_ts >= nowSec - 60s (updated in last minute)
+	memos := tc.ListWithFilter(`updated_ts >= nowSec - duration("60s")`)
 	require.Len(t, memos, 1)
 
-	// Test: updated_ts > now + 1h (should be empty)
-	memos = tc.ListWithFilter(`updated_ts > now + duration("1h")`)
+	// Test: updated_ts > nowSec + 1h (should be empty)
+	memos = tc.ListWithFilter(`updated_ts > nowSec + duration("1h")`)
 	require.Len(t, memos, 0)
 }
 
@@ -818,19 +818,19 @@ func TestMemoFilterAllComparisonOperators(t *testing.T) {
 	tc.CreateMemo(NewMemoBuilder("memo-ops", tc.User.ID).Content("Comparison operators test"))
 
 	// Test: < (less than)
-	memos := tc.ListWithFilter(`created_ts < now + duration("1h")`)
+	memos := tc.ListWithFilter(`created_ts < nowSec + duration("1h")`)
 	require.Len(t, memos, 1)
 
 	// Test: <= (less than or equal) with buffer for clock drift
-	memos = tc.ListWithFilter(`created_ts < now + duration("5s")`)
+	memos = tc.ListWithFilter(`created_ts < nowSec + duration("5s")`)
 	require.Len(t, memos, 1)
 
 	// Test: > (greater than)
-	memos = tc.ListWithFilter(`created_ts > now - duration("1h")`)
+	memos = tc.ListWithFilter(`created_ts > nowSec - duration("1h")`)
 	require.Len(t, memos, 1)
 
 	// Test: >= (greater than or equal)
-	memos = tc.ListWithFilter(`created_ts >= now - duration("60s")`)
+	memos = tc.ListWithFilter(`created_ts >= nowSec - duration("60s")`)
 	require.Len(t, memos, 1)
 }
 
