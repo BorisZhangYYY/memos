@@ -48,6 +48,10 @@ function buildUpdateMask(
     mask.add("location");
     patch.location = state.metadata.location;
   }
+  if (!isEqual(state.metadata.moodLevel, prevMemo.moodLevel)) {
+    mask.add("mood_level");
+    patch.moodLevel = state.metadata.moodLevel;
+  }
 
   // Auto-update timestamp if content changed
   if (["content", "attachments", "relations", "location"].some((key) => mask.has(key))) {
@@ -108,6 +112,7 @@ export const memoService = {
       attachments: toAttachmentReferences(allAttachments),
       relations: state.metadata.relations,
       location: state.metadata.location,
+      moodLevel: state.metadata.moodLevel,
       createTime: state.timestamps.createTime ? timestampFromDate(state.timestamps.createTime) : undefined,
       updateTime: state.timestamps.updateTime ? timestampFromDate(state.timestamps.updateTime) : undefined,
     });
@@ -135,6 +140,7 @@ export const memoService = {
         attachments: memo.attachments,
         relations: memo.relations,
         location: memo.location,
+        moodLevel: memo.moodLevel,
       },
       timestamps: {
         createTime: memo.createTime ? timestampDate(memo.createTime) : undefined,

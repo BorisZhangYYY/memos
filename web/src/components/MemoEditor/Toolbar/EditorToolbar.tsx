@@ -6,6 +6,7 @@ import { validationService } from "../services";
 import { useEditorContext, useEditorSelector } from "../state";
 import type { EditorToolbarProps } from "../types";
 import InsertMenu from "./InsertMenu";
+import MoodSelector from "./MoodSelector";
 import VisibilitySelector from "./VisibilitySelector";
 
 export const EditorToolbar: FC<EditorToolbarProps> = ({
@@ -26,6 +27,7 @@ export const EditorToolbar: FC<EditorToolbarProps> = ({
   const isUploading = useEditorSelector((s) => s.ui.isLoading.uploading);
   const location = useEditorSelector((s) => s.metadata.location);
   const visibility = useEditorSelector((s) => s.metadata.visibility);
+  const moodLevel = useEditorSelector((s) => s.metadata.moodLevel ?? 0);
 
   const handleLocationChange = (next?: Location) => {
     dispatch(actions.setMetadata({ location: next }));
@@ -37,6 +39,10 @@ export const EditorToolbar: FC<EditorToolbarProps> = ({
 
   const handleVisibilityChange = (next: Visibility) => {
     dispatch(actions.setMetadata({ visibility: next }));
+  };
+
+  const handleMoodChange = (next: number) => {
+    dispatch(actions.setMetadata({ moodLevel: next }));
   };
 
   return (
@@ -53,6 +59,7 @@ export const EditorToolbar: FC<EditorToolbarProps> = ({
           onToggleFormattingToolbar={onToggleFormattingToolbar}
         />
         <VisibilitySelector value={visibility} onChange={handleVisibilityChange} />
+        <MoodSelector moodLevel={moodLevel} onChange={handleMoodChange} />
       </div>
 
       <div className="flex flex-row justify-end items-center gap-2">

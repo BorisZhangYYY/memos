@@ -11,6 +11,10 @@ message MemoPayload {
 
   repeated string tags = 3;
 
+  // mood_level represents the mood of the memo, 1-7.
+  // 0 means no mood is set. 1=very unhappy, 7=very happy.
+  int32 mood_level = 4;
+
   // The calculated properties from the memo content.
   message Property {
     bool has_link = 1;

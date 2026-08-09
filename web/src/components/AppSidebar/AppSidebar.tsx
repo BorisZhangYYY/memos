@@ -61,6 +61,7 @@ import type { Shortcut } from "@/types/proto/api/v1/shortcut_service_pb";
 import { User_Role, UserNotification_Status } from "@/types/proto/api/v1/user_service_pb";
 import { useTranslate } from "@/utils/i18n";
 import MemosLogo from "../MemosLogo";
+import MoodFilterSection from "./MoodFilterSection";
 import { getSidebarRouteKind } from "./routes";
 import SidebarRow, { SIDEBAR_ROW_CLASSES, SIDEBAR_ROW_ICON_CLASSES } from "./SidebarRow";
 import SidebarSectionHeader from "./SidebarSectionHeader";
@@ -229,7 +230,7 @@ const CollectionSidebarContent = ({ context }: { context: MemoStatsContext }) =>
     enabled: context === "profile" && !!profileMatch?.params.username,
   });
   const statsUserName = context === "home" ? currentUser?.name : context === "profile" ? profileUser?.name : undefined;
-  const { statistics, tags } = useFilteredMemoStats({
+  const { statistics, tags, dailyMoodStats } = useFilteredMemoStats({
     context,
     userName: statsUserName,
     enabled: authInitialized && instanceInitialized && (md || mobileOpen),
@@ -246,10 +247,16 @@ const CollectionSidebarContent = ({ context }: { context: MemoStatsContext }) =>
     <div className="space-y-3.5">
       {context === "profile" && <ProfileMode />}
       <section>
-        <StatisticsView statisticsData={statistics} navigationTarget={filterTarget} onDateSelect={() => setMobileOpen(false)} />
+        <StatisticsView
+          statisticsData={statistics}
+          dailyMoodStats={dailyMoodStats}
+          navigationTarget={filterTarget}
+          onDateSelect={() => setMobileOpen(false)}
+        />
       </section>
       {showViews && <ViewsSection />}
       <TagsSection tagCount={tags} navigationTarget={filterTarget} onSelect={() => setMobileOpen(false)} />
+      <MoodFilterSection navigationTarget={filterTarget} onSelect={() => setMobileOpen(false)} />
     </div>
   );
 };
@@ -418,7 +425,10 @@ const GlobalNavigation = () => {
   const { data: notifications = [] } = useNotifications();
   const { memoDetail, memoScope, setMemoScope, setMobileOpen } = useAppSidebar();
   const { filters } = useMemoFilterContext();
+  const { memoRelatedSetting } = useInstance();
   const unreadCount = notifications.filter((notification) => notification.status === UserNotification_Status.UNREAD).length;
+  // The Explore scope is hidden when the instance disables the PUBLIC level.
+  const exploreEnabled = !memoRelatedSetting?.allowedVisibilities?.length || memoRelatedSetting.allowedVisibilities.includes("PUBLIC");
   const routeKind = getSidebarRouteKind(location.pathname);
   const resolvedScope = resolveMemoScope(location.pathname, {
     currentUsername: currentUser?.username,
@@ -437,7 +447,7 @@ const GlobalNavigation = () => {
 
   const scopeItems: Array<{ id: MemoScope; label: string; icon: LucideIcon }> = [
     { id: "home", label: t("common.home"), icon: HouseIcon },
-    { id: "explore", label: t("common.explore"), icon: EarthIcon },
+    ...(exploreEnabled ? [{ id: "explore" as MemoScope, label: t("common.explore"), icon: EarthIcon }] : []),
     { id: "archived", label: t("common.archived"), icon: ArchiveIcon },
   ];
   const activeScopeItem = scopeItems.find((item) => item.id === resolvedScope) ?? scopeItems[0];
@@ -469,13 +479,17 @@ const GlobalNavigation = () => {
         },
       ]
     : [
-        {
-          id: "explore",
-          label: t("common.explore"),
-          path: ROUTES.EXPLORE,
-          icon: EarthIcon,
-          active: routeKind === "explore" || routeKind === "profile" || routeKind === "memo",
-        },
+        ...(exploreEnabled
+          ? [
+              {
+                id: "explore",
+                label: t("common.explore"),
+                path: ROUTES.EXPLORE,
+                icon: EarthIcon,
+                active: routeKind === "explore" || routeKind === "profile" || routeKind === "memo",
+              },
+            ]
+          : []),
         { id: "about", label: t("common.about"), path: ROUTES.ABOUT, icon: InfoIcon, active: location.pathname === ROUTES.ABOUT },
       ];
 

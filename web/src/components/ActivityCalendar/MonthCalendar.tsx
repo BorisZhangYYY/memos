@@ -1,4 +1,5 @@
 import { memo, useMemo } from "react";
+import { DEFAULT_MOOD_EMOJIS } from "@/components/MemoEditor/Toolbar/MoodSelector";
 import { useInstance } from "@/contexts/InstanceContext";
 import { cn } from "@/lib/utils";
 import { useTranslate } from "@/utils/i18n";
@@ -45,9 +46,10 @@ export const MonthCalendar = memo((props: MonthCalendarProps) => {
     className,
     disableTooltips = false,
     timeBasis = "create_time",
+    moodData,
   } = props;
   const t = useTranslate();
-  const { generalSetting } = useInstance();
+  const { generalSetting, memoRelatedSetting } = useInstance();
   const today = useTodayDate();
   const weekDays = useWeekdayLabels();
   const gridStyle = GRID_STYLES[size];
@@ -63,6 +65,23 @@ export const MonthCalendar = memo((props: MonthCalendarProps) => {
 
   const flatDays = useMemo(() => weeks.flatMap((week) => week.days), [weeks]);
 
+  // Map each day's average mood level to its emoji, using the instance's
+  // configured emojis when a full set of 7 is provided.
+  const moodEmojisByDate = useMemo(() => {
+    if (!moodData) {
+      return {};
+    }
+    const emojis = memoRelatedSetting.moodEmojis?.length === 7 ? memoRelatedSetting.moodEmojis : DEFAULT_MOOD_EMOJIS;
+    const byDate: Record<string, string> = {};
+    for (const [date, avg] of Object.entries(moodData)) {
+      const level = Math.round(avg);
+      if (level >= 1 && level <= 7) {
+        byDate[date] = emojis[level - 1];
+      }
+    }
+    return byDate;
+  }, [moodData, memoRelatedSetting.moodEmojis]);
+
   return (
     <div className={cn("flex flex-col", className)} role="grid" aria-label={`Calendar for ${month}`}>
       <WeekdayHeader weekDays={rotatedWeekDays} size={size} />
@@ -77,6 +96,7 @@ export const MonthCalendar = memo((props: MonthCalendarProps) => {
             onClick={onClick}
             size={size}
             disableTooltip={disableTooltips}
+            moodEmoji={moodEmojisByDate[day.date]}
           />
         ))}
       </div>

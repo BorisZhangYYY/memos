@@ -13,6 +13,8 @@ import type { StatisticsData } from "@/types/statistics";
 export interface FilteredMemoStats {
   statistics: StatisticsData;
   tags: Record<string, number>;
+  /** Average mood level (1-7) per day, keyed by "YYYY-MM-DD". Only set for home/profile. */
+  dailyMoodStats: Record<string, number>;
   loading: boolean;
 }
 
@@ -25,6 +27,24 @@ export interface UseFilteredMemoStatsOptions {
 }
 
 const toDateString = (date: Date) => dayjs(date).format("YYYY-MM-DD");
+
+/**
+ * Averages each day's mood levels into a browser-local "YYYY-MM-DD" keyed map,
+ * mirroring the activity heatmap bucketing. mood_levels mirrors
+ * memo_created_timestamps order, so the two arrays are zipped by index.
+ */
+export const dailyMoodStatsFromLevels = (stats: UserStats): Record<string, number> => {
+  const sums: Record<string, number> = {};
+  const counts: Record<string, number> = {};
+  (stats.memoCreatedTimestamps ?? []).forEach((ts, index) => {
+    const level = (stats.moodLevels ?? [])[index];
+    if (!level || level <= 0 || !ts) return;
+    const date = toDateString(timestampDate(ts));
+    sums[date] = (sums[date] ?? 0) + level;
+    counts[date] = (counts[date] ?? 0) + 1;
+  });
+  return Object.fromEntries(Object.entries(sums).map(([date, sum]) => [date, sum / counts[date]]));
+};
 
 const timestampsForBasis = (stats: UserStats, basis: MemoTimeBasis) => {
   const createdArray = stats.memoCreatedTimestamps ?? [];
@@ -63,6 +83,8 @@ export const useFilteredMemoStats = (options: UseFilteredMemoStatsOptions = {}):
     const loading = isLoadingUserStats || isLoadingAllUserStats;
     let activityStats: Record<string, number> = {};
     let tagCount: Record<string, number> = mergeTagCounts();
+    // Mood averages are only meaningful per user; the calendar shows them in home/profile.
+    let dailyMoodStats: Record<string, number> = {};
 
     if (context === "explore" || context === "archived") {
       const displayDates: string[] = [];
@@ -90,9 +112,10 @@ export const useFilteredMemoStats = (options: UseFilteredMemoStatsOptions = {}):
       if (userStats.tagCount) {
         tagCount = mergeTagCounts(userStats.tagCount);
       }
+      dailyMoodStats = dailyMoodStatsFromLevels(userStats);
     }
 
-    return { statistics: { activityStats, timeBasis }, tags: tagCount, loading };
+    return { statistics: { activityStats, timeBasis }, tags: tagCount, dailyMoodStats, loading };
   }, [context, userName, userStats, allUserStats, isLoadingUserStats, isLoadingAllUserStats, timeBasis]);
 
   return data;

@@ -22,10 +22,13 @@ const (
 )
 
 type MemoPayload struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Property      *MemoPayload_Property  `protobuf:"bytes,1,opt,name=property,proto3" json:"property,omitempty"`
-	Location      *MemoPayload_Location  `protobuf:"bytes,2,opt,name=location,proto3" json:"location,omitempty"`
-	Tags          []string               `protobuf:"bytes,3,rep,name=tags,proto3" json:"tags,omitempty"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Property *MemoPayload_Property  `protobuf:"bytes,1,opt,name=property,proto3" json:"property,omitempty"`
+	Location *MemoPayload_Location  `protobuf:"bytes,2,opt,name=location,proto3" json:"location,omitempty"`
+	Tags     []string               `protobuf:"bytes,3,rep,name=tags,proto3" json:"tags,omitempty"`
+	// mood_level represents the mood of the memo, 1-7.
+	// 0 means no mood is set. 1=very unhappy, 7=very happy.
+	MoodLevel     int32 `protobuf:"varint,4,opt,name=mood_level,json=moodLevel,proto3" json:"mood_level,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -79,6 +82,13 @@ func (x *MemoPayload) GetTags() []string {
 		return x.Tags
 	}
 	return nil
+}
+
+func (x *MemoPayload) GetMoodLevel() int32 {
+	if x != nil {
+		return x.MoodLevel
+	}
+	return 0
 }
 
 // The calculated properties from the memo content.
@@ -223,11 +233,13 @@ var File_store_memo_proto protoreflect.FileDescriptor
 
 const file_store_memo_proto_rawDesc = "" +
 	"\n" +
-	"\x10store/memo.proto\x12\vmemos.store\"\xb6\x03\n" +
+	"\x10store/memo.proto\x12\vmemos.store\"\xd5\x03\n" +
 	"\vMemoPayload\x12=\n" +
 	"\bproperty\x18\x01 \x01(\v2!.memos.store.MemoPayload.PropertyR\bproperty\x12=\n" +
 	"\blocation\x18\x02 \x01(\v2!.memos.store.MemoPayload.LocationR\blocation\x12\x12\n" +
-	"\x04tags\x18\x03 \x03(\tR\x04tags\x1a\xac\x01\n" +
+	"\x04tags\x18\x03 \x03(\tR\x04tags\x12\x1d\n" +
+	"\n" +
+	"mood_level\x18\x04 \x01(\x05R\tmoodLevel\x1a\xac\x01\n" +
 	"\bProperty\x12\x19\n" +
 	"\bhas_link\x18\x01 \x01(\bR\ahasLink\x12\"\n" +
 	"\rhas_task_list\x18\x02 \x01(\bR\vhasTaskList\x12\x19\n" +

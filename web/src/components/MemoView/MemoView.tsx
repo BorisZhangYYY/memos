@@ -2,9 +2,12 @@ import { type ComponentType, memo, Suspense, useCallback, useLayoutEffect, useMe
 import { useLocation } from "react-router-dom";
 import { useResolvedUser } from "@/components/MemoContent/MentionResolutionContext";
 import { loadMemoEditor } from "@/components/MemoEditor/loader";
+import { DEFAULT_MOOD_EMOJIS } from "@/components/MemoEditor/Toolbar/MoodSelector";
 import type { MemoEditorProps } from "@/components/MemoEditor/types";
 import { useAuth } from "@/contexts/AuthContext";
+import { useInstance } from "@/contexts/InstanceContext";
 import useCurrentUser from "@/hooks/useCurrentUser";
+import { getMoodColor } from "@/lib/mood";
 import { findTagMetadata } from "@/lib/tag";
 import { cn } from "@/lib/utils";
 import { State } from "@/types/proto/api/v1/common_pb";
@@ -28,10 +31,17 @@ const MemoView: React.FC<MemoViewProps> = (props: MemoViewProps) => {
 
   const currentUser = useCurrentUser();
   const { userTagsSetting } = useAuth();
+  const { memoRelatedSetting } = useInstance();
   const creator = useResolvedUser(memoData.creator, { enabled: Boolean(showCreator || props.shareImageDialogOpen) });
   const isArchived = memoData.state === State.ARCHIVED;
   const readonly = memoData.creator !== currentUser?.name && !isSuperUser(currentUser);
   const parentPage = parentPageProp || "/";
+
+  // Mood display: a small emoji marker on the card's left edge and a border
+  // tinted with the mood level's color (customizable in instance settings).
+  const moodLevel = memoData.moodLevel ?? 0;
+  const moodEmojis = memoRelatedSetting?.moodEmojis?.length === 7 ? memoRelatedSetting.moodEmojis : DEFAULT_MOOD_EMOJIS;
+  const moodColor = getMoodColor(moodLevel, memoRelatedSetting?.moodColors);
 
   // Blur content when any tag has blur_content enabled in the current user's tag settings.
   const [showBlurredContent, setShowBlurredContent] = useState(false);
@@ -123,7 +133,13 @@ const MemoView: React.FC<MemoViewProps> = (props: MemoViewProps) => {
       className={cn(MEMO_CARD_BASE_CLASSES, showCommentPreview ? "mb-0 rounded-b-none" : "mb-2", className)}
       ref={cardRef}
       tabIndex={readonly ? -1 : 0}
+      style={moodLevel > 0 && moodColor ? { borderColor: moodColor } : undefined}
     >
+      {moodLevel > 0 && (
+        <span className="pointer-events-none absolute top-1/2 -left-3 -translate-y-1/2 text-lg leading-none" aria-hidden="true">
+          {moodEmojis[moodLevel - 1]}
+        </span>
+      )}
       <MemoHeader showCreator={showCreator} showVisibility={showVisibility} showPinned={showPinned} />
 
       <MemoBody compact={compact} />

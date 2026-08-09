@@ -115,6 +115,14 @@ message InstanceMemoRelatedSetting {
   bool enable_double_click_edit = 4;
   // reactions is the list of reactions.
   repeated string reactions = 7;
+  // allowed_visibilities restricts which visibility levels users can select.
+  repeated string allowed_visibilities = 8;
+  // mood_emojis are the emoji representations for mood levels 1-7.
+  // Index 0 = mood level 1, index 6 = mood level 7. Default emojis are used when empty.
+  repeated string mood_emojis = 9;
+  // mood_colors are the hex colors for mood levels 1-7 (e.g. "#ef4444").
+  // Index 0 = mood level 1, index 6 = mood level 7. Default palette is used when empty.
+  repeated string mood_colors = 10;
 }
 
 message InstanceTagMetadata {

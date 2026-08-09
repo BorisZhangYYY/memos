@@ -284,6 +284,28 @@
     "code-block": "Code block",
     "content-syntax": "Content syntax"
   },
+  "mood": {
+    "filter": "Mood",
+    "monthly-average": "Monthly average mood",
+    "select": "Select mood",
+    "level": "Mood level",
+    "level-1": "Very unhappy",
+    "level-2": "A bit unhappy",
+    "level-3": "Unhappy",
+    "level-4": "Neutral",
+    "level-5": "Happy",
+    "level-6": "Quite happy",
+    "level-7": "Very happy",
+    "chart": {
+      "title": "Mood Trend",
+      "today": "Today",
+      "day": "Day",
+      "week": "Last 7 days",
+      "trend": "Last 30 days",
+      "expand": "Expand mood chart",
+      "empty": "No mood data for this period"
+    }
+  },
   "memo": {
     "archived-at": "Archived at",
     "click-to-hide-sensitive-content": "Click to hide sensitive content",
@@ -592,6 +614,12 @@
     },
     "memo": {
       "add-reaction": "Add reaction",
+      "allowed-visibilities": "Allowed visibilities",
+      "allowed-visibilities-description": "Choose which visibility levels users can publish to. Disabling a level hides all existing memos at that level (including their mood and other info); disabling Public also disables the Explore page. Private is always allowed.",
+      "visibility-policy": "Visibility policy",
+      "visibility-policy.all": "Allow all levels",
+      "visibility-policy.no-public": "Disable Public",
+      "visibility-policy.private-only": "Disable Protected and Public",
       "bytes-unit": "bytes",
       "configured-reactions": "Configured reactions",
       "content-length-limit": "Content length limit (Byte)",
@@ -603,6 +631,11 @@
       "enable-memo-comments": "Enable memo comments",
       "enable-memo-location": "Enable memo location",
       "label": "Memo",
+      "mood-settings": "Mood settings",
+      "mood-settings-description": "Customize the emoji and color for each of the 7 mood levels. Leave empty to use defaults.",
+      "custom-color": "Custom color",
+      "color-panel": "Color panel",
+      "color-hue": "Hue strip",
       "reaction-placeholder": "e.g. 👍",
       "reactions-description": "Define the reaction options users can apply to memos.",
       "remove-reaction": "Remove reaction",

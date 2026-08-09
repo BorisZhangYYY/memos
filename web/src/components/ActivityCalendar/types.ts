@@ -31,6 +31,8 @@ export interface MonthCalendarProps {
   className?: string;
   disableTooltips?: boolean;
   timeBasis?: MemoTimeBasis;
+  /** Average mood level (1-7) per day, keyed by "YYYY-MM-DD". */
+  moodData?: CalendarData;
 }
 
 export interface YearCalendarProps {

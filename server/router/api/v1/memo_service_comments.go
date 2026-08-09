@@ -53,7 +53,9 @@ func (s *APIV1Service) CreateMemoComment(ctx context.Context, request *v1pb.Crea
 
 	// Create the memo comment first; suppress the generic memo.created SSE event
 	// since CreateMemoComment broadcasts memo.comment.created for the parent instead.
-	memoComment, err := s.CreateMemo(withSuppressMentionNotifications(withSuppressSSE(ctx)), &v1pb.CreateMemoRequest{
+	// The allowed-visibilities check is also suppressed since the comment's
+	// visibility is inherited from the parent memo, not user-chosen.
+	memoComment, err := s.CreateMemo(withSuppressVisibilityValidation(withSuppressMentionNotifications(withSuppressSSE(ctx))), &v1pb.CreateMemoRequest{
 		Memo:   comment,
 		MemoId: request.CommentId,
 	})

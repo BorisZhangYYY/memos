@@ -6,8 +6,10 @@ import { toast } from "react-hot-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useInstance } from "@/contexts/InstanceContext";
+import { DEFAULT_MOOD_COLORS } from "@/lib/mood";
 import {
   InstanceSetting_Key,
   InstanceSetting_MemoRelatedSetting,
@@ -15,10 +17,43 @@ import {
   InstanceSettingSchema,
 } from "@/types/proto/api/v1/instance_service_pb";
 import { useTranslate } from "@/utils/i18n";
+import MoodColorPicker from "./MoodColorPicker";
 import SettingGroup from "./SettingGroup";
 import { SettingList, SettingListItem, SettingPanel } from "./SettingList";
 import SettingSection from "./SettingSection";
 import useInstanceSettingUpdater, { buildInstanceSettingName } from "./useInstanceSettingUpdater";
+
+const DEFAULT_MOOD_EMOJIS = ["😫", "😟", "😔", "😐", "😌", "☺️", "😆"];
+
+type VisibilityPolicy = "all" | "no-public" | "private-only";
+
+// Maps the stored allowed_visibilities list back to the single policy choice.
+// An empty list means all levels are allowed. PUBLIC implies PROTECTED is
+// allowed too (enforced server-side), so any list containing PUBLIC maps to
+// the "all" policy.
+const getVisibilityPolicy = (allowed: string[] | undefined): VisibilityPolicy => {
+  if (!allowed || allowed.length === 0) return "all";
+  if (allowed.includes("PUBLIC")) return "all";
+  if (allowed.includes("PROTECTED")) return "no-public";
+  return "private-only";
+};
+
+const allowedVisibilitiesForPolicy = (policy: VisibilityPolicy): string[] => {
+  switch (policy) {
+    case "all":
+      return [];
+    case "no-public":
+      return ["PRIVATE", "PROTECTED"];
+    case "private-only":
+      return ["PRIVATE"];
+  }
+};
+
+const visibilityPolicyOptions = (t: ReturnType<typeof useTranslate>) => [
+  { value: "all", label: t("setting.memo.visibility-policy.all") },
+  { value: "no-public", label: t("setting.memo.visibility-policy.no-public") },
+  { value: "private-only", label: t("setting.memo.visibility-policy.private-only") },
+];
 
 const MemoRelatedSettings = () => {
   const t = useTranslate();
@@ -55,17 +90,59 @@ const MemoRelatedSettings = () => {
       return;
     }
 
+    // Normalize mood emojis and colors so cleared inputs fall back to defaults
+    // instead of persisting blank entries.
+    const normalizedSetting = create(InstanceSetting_MemoRelatedSettingSchema, {
+      ...memoRelatedSetting,
+      moodEmojis: memoRelatedSetting.moodEmojis?.map((emoji, i) => emoji || DEFAULT_MOOD_EMOJIS[i]),
+      moodColors: memoRelatedSetting.moodColors?.map((color, i) => color || DEFAULT_MOOD_COLORS[i]),
+    });
+    setMemoRelatedSetting(normalizedSetting);
+
     await saveInstanceSetting({
       key: InstanceSetting_Key.MEMO_RELATED,
       setting: create(InstanceSettingSchema, {
         name: buildInstanceSettingName(InstanceSetting_Key.MEMO_RELATED),
         value: {
           case: "memoRelatedSetting",
-          value: memoRelatedSetting,
+          value: normalizedSetting,
         },
       }),
       errorContext: "Update memo-related settings",
     });
+  };
+
+  // Visibility policy is a single choice: all levels, or progressively more
+  // restricted. Disabling PUBLIC keeps PROTECTED allowed; disabling PROTECTED
+  // also disables PUBLIC.
+  const visibilityPolicy = getVisibilityPolicy(memoRelatedSetting.allowedVisibilities);
+
+  const setVisibilityPolicy = (policy: VisibilityPolicy) => {
+    updatePartialSetting({ allowedVisibilities: allowedVisibilitiesForPolicy(policy) });
+  };
+
+  const moodEmojis = memoRelatedSetting.moodEmojis?.length === 7 ? memoRelatedSetting.moodEmojis : DEFAULT_MOOD_EMOJIS;
+  const moodColors = memoRelatedSetting.moodColors?.length === 7 ? memoRelatedSetting.moodColors : DEFAULT_MOOD_COLORS;
+  const moodLevelLabels = [
+    t("mood.level-1"),
+    t("mood.level-2"),
+    t("mood.level-3"),
+    t("mood.level-4"),
+    t("mood.level-5"),
+    t("mood.level-6"),
+    t("mood.level-7"),
+  ];
+
+  const updateMoodEmoji = (index: number, value: string) => {
+    const next = [...moodEmojis];
+    next[index] = value;
+    updatePartialSetting({ moodEmojis: next });
+  };
+
+  const updateMoodColor = (index: number, value: string) => {
+    const next = [...moodColors];
+    next[index] = value;
+    updatePartialSetting({ moodColors: next });
   };
 
   return (
@@ -93,6 +170,29 @@ const MemoRelatedSettings = () => {
               />
               <span className="text-xs text-muted-foreground">{t("setting.memo.bytes-unit")}</span>
             </div>
+          </SettingListItem>
+        </SettingList>
+      </SettingGroup>
+
+      <SettingGroup title={t("setting.memo.allowed-visibilities")} description={t("setting.memo.allowed-visibilities-description")}>
+        <SettingList>
+          <SettingListItem label={t("setting.memo.visibility-policy")}>
+            <Select
+              value={visibilityPolicy}
+              items={visibilityPolicyOptions(t)}
+              onValueChange={(value) => setVisibilityPolicy(value as VisibilityPolicy)}
+            >
+              <SelectTrigger size="sm" className="w-64" aria-label={t("setting.memo.visibility-policy")}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {visibilityPolicyOptions(t).map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </SettingListItem>
         </SettingList>
       </SettingGroup>
@@ -139,6 +239,27 @@ const MemoRelatedSettings = () => {
             ))}
           </div>
         </SettingPanel>
+      </SettingGroup>
+
+      <SettingGroup title={t("setting.memo.mood-settings")} description={t("setting.memo.mood-settings-description")} showSeparator>
+        <div className="flex items-stretch gap-2">
+          {moodEmojis.map((emoji: string, i: number) => (
+            <div key={i} className="flex flex-1 flex-col items-center gap-1.5 rounded-lg border p-2" style={{ borderColor: moodColors[i] }}>
+              <span className="max-w-full truncate text-[11px] leading-4 text-muted-foreground">{moodLevelLabels[i]}</span>
+              <Input
+                className="h-9 w-12 p-0 font-mono text-center text-lg"
+                value={emoji}
+                aria-label={`${moodLevelLabels[i]} emoji`}
+                onChange={(e) => updateMoodEmoji(i, e.target.value)}
+              />
+              <MoodColorPicker
+                value={moodColors[i]}
+                onChange={(color) => updateMoodColor(i, color)}
+                ariaLabel={`${moodLevelLabels[i]} color`}
+              />
+            </div>
+          ))}
+        </div>
       </SettingGroup>
 
       <div className="w-full flex justify-end">

@@ -243,6 +243,28 @@
     "code-block": "代码块",
     "content-syntax": "内容语法"
   },
+  "mood": {
+    "filter": "心情",
+    "monthly-average": "当月平均心情",
+    "select": "选择心情",
+    "level": "心情等级",
+    "level-1": "非常不愉快",
+    "level-2": "有点不愉快",
+    "level-3": "不愉快",
+    "level-4": "不悲不喜",
+    "level-5": "愉快",
+    "level-6": "有点愉快",
+    "level-7": "非常愉快",
+    "chart": {
+      "title": "心情趋势",
+      "today": "今天",
+      "day": "日视图",
+      "week": "近 7 天",
+      "trend": "近 30 天",
+      "expand": "展开心情图表",
+      "empty": "该时段暂无心情数据"
+    }
+  },
   "memo": {
     "archived-at": "归档于",
     "click-to-hide-sensitive-content": "点击隐藏 NSFW 内容",
@@ -719,6 +741,12 @@
     },
     "memo": {
       "add-reaction": "添加表态",
+      "allowed-visibilities": "允许的可见性级别",
+      "allowed-visibilities-description": "选择用户可发布的可见性级别。禁用某个级别后，已发布的对应 memo 将全部隐藏（含心情等信息）；禁用 Public 时，发现页入口也会被禁用。Private 始终允许。",
+      "visibility-policy": "可见性策略",
+      "visibility-policy.all": "允许所有级别",
+      "visibility-policy.no-public": "禁用 Public",
+      "visibility-policy.private-only": "禁用 Protected 和 Public",
       "bytes-unit": "字节",
       "configured-reactions": "已配置表态",
       "content-length-limit": "内容长度限制（字节）",
@@ -735,6 +763,11 @@
       "remove-reaction": "移除表态",
       "title": "备忘录相关设置",
       "label": "备忘录",
+      "mood-settings": "心情设置",
+      "mood-settings-description": "自定义 7 个心情档位的表情符号和颜色。留空使用默认值。",
+      "custom-color": "自定义颜色",
+      "color-panel": "颜色面板",
+      "color-hue": "色相条",
       "reactions-required": "反应列表不能为空"
     },
     "webhook": {

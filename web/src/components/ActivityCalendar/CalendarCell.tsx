@@ -12,10 +12,12 @@ export interface CalendarCellProps {
   onClick?: (date: string) => void;
   size?: CalendarSize;
   disableTooltip?: boolean;
+  /** Small emoji overlaid at the cell's top-left corner; shown when the day has mood data. */
+  moodEmoji?: string;
 }
 
 export const CalendarCell = memo((props: CalendarCellProps) => {
-  const { day, maxCount, tooltipText, onClick, size = "default", disableTooltip = false } = props;
+  const { day, maxCount, tooltipText, onClick, size = "default", disableTooltip = false, moodEmoji } = props;
 
   const handleClick = () => {
     if (onClick) {
@@ -58,6 +60,11 @@ export const CalendarCell = memo((props: CalendarCellProps) => {
       )}
     >
       {day.label}
+      {moodEmoji && (
+        <span aria-hidden="true" className="absolute left-[1px] top-[1px] text-[8px] leading-none">
+          {moodEmoji}
+        </span>
+      )}
       {day.isToday && (
         <span
           aria-hidden="true"

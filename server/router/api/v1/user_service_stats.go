@@ -93,6 +93,7 @@ func (s *APIV1Service) ListAllUserStats(ctx context.Context, request *v1pb.ListA
 
 	userMemoStatMap := make(map[int32]*v1pb.UserStats)
 	pinnedMemoUIDsByUserID := make(map[int32][]string)
+	moodLevelsByUserID := make(map[int32][]int32)
 	limit := 1000
 	offset := 0
 	memoFind.Limit = &limit
@@ -123,12 +124,20 @@ func (s *APIV1Service) ListAllUserStats(ctx context.Context, request *v1pb.ListA
 						UndoCount: 0,
 					},
 				}
+				moodLevelsByUserID[memo.CreatorID] = []int32{}
 			}
 
 			stats := userMemoStatMap[memo.CreatorID]
 
 			stats.MemoCreatedTimestamps = append(stats.MemoCreatedTimestamps, timestamppb.New(time.Unix(memo.CreatedTs, 0)))
 			stats.MemoUpdatedTimestamps = append(stats.MemoUpdatedTimestamps, timestamppb.New(time.Unix(memo.UpdatedTs, 0)))
+
+			// Track the mood level parallel to the created timestamps (0 = no mood).
+			if memo.Payload != nil {
+				moodLevelsByUserID[memo.CreatorID] = append(moodLevelsByUserID[memo.CreatorID], memo.Payload.MoodLevel)
+			} else {
+				moodLevelsByUserID[memo.CreatorID] = append(moodLevelsByUserID[memo.CreatorID], 0)
+			}
 
 			// Count memo stats
 			stats.TotalMemoCount++
@@ -176,6 +185,7 @@ func (s *APIV1Service) ListAllUserStats(ctx context.Context, request *v1pb.ListA
 			return nil, status.Errorf(codes.Internal, "failed to resolve user stats name")
 		}
 		userMemoStat.Name = fmt.Sprintf("%s/stats", BuildUserName(username))
+		userMemoStat.MoodLevels = moodLevelsByUserID[userID]
 		for _, memoUID := range pinnedMemoUIDsByUserID[userID] {
 			userMemoStat.PinnedMemos = append(userMemoStat.PinnedMemos, MemoNamePrefix+memoUID)
 		}
@@ -227,6 +237,7 @@ func (s *APIV1Service) GetUserStats(ctx context.Context, request *v1pb.GetUserSt
 	undoCount := int32(0)
 	pinnedMemos := []string{}
 	totalMemoCount := int32(0)
+	moodLevels := []int32{}
 
 	limit := 1000
 	offset := 0
@@ -247,6 +258,12 @@ func (s *APIV1Service) GetUserStats(ctx context.Context, request *v1pb.GetUserSt
 		for _, memo := range memos {
 			createdTimestamps = append(createdTimestamps, timestamppb.New(time.Unix(memo.CreatedTs, 0)))
 			updatedTimestamps = append(updatedTimestamps, timestamppb.New(time.Unix(memo.UpdatedTs, 0)))
+			// Track the mood level parallel to the created timestamps (0 = no mood).
+			if memo.Payload != nil {
+				moodLevels = append(moodLevels, memo.Payload.MoodLevel)
+			} else {
+				moodLevels = append(moodLevels, 0)
+			}
 			// Count different memo types based on content.
 			if memo.Payload != nil {
 				incrementTagCounts(tagCount, memo.Payload.Tags)
@@ -280,6 +297,7 @@ func (s *APIV1Service) GetUserStats(ctx context.Context, request *v1pb.GetUserSt
 		TagCount:              tagCount,
 		PinnedMemos:           pinnedMemos,
 		TotalMemoCount:        totalMemoCount,
+		MoodLevels:            moodLevels,
 		MemoTypeStats: &v1pb.UserStats_MemoTypeStats{
 			LinkCount: linkCount,
 			CodeCount: codeCount,

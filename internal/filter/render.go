@@ -160,6 +160,8 @@ func (r *renderer) renderComparison(cond *ComparisonCondition) (renderResult, er
 			return r.renderBoolColumnComparison(field, cond.Operator, cond.Right)
 		case FieldKindJSONBool:
 			return r.renderJSONBoolComparison(field, cond.Operator, cond.Right)
+		case FieldKindJSONInt:
+			return r.renderJSONIntComparison(field, cond.Operator, cond.Right)
 		case FieldKindScalar:
 			return r.renderScalarComparison(field, cond.Operator, cond.Right)
 		default:
@@ -403,6 +405,33 @@ func (r *renderer) renderJSONBoolComparison(field Field, op ComparisonOperator, 
 		placeholder := r.addArg(value)
 		return renderResult{
 			sql: fmt.Sprintf("(%s)::boolean %s %s", jsonExpr, sqlOperator(op), placeholder),
+		}, nil
+	default:
+		return renderResult{}, errors.Errorf("unsupported dialect %s", r.dialect)
+	}
+}
+
+// renderJSONIntComparison renders a numeric comparison against an int value
+// stored in the payload JSON. JSON numbers extract cleanly on SQLite and MySQL;
+// Postgres reads the text accessor (->>) and casts to int, mirroring the
+// ::boolean cast used for JSON booleans. Missing fields extract to NULL, so
+// comparisons simply exclude rows without the key.
+func (r *renderer) renderJSONIntComparison(field Field, op ComparisonOperator, right ValueExpr) (renderResult, error) {
+	value, err := expectNumericLiteral(right)
+	if err != nil {
+		return renderResult{}, err
+	}
+
+	jsonExpr := jsonExtractExpr(r.dialect, field)
+	placeholder := r.addArg(value)
+	switch r.dialect {
+	case DialectPostgres:
+		return renderResult{
+			sql: fmt.Sprintf("(%s)::int %s %s", jsonExpr, sqlOperator(op), placeholder),
+		}, nil
+	case DialectSQLite, DialectMySQL:
+		return renderResult{
+			sql: fmt.Sprintf("%s %s %s", jsonExpr, sqlOperator(op), placeholder),
 		}, nil
 	default:
 		return renderResult{}, errors.Errorf("unsupported dialect %s", r.dialect)

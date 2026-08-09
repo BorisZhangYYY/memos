@@ -31,3 +31,14 @@ dist
 
 # Frontend test coverage output (Vitest + @vitest/coverage-v8).
 web/coverage/
+
+# Local test environment credentials (never commit).
+docs/test-env.md
+
+
+# Superpowers skill workspace (design drafts, session state).
+.superpowers/
+
+# Local Claude Code overrides and installed skills.
+.claude/settings.local.json
+.claude/skills/

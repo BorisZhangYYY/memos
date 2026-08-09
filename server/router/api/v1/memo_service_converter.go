@@ -46,6 +46,7 @@ func (s *APIV1Service) convertMemoFromStoreWithCreators(ctx context.Context, mem
 	}
 	if memo.Payload != nil {
 		memoMessage.Tags = memo.Payload.Tags
+		memoMessage.MoodLevel = memo.Payload.MoodLevel
 		memoMessage.Property = convertMemoPropertyFromStore(memo.Payload.Property)
 		memoMessage.Location = convertLocationFromStore(memo.Payload.Location)
 	}

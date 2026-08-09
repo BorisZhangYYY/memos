@@ -363,6 +363,9 @@ message UserStats {
   reserved 2;
   reserved "memo_display_timestamps";
 
+  reserved 9;
+  reserved "daily_mood_stats";
+
   // The stats of memo types.
   MemoTypeStats memo_type_stats = 3;
 
@@ -376,6 +379,10 @@ message UserStats {
   // mirrors memo_created_timestamps). Used by the activity heatmap when
   // the client's view is set to update_time basis.
   repeated google.protobuf.Timestamp memo_updated_timestamps = 8;
+
+  // The mood levels of the user's memos, one per memo.
+  // Mirrors memo_created_timestamps order; 0 means no mood set.
+  repeated int32 mood_levels = 10;
 
   // The pinned memos of the user.
   repeated string pinned_memos = 5 [(google.api.resource_reference) = {type: "memos.api.v1/Memo"}];

@@ -468,3 +468,104 @@ func TestRenderAllRejectsUnsupportedPredicate(t *testing.T) {
 	_, err = engine.CompileToStatement(context.Background(), `tags.all(t, size(t) > 2)`, RenderOptions{Dialect: DialectSQLite})
 	require.Error(t, err)
 }
+
+// =============================================================================
+// JSON Int Field Tests
+// Schema: mood_level (payload JSON int, all comparison operators)
+// =============================================================================
+
+func TestRenderMoodLevelComparisonPerDialect(t *testing.T) {
+	t.Parallel()
+
+	engine, err := NewEngine(NewSchema())
+	require.NoError(t, err)
+
+	cases := []struct {
+		dialect   DialectName
+		expression string
+		fragments []string
+		args      []any
+	}{
+		{DialectSQLite, `mood_level >= 5`, []string{"JSON_EXTRACT(`memo`.`payload`, '$.moodLevel') >= ?"}, []any{int64(5)}},
+		{DialectMySQL, `mood_level >= 5`, []string{"JSON_EXTRACT(`memo`.`payload`, '$.moodLevel') >= ?"}, []any{int64(5)}},
+		{DialectPostgres, `mood_level >= 5`, []string{"(memo.payload->>'moodLevel')::int >= $1"}, []any{int64(5)}},
+		{DialectSQLite, `mood_level == 5`, []string{"JSON_EXTRACT(`memo`.`payload`, '$.moodLevel') = ?"}, []any{int64(5)}},
+		{DialectPostgres, `mood_level == 5`, []string{"(memo.payload->>'moodLevel')::int = $1"}, []any{int64(5)}},
+	}
+	for _, tc := range cases {
+		stmt, err := engine.CompileToStatement(context.Background(), tc.expression, RenderOptions{Dialect: tc.dialect})
+		require.NoError(t, err, tc.dialect)
+		for _, fragment := range tc.fragments {
+			require.Contains(t, stmt.SQL, fragment, "dialect %s", tc.dialect)
+		}
+		require.Equal(t, tc.args, stmt.Args, "dialect %s", tc.dialect)
+	}
+}
+
+func TestRenderMoodLevelRangePerDialect(t *testing.T) {
+	t.Parallel()
+
+	engine, err := NewEngine(NewSchema())
+	require.NoError(t, err)
+
+	cases := []struct {
+		dialect   DialectName
+		fragments []string
+	}{
+		{DialectSQLite, []string{"JSON_EXTRACT(`memo`.`payload`, '$.moodLevel') >= ?", "JSON_EXTRACT(`memo`.`payload`, '$.moodLevel') <= ?"}},
+		{DialectMySQL, []string{"JSON_EXTRACT(`memo`.`payload`, '$.moodLevel') >= ?", "JSON_EXTRACT(`memo`.`payload`, '$.moodLevel') <= ?"}},
+		{DialectPostgres, []string{"(memo.payload->>'moodLevel')::int >= $1", "(memo.payload->>'moodLevel')::int <= $2"}},
+	}
+	for _, tc := range cases {
+		stmt, err := engine.CompileToStatement(context.Background(), `mood_level >= 5 && mood_level <= 7`, RenderOptions{Dialect: tc.dialect})
+		require.NoError(t, err, tc.dialect)
+		for _, fragment := range tc.fragments {
+			require.Contains(t, stmt.SQL, fragment, "dialect %s", tc.dialect)
+		}
+		require.Equal(t, []any{int64(5), int64(7)}, stmt.Args, "dialect %s", tc.dialect)
+	}
+}
+
+func TestRenderMoodLevelComparisonSQLiteBehavior(t *testing.T) {
+	db, err := sql.Open("sqlite", ":memory:")
+	require.NoError(t, err)
+	db.SetMaxOpenConns(1)
+	t.Cleanup(func() { require.NoError(t, db.Close()) })
+
+	_, err = db.Exec(`CREATE TABLE memo (id INTEGER PRIMARY KEY, payload TEXT)`)
+	require.NoError(t, err)
+	for _, fixture := range []struct {
+		id      int
+		payload string
+	}{
+		{1, `{"moodLevel": 2}`},
+		{2, `{"moodLevel": 5}`},
+		{3, `{"moodLevel": 7}`},
+		{4, `{}`},
+	} {
+		_, err = db.Exec(`INSERT INTO memo (id, payload) VALUES (?, ?)`, fixture.id, fixture.payload)
+		require.NoError(t, err)
+	}
+
+	engine, err := NewEngine(NewSchema())
+	require.NoError(t, err)
+
+	tests := []struct {
+		name       string
+		expression string
+		want       []int
+	}{
+		{name: "greater or equal", expression: `mood_level >= 5`, want: []int{2, 3}},
+		{name: "equal", expression: `mood_level == 5`, want: []int{2}},
+		{name: "less than", expression: `mood_level < 5`, want: []int{1}},
+		{name: "not equal", expression: `mood_level != 5`, want: []int{1, 3}},
+		{name: "range", expression: `mood_level >= 2 && mood_level <= 5`, want: []int{1, 2}},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			stmt, err := engine.CompileToStatement(context.Background(), tc.expression, RenderOptions{Dialect: DialectSQLite})
+			require.NoError(t, err)
+			require.Equal(t, tc.want, selectMemoIDs(t, db, stmt))
+		})
+	}
+}

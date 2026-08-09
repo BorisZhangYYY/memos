@@ -79,6 +79,14 @@ func (b *MemoBuilder) Tags(tags ...string) *MemoBuilder {
 	return b
 }
 
+func (b *MemoBuilder) MoodLevel(level int32) *MemoBuilder {
+	if b.memo.Payload == nil {
+		b.memo.Payload = &storepb.MemoPayload{}
+	}
+	b.memo.Payload.MoodLevel = level
+	return b
+}
+
 func (b *MemoBuilder) Property(fn func(*storepb.MemoPayload_Property)) *MemoBuilder {
 	if b.memo.Payload == nil {
 		b.memo.Payload = &storepb.MemoPayload{}

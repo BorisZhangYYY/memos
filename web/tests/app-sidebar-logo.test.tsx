@@ -55,10 +55,13 @@ vi.mock("@/contexts/InstanceContext", () => ({
 
 vi.mock("@/contexts/MemoFilterContext", () => ({
   stringifyFilters: () => "",
+  replaceFiltersByFactor: (filters: unknown[]) => filters,
   useMemoFilterContext: () => ({
     filters: [],
     shortcut: undefined,
     setShortcut: vi.fn(),
+    setFilters: vi.fn(),
+    getFiltersByFactor: () => [],
   }),
 }));
 

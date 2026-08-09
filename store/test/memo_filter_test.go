@@ -691,6 +691,39 @@ func TestMemoFilterCombinedJSONBool(t *testing.T) {
 }
 
 // =============================================================================
+// JSON Int Field Tests
+// Schema: mood_level (payload JSON int, all comparison operators)
+// =============================================================================
+
+func TestMemoFilterMoodLevel(t *testing.T) {
+	t.Parallel()
+	tc := NewMemoFilterTestContext(t)
+	defer tc.Close()
+
+	tc.CreateMemo(NewMemoBuilder("memo-mood-2", tc.User.ID).Content("Mood 2").MoodLevel(2))
+	tc.CreateMemo(NewMemoBuilder("memo-mood-5", tc.User.ID).Content("Mood 5").MoodLevel(5))
+	tc.CreateMemo(NewMemoBuilder("memo-mood-7", tc.User.ID).Content("Mood 7").MoodLevel(7))
+	tc.CreateMemo(NewMemoBuilder("memo-no-mood", tc.User.ID).Content("No mood"))
+
+	// Test: mood_level >= 5
+	memos := tc.ListWithFilter(`mood_level >= 5`)
+	require.Len(t, memos, 2)
+
+	// Test: mood_level == 5
+	memos = tc.ListWithFilter(`mood_level == 5`)
+	require.Len(t, memos, 1)
+	require.Equal(t, int32(5), memos[0].Payload.MoodLevel)
+
+	// Test: range
+	memos = tc.ListWithFilter(`mood_level >= 2 && mood_level <= 5`)
+	require.Len(t, memos, 2)
+
+	// Test: combined with a text match
+	memos = tc.ListWithFilter(`mood_level >= 5 && content.contains("Mood")`)
+	require.Len(t, memos, 2)
+}
+
+// =============================================================================
 // Timestamp Field Tests
 // Schema: created_ts, updated_ts (timestamp, all comparison operators)
 // Time helpers: now variable, timestamp(...), duration(...)
