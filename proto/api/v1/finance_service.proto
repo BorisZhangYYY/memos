@@ -1,0 +1,251 @@
+syntax = "proto3";
+
+package memos.api.v1;
+
+import "api/v1/common.proto";
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "gen/api/v1";
+
+// FinanceService manages a user's private wallets and ledger.
+service FinanceService {
+  rpc ListFinanceWallets(ListFinanceWalletsRequest) returns (ListFinanceWalletsResponse) {
+    option (google.api.http) = {get: "/api/v1/{parent=users/*}/wallets"};
+  }
+  rpc CreateFinanceWallet(CreateFinanceWalletRequest) returns (FinanceWallet) {
+    option (google.api.http) = {
+      post: "/api/v1/{parent=users/*}/wallets"
+      body: "wallet"
+    };
+  }
+  rpc UpdateFinanceWallet(UpdateFinanceWalletRequest) returns (FinanceWallet) {
+    option (google.api.http) = {
+      patch: "/api/v1/{wallet.name=users/*/wallets/*}"
+      body: "wallet"
+    };
+  }
+
+  rpc ListFinanceCategories(ListFinanceCategoriesRequest) returns (ListFinanceCategoriesResponse) {
+    option (google.api.http) = {get: "/api/v1/{parent=users/*}/finance-categories"};
+  }
+  rpc CreateFinanceCategory(CreateFinanceCategoryRequest) returns (FinanceCategory) {
+    option (google.api.http) = {
+      post: "/api/v1/{parent=users/*}/finance-categories"
+      body: "category"
+    };
+  }
+  rpc UpdateFinanceCategory(UpdateFinanceCategoryRequest) returns (FinanceCategory) {
+    option (google.api.http) = {
+      patch: "/api/v1/{category.name=users/*/financeCategories/*}"
+      body: "category"
+    };
+  }
+
+  rpc ListFinanceTransactions(ListFinanceTransactionsRequest) returns (ListFinanceTransactionsResponse) {
+    option (google.api.http) = {get: "/api/v1/{parent=users/*}/finance-transactions"};
+  }
+  rpc CreateFinanceTransaction(CreateFinanceTransactionRequest) returns (FinanceTransaction) {
+    option (google.api.http) = {
+      post: "/api/v1/{parent=users/*}/finance-transactions"
+      body: "transaction"
+    };
+  }
+  rpc UpdateFinanceTransaction(UpdateFinanceTransactionRequest) returns (FinanceTransaction) {
+    option (google.api.http) = {
+      patch: "/api/v1/{transaction.name=users/*/financeTransactions/*}"
+      body: "transaction"
+    };
+  }
+  rpc DeleteFinanceTransaction(DeleteFinanceTransactionRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/api/v1/{name=users/*/financeTransactions/*}"};
+  }
+  rpc AdjustFinanceWalletBalance(AdjustFinanceWalletBalanceRequest) returns (FinanceTransaction) {
+    option (google.api.http) = {
+      post: "/api/v1/{wallet=users/*/wallets/*}:adjustBalance"
+      body: "*"
+    };
+  }
+  rpc GetFinanceSummary(GetFinanceSummaryRequest) returns (FinanceSummary) {
+    option (google.api.http) = {get: "/api/v1/{parent=users/*}/finance-summary"};
+  }
+}
+
+message FinanceWallet {
+  option (google.api.resource) = {
+    type: "memos.api.v1/FinanceWallet"
+    pattern: "users/{user}/wallets/{wallet}"
+    singular: "financeWallet"
+    plural: "financeWallets"
+  };
+
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+  string display_name = 2 [(google.api.field_behavior) = REQUIRED];
+  // Amounts are stored in the currency's minor unit. For CNY, 1299 means ¥12.99.
+  int64 initial_balance_minor = 3 [(google.api.field_behavior) = IMMUTABLE];
+  int64 balance_minor = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+  bool allow_negative_balance = 5 [(google.api.field_behavior) = OPTIONAL];
+  State state = 6 [(google.api.field_behavior) = OPTIONAL];
+  google.protobuf.Timestamp create_time = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+  google.protobuf.Timestamp update_time = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+message FinanceCategory {
+  option (google.api.resource) = {
+    type: "memos.api.v1/FinanceCategory"
+    pattern: "users/{user}/financeCategories/{finance_category}"
+    singular: "financeCategory"
+    plural: "financeCategories"
+  };
+
+  enum Type {
+    TYPE_UNSPECIFIED = 0;
+    INCOME = 1;
+    EXPENSE = 2;
+  }
+
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+  string display_name = 2 [(google.api.field_behavior) = REQUIRED];
+  Type type = 3 [(google.api.field_behavior) = IMMUTABLE];
+  State state = 4 [(google.api.field_behavior) = OPTIONAL];
+  google.protobuf.Timestamp create_time = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+  google.protobuf.Timestamp update_time = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+message FinanceTransaction {
+  option (google.api.resource) = {
+    type: "memos.api.v1/FinanceTransaction"
+    pattern: "users/{user}/financeTransactions/{finance_transaction}"
+    singular: "financeTransaction"
+    plural: "financeTransactions"
+  };
+
+  enum Type {
+    TYPE_UNSPECIFIED = 0;
+    INCOME = 1;
+    EXPENSE = 2;
+    TRANSFER = 3;
+    ADJUSTMENT = 4;
+  }
+
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+  Type type = 2 [(google.api.field_behavior) = REQUIRED];
+  // Positive amount in minor units. Adjustments expose the absolute delta here.
+  int64 amount_minor = 3 [(google.api.field_behavior) = REQUIRED];
+  string wallet = 4 [(google.api.field_behavior) = REQUIRED];
+  string destination_wallet = 5 [(google.api.field_behavior) = OPTIONAL];
+  string category = 6 [(google.api.field_behavior) = OPTIONAL];
+  string note = 7 [(google.api.field_behavior) = OPTIONAL];
+  google.protobuf.Timestamp occur_time = 8 [(google.api.field_behavior) = REQUIRED];
+  google.protobuf.Timestamp create_time = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
+  google.protobuf.Timestamp update_time = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // Signed wallet delta for an adjustment. Ordinary transactions return zero.
+  int64 adjustment_delta_minor = 11 [(google.api.field_behavior) = OUTPUT_ONLY];
+  int64 balance_before_minor = 12 [(google.api.field_behavior) = OUTPUT_ONLY];
+  int64 balance_after_minor = 13 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+message FinanceDailySummary {
+  string date = 1;
+  int64 income_minor = 2;
+  int64 expense_minor = 3;
+}
+
+message FinanceSummary {
+  int64 total_balance_minor = 1;
+  int64 income_minor = 2;
+  int64 expense_minor = 3;
+  int64 net_minor = 4;
+  repeated FinanceDailySummary daily_summaries = 5;
+}
+
+message ListFinanceWalletsRequest {
+  string parent = 1 [(google.api.field_behavior) = REQUIRED];
+  State state = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message ListFinanceWalletsResponse {
+  repeated FinanceWallet wallets = 1;
+}
+
+message CreateFinanceWalletRequest {
+  string parent = 1 [(google.api.field_behavior) = REQUIRED];
+  FinanceWallet wallet = 2 [(google.api.field_behavior) = REQUIRED];
+  string request_id = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message UpdateFinanceWalletRequest {
+  FinanceWallet wallet = 1 [(google.api.field_behavior) = REQUIRED];
+  google.protobuf.FieldMask update_mask = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message ListFinanceCategoriesRequest {
+  string parent = 1 [(google.api.field_behavior) = REQUIRED];
+  FinanceCategory.Type type = 2 [(google.api.field_behavior) = OPTIONAL];
+  State state = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message ListFinanceCategoriesResponse {
+  repeated FinanceCategory categories = 1;
+}
+
+message CreateFinanceCategoryRequest {
+  string parent = 1 [(google.api.field_behavior) = REQUIRED];
+  FinanceCategory category = 2 [(google.api.field_behavior) = REQUIRED];
+  string request_id = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message UpdateFinanceCategoryRequest {
+  FinanceCategory category = 1 [(google.api.field_behavior) = REQUIRED];
+  google.protobuf.FieldMask update_mask = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message ListFinanceTransactionsRequest {
+  string parent = 1 [(google.api.field_behavior) = REQUIRED];
+  google.protobuf.Timestamp start_time = 2 [(google.api.field_behavior) = OPTIONAL];
+  google.protobuf.Timestamp end_time = 3 [(google.api.field_behavior) = OPTIONAL];
+  string wallet = 4 [(google.api.field_behavior) = OPTIONAL];
+  FinanceTransaction.Type type = 5 [(google.api.field_behavior) = OPTIONAL];
+  int32 page_size = 6 [(google.api.field_behavior) = OPTIONAL];
+  string page_token = 7 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message ListFinanceTransactionsResponse {
+  repeated FinanceTransaction transactions = 1;
+  string next_page_token = 2;
+}
+
+message CreateFinanceTransactionRequest {
+  string parent = 1 [(google.api.field_behavior) = REQUIRED];
+  FinanceTransaction transaction = 2 [(google.api.field_behavior) = REQUIRED];
+  string request_id = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message UpdateFinanceTransactionRequest {
+  FinanceTransaction transaction = 1 [(google.api.field_behavior) = REQUIRED];
+  google.protobuf.FieldMask update_mask = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message DeleteFinanceTransactionRequest {
+  string name = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message AdjustFinanceWalletBalanceRequest {
+  string wallet = 1 [(google.api.field_behavior) = REQUIRED];
+  int64 actual_balance_minor = 2 [(google.api.field_behavior) = REQUIRED];
+  string note = 3 [(google.api.field_behavior) = OPTIONAL];
+  google.protobuf.Timestamp occur_time = 4 [(google.api.field_behavior) = REQUIRED];
+  string request_id = 5 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message GetFinanceSummaryRequest {
+  string parent = 1 [(google.api.field_behavior) = REQUIRED];
+  google.protobuf.Timestamp start_time = 2 [(google.api.field_behavior) = REQUIRED];
+  google.protobuf.Timestamp end_time = 3 [(google.api.field_behavior) = REQUIRED];
+  // IANA time zone used for daily buckets, e.g. Asia/Shanghai.
+  string time_zone = 4 [(google.api.field_behavior) = REQUIRED];
+}

@@ -565,6 +565,104 @@ func (s *ConnectServiceHandler) DeleteShortcut(ctx context.Context, req *connect
 	return connect.NewResponse(resp), nil
 }
 
+// FinanceService
+
+func (s *ConnectServiceHandler) ListFinanceWallets(ctx context.Context, req *connect.Request[v1pb.ListFinanceWalletsRequest]) (*connect.Response[v1pb.ListFinanceWalletsResponse], error) {
+	resp, err := s.APIV1Service.ListFinanceWallets(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) CreateFinanceWallet(ctx context.Context, req *connect.Request[v1pb.CreateFinanceWalletRequest]) (*connect.Response[v1pb.FinanceWallet], error) {
+	resp, err := s.APIV1Service.CreateFinanceWallet(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) UpdateFinanceWallet(ctx context.Context, req *connect.Request[v1pb.UpdateFinanceWalletRequest]) (*connect.Response[v1pb.FinanceWallet], error) {
+	resp, err := s.APIV1Service.UpdateFinanceWallet(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) ListFinanceCategories(ctx context.Context, req *connect.Request[v1pb.ListFinanceCategoriesRequest]) (*connect.Response[v1pb.ListFinanceCategoriesResponse], error) {
+	resp, err := s.APIV1Service.ListFinanceCategories(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) CreateFinanceCategory(ctx context.Context, req *connect.Request[v1pb.CreateFinanceCategoryRequest]) (*connect.Response[v1pb.FinanceCategory], error) {
+	resp, err := s.APIV1Service.CreateFinanceCategory(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) UpdateFinanceCategory(ctx context.Context, req *connect.Request[v1pb.UpdateFinanceCategoryRequest]) (*connect.Response[v1pb.FinanceCategory], error) {
+	resp, err := s.APIV1Service.UpdateFinanceCategory(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) ListFinanceTransactions(ctx context.Context, req *connect.Request[v1pb.ListFinanceTransactionsRequest]) (*connect.Response[v1pb.ListFinanceTransactionsResponse], error) {
+	resp, err := s.APIV1Service.ListFinanceTransactions(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) CreateFinanceTransaction(ctx context.Context, req *connect.Request[v1pb.CreateFinanceTransactionRequest]) (*connect.Response[v1pb.FinanceTransaction], error) {
+	resp, err := s.APIV1Service.CreateFinanceTransaction(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) UpdateFinanceTransaction(ctx context.Context, req *connect.Request[v1pb.UpdateFinanceTransactionRequest]) (*connect.Response[v1pb.FinanceTransaction], error) {
+	resp, err := s.APIV1Service.UpdateFinanceTransaction(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) DeleteFinanceTransaction(ctx context.Context, req *connect.Request[v1pb.DeleteFinanceTransactionRequest]) (*connect.Response[emptypb.Empty], error) {
+	resp, err := s.APIV1Service.DeleteFinanceTransaction(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) AdjustFinanceWalletBalance(ctx context.Context, req *connect.Request[v1pb.AdjustFinanceWalletBalanceRequest]) (*connect.Response[v1pb.FinanceTransaction], error) {
+	resp, err := s.APIV1Service.AdjustFinanceWalletBalance(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) GetFinanceSummary(ctx context.Context, req *connect.Request[v1pb.GetFinanceSummaryRequest]) (*connect.Response[v1pb.FinanceSummary], error) {
+	resp, err := s.APIV1Service.GetFinanceSummary(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
 // IdentityProviderService
 
 func (s *ConnectServiceHandler) ListIdentityProviders(ctx context.Context, req *connect.Request[v1pb.ListIdentityProvidersRequest]) (*connect.Response[v1pb.ListIdentityProvidersResponse], error) {

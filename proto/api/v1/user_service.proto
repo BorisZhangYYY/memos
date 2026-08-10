@@ -384,6 +384,10 @@ message UserStats {
   // Mirrors memo_created_timestamps order; 0 means no mood set.
   repeated int32 mood_levels = 10;
 
+  // The resource names of the user's memos, one per memo.
+  // Mirrors memo_created_timestamps order and is returned only to the owner.
+  repeated string mood_memo_names = 11 [(google.api.resource_reference) = {type: "memos.api.v1/Memo"}];
+
   // The pinned memos of the user.
   repeated string pinned_memos = 5 [(google.api.resource_reference) = {type: "memos.api.v1/Memo"}];
 

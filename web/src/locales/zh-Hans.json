@@ -231,6 +231,84 @@
     "unsupported-syntax-raw-mode": "此备忘包含富文本编辑器无法安全编辑的语法，已切换到原始 Markdown 模式。",
     "wysiwyg-editor": "所见即所得编辑器"
   },
+  "finance": {
+    "amount": "金额",
+    "category": {
+      "create-error": "添加类型失败",
+      "created": "类型已添加",
+      "empty": "暂未添加类型",
+      "label": "收支类型",
+      "management": "收入与支出类型",
+      "management-description": "添加记账时使用的类型，例如工资、饮品、还款等。",
+      "name": "类型名称",
+      "name-placeholder": "例如：饮品",
+      "select": "请选择类型",
+      "type": "归属"
+    },
+    "dashboard": {
+      "add": "记一笔",
+      "empty": "该时段暂无收入或支出",
+      "empty-today": "今天还没有收支记录",
+      "expense": "支出",
+      "income": "收入",
+      "net": "结余",
+      "setup": "设置钱包",
+      "title": "收支看板",
+      "total-balance": "总余额",
+      "view-details": "查看统计"
+    },
+    "insights": {
+      "all-months": "返回月份",
+      "back-to-month": "返回当月",
+      "description": "按天查看近 7 天、近 30 天或按年份和月份回顾完整收支历史。",
+      "empty-history": "暂无收支记录",
+      "entries": "笔",
+      "loading": "正在加载完整历史…",
+      "more-history": "更多历史",
+      "title": "收支统计"
+    },
+    "note": "备注",
+    "note-placeholder": "可选备注",
+    "occur-time": "发生时间",
+    "transaction": {
+      "description": "保存后会立即按收支方向更新所选钱包的真实余额。",
+      "no-wallet": "请先在收支设置中添加一个可用钱包，再开始记账。",
+      "save-error": "记账失败",
+      "saved": "记账成功，钱包余额已更新",
+      "title": "新增收支"
+    },
+    "type": {
+      "expense": "支出",
+      "income": "收入",
+      "transfer": "转账"
+    },
+    "wallet": {
+      "allow-negative": "允许负余额",
+      "create-error": "添加钱包失败",
+      "created": "钱包已添加",
+      "current-balance": "当前余额",
+      "destination": "转入钱包",
+      "empty": "暂未添加钱包",
+      "initial-balance": "初始余额",
+      "label": "钱包",
+      "management": "钱包管理",
+      "management-description": "管理招行、微信等账户的真实余额，金额会精确保存到分。",
+      "name": "钱包名称",
+      "name-placeholder": "例如：招行",
+      "select-destination": "请选择转入钱包",
+      "source": "转出钱包"
+    },
+    "adjustment": {
+      "action": "余额校准",
+      "actual-balance": "钱包实际余额",
+      "confirm": "创建调整记录",
+      "description": "系统会根据差额创建一笔可追溯的余额调整记录，而不是直接静默覆盖余额。",
+      "note-placeholder": "填写差异原因，例如：银行结息",
+      "save-error": "余额校准失败",
+      "saved": "余额已校准，并已生成调整记录",
+      "title": "校准「{{wallet}}」余额"
+    }
+  },
   "inbox": {
     "failed-to-load": "加载失败",
     "memo-comment": "{{user}} 评论了您的“{{memo}}”。",
@@ -256,13 +334,30 @@
     "level-6": "有点愉快",
     "level-7": "非常愉快",
     "chart": {
-      "title": "心情趋势",
+      "title": "心情记录",
       "today": "今天",
-      "day": "日视图",
       "week": "近 7 天",
       "trend": "近 30 天",
-      "expand": "展开心情图表",
       "empty": "该时段暂无心情数据"
+    },
+    "dashboard": {
+      "empty-today": "今天还没有记录心情",
+      "open-memo": "打开对应 Memo",
+      "records": "记录数",
+      "today-average": "今日平均",
+      "view-details": "查看统计"
+    },
+    "insights": {
+      "all-months": "返回月份",
+      "average": "平均心情",
+      "back-to-month": "返回当月",
+      "back-to-recent": "返回近 30 天",
+      "description": "按日期查看近 30 天记录，或按年份、月份和日期回顾完整历史。点击任一心情即可打开对应 Memo。",
+      "entries": "条",
+      "more-history": "更多历史",
+      "range": "范围",
+      "recorded-days": "有记录天数",
+      "title": "心情统计"
     }
   },
   "memo": {
@@ -436,6 +531,10 @@
     "go-to-home": "回到首页"
   },
   "setting": {
+    "finance": {
+      "description": "管理钱包真实余额、自定义收支类型，以及可追溯的余额校准。",
+      "label": "收支管理"
+    },
     "member": {
       "active": "启用中",
       "admin": "管理员",

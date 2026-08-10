@@ -12,6 +12,7 @@ import (
 
 	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 	storepb "github.com/usememos/memos/proto/gen/store"
+	"github.com/usememos/memos/server/auth"
 	"github.com/usememos/memos/store"
 )
 
@@ -46,7 +47,11 @@ func (s *APIV1Service) convertMemoFromStoreWithCreators(ctx context.Context, mem
 	}
 	if memo.Payload != nil {
 		memoMessage.Tags = memo.Payload.Tags
-		memoMessage.MoodLevel = memo.Payload.MoodLevel
+		// Mood is private personal data. A memo may be shared, but its mood is
+		// only returned to the memo creator.
+		if auth.GetUserID(ctx) == memo.CreatorID {
+			memoMessage.MoodLevel = memo.Payload.MoodLevel
+		}
 		memoMessage.Property = convertMemoPropertyFromStore(memo.Payload.Property)
 		memoMessage.Location = convertLocationFromStore(memo.Payload.Location)
 	}

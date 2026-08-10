@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dayViewPoints, type MoodPoint, weekViewDays } from "@/components/MoodChart";
+import { dayViewPoints, type MoodPoint, weekViewDays } from "@/lib/mood-stats";
 
 // All dates are built with local-time constructors so the day/window bucketing
 // (which follows the browser-local calendar) is timezone-independent.
@@ -11,7 +11,7 @@ const point = (year: number, month: number, day: number, hour: number, minute: n
 describe("dayViewPoints", () => {
   const now = new Date(2026, 7, 7, 12, 0);
 
-  it("keeps only the same local day, mapping each point to minutes since midnight and sorting by time", () => {
+  it("keeps only the same local day, mapping each point to seconds since midnight and sorting by time", () => {
     const points = [
       point(2026, 7, 7, 23, 59, 3),
       point(2026, 7, 7, 0, 1, 5),
@@ -20,15 +20,15 @@ describe("dayViewPoints", () => {
       point(2026, 7, 8, 0, 0, 1), // tomorrow
     ];
     expect(dayViewPoints(points, now)).toEqual([
-      { ...point(2026, 7, 7, 0, 1, 5), minutes: 1 },
-      { ...point(2026, 7, 7, 12, 0, 4), minutes: 720 },
-      { ...point(2026, 7, 7, 23, 59, 3), minutes: 1439 },
+      { ...point(2026, 7, 7, 0, 1, 5), seconds: 60 },
+      { ...point(2026, 7, 7, 12, 0, 4), seconds: 43200 },
+      { ...point(2026, 7, 7, 23, 59, 3), seconds: 86340 },
     ]);
   });
 
   it("drops memos without a valid mood level", () => {
     const points = [point(2026, 7, 7, 8, 0, 0), point(2026, 7, 7, 9, 0, 8), point(2026, 7, 7, 10, 0, 7)];
-    expect(dayViewPoints(points, now)).toEqual([{ ...point(2026, 7, 7, 10, 0, 7), minutes: 600 }]);
+    expect(dayViewPoints(points, now)).toEqual([{ ...point(2026, 7, 7, 10, 0, 7), seconds: 36000 }]);
   });
 
   it("returns an empty list when nothing was recorded today", () => {

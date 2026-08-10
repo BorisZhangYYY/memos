@@ -64,6 +64,19 @@ func TestProtectedMethodsRequireAuth(t *testing.T) {
 		"/memos.api.v1.ShortcutService/ListShortcuts",
 		"/memos.api.v1.ShortcutService/UpdateShortcut",
 		"/memos.api.v1.ShortcutService/DeleteShortcut",
+		// Finance Service - all wallet and ledger data is private.
+		"/memos.api.v1.FinanceService/ListFinanceWallets",
+		"/memos.api.v1.FinanceService/CreateFinanceWallet",
+		"/memos.api.v1.FinanceService/UpdateFinanceWallet",
+		"/memos.api.v1.FinanceService/ListFinanceCategories",
+		"/memos.api.v1.FinanceService/CreateFinanceCategory",
+		"/memos.api.v1.FinanceService/UpdateFinanceCategory",
+		"/memos.api.v1.FinanceService/ListFinanceTransactions",
+		"/memos.api.v1.FinanceService/CreateFinanceTransaction",
+		"/memos.api.v1.FinanceService/UpdateFinanceTransaction",
+		"/memos.api.v1.FinanceService/DeleteFinanceTransaction",
+		"/memos.api.v1.FinanceService/AdjustFinanceWalletBalance",
+		"/memos.api.v1.FinanceService/GetFinanceSummary",
 	}
 
 	for _, method := range protectedMethods {

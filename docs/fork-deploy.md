@@ -6,7 +6,7 @@
 
 | 产物 | 地址 |
 |------|------|
-| Docker 镜像 | `ghcr.io/boriszhangyyy/memos`（tag：`v0.31.0` / `0.31` / `stable`） |
+| Docker 镜像 | `ghcr.io/boriszhangyyy/memos`（tag：`0.32.0` / `0.32` / `stable`） |
 | 二进制 | [GitHub Releases](https://github.com/BorisZhangYYY/memos/releases)（linux/darwin/windows × amd64/arm64/armv7） |
 
 ## 方式一：Docker 部署（推荐）

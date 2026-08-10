@@ -267,6 +267,84 @@
       "unsupported-description": "This browser cannot record audio from the memo composer."
     }
   },
+  "finance": {
+    "amount": "Amount",
+    "category": {
+      "create-error": "Failed to add category",
+      "created": "Category added",
+      "empty": "No categories yet",
+      "label": "Category",
+      "management": "Income and expense categories",
+      "management-description": "Add the categories you use for entries, such as Salary, Drinks, and Repayment.",
+      "name": "Category name",
+      "name-placeholder": "e.g. Drinks",
+      "select": "Select a category",
+      "type": "Type"
+    },
+    "dashboard": {
+      "add": "Add entry",
+      "empty": "No income or expenses in this period",
+      "empty-today": "No income or expense entries today",
+      "expense": "Expense",
+      "income": "Income",
+      "net": "Net",
+      "setup": "Set up wallets",
+      "title": "Income & Expense",
+      "total-balance": "Total balance",
+      "view-details": "View stats"
+    },
+    "insights": {
+      "all-months": "Back to months",
+      "back-to-month": "Back to month",
+      "description": "Review the last 7 days, last 30 days, or browse complete finance history by year and month.",
+      "empty-history": "No finance entries",
+      "entries": "entries",
+      "loading": "Loading complete history…",
+      "more-history": "More history",
+      "title": "Finance statistics"
+    },
+    "note": "Note",
+    "note-placeholder": "Optional note",
+    "occur-time": "Time",
+    "transaction": {
+      "description": "The selected wallet balance is updated as soon as this entry is saved.",
+      "no-wallet": "Add an active wallet in Finance settings before recording an entry.",
+      "save-error": "Failed to save entry",
+      "saved": "Entry saved and wallet balance updated",
+      "title": "Add income or expense"
+    },
+    "type": {
+      "expense": "Expense",
+      "income": "Income",
+      "transfer": "Transfer"
+    },
+    "wallet": {
+      "allow-negative": "Allow negative balance",
+      "create-error": "Failed to add wallet",
+      "created": "Wallet added",
+      "current-balance": "Current balance",
+      "destination": "To wallet",
+      "empty": "No wallets yet",
+      "initial-balance": "Opening balance",
+      "label": "Wallet",
+      "management": "Wallets",
+      "management-description": "Manage real balances for accounts such as CMB and WeChat Pay. Amounts are stored exactly to the cent.",
+      "name": "Wallet name",
+      "name-placeholder": "e.g. CMB",
+      "select-destination": "Select destination wallet",
+      "source": "From wallet"
+    },
+    "adjustment": {
+      "action": "Reconcile",
+      "actual-balance": "Actual wallet balance",
+      "confirm": "Create adjustment",
+      "description": "This creates an auditable adjustment entry for the difference instead of silently overwriting the balance.",
+      "note-placeholder": "Reason for the difference, e.g. bank interest",
+      "save-error": "Failed to reconcile balance",
+      "saved": "Balance reconciled with an adjustment entry",
+      "title": "Reconcile {{wallet}}"
+    }
+  },
   "inbox": {
     "failed-to-load": "Failed to load inbox item",
     "memo-comment": "{{user}} has a comment on your {{memo}}.",
@@ -297,13 +375,30 @@
     "level-6": "Quite happy",
     "level-7": "Very happy",
     "chart": {
-      "title": "Mood Trend",
+      "title": "Mood Records",
       "today": "Today",
-      "day": "Day",
       "week": "Last 7 days",
       "trend": "Last 30 days",
-      "expand": "Expand mood chart",
       "empty": "No mood data for this period"
+    },
+    "dashboard": {
+      "empty-today": "No mood entries today",
+      "open-memo": "Open related Memo",
+      "records": "Entries",
+      "today-average": "Today's average",
+      "view-details": "View stats"
+    },
+    "insights": {
+      "all-months": "Back to months",
+      "average": "Average mood",
+      "back-to-month": "Back to month",
+      "back-to-recent": "Back to last 30 days",
+      "description": "Review the last 30 days by date, or browse complete history by year, month, and date. Select any mood to open its Memo.",
+      "entries": "entries",
+      "more-history": "More history",
+      "range": "Range",
+      "recorded-days": "Days recorded",
+      "title": "Mood statistics"
     }
   },
   "memo": {
@@ -477,6 +572,10 @@
     "go-to-home": "Go to Home"
   },
   "setting": {
+    "finance": {
+      "description": "Manage wallets, exact balances, custom income and expense categories, and balance reconciliation.",
+      "label": "Finance"
+    },
     "access-token": {
       "access-token-copied-to-clipboard": "Access token copied to clipboard",
       "access-token-deleted": "Access token `{{description}}` deleted",

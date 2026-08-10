@@ -285,6 +285,19 @@ func (s *APIV1Service) ListMemos(ctx context.Context, request *v1pb.ListMemosReq
 		if err := s.validateFilter(ctx, request.Filter); err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "invalid filter: %v", err)
 		}
+		usesMood, err := filterUsesField(ctx, request.Filter, "mood_level")
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid filter: %v", err)
+		}
+		if usesMood {
+			if currentUser == nil {
+				return nil, status.Errorf(codes.PermissionDenied, "mood filters are private")
+			}
+			// Mood filters operate only on the caller's own memos. Setting the
+			// structured creator constraint also prevents crafted OR filters from
+			// using mood matches to infer another user's private mood.
+			memoFind.CreatorID = &currentUser.ID
+		}
 		memoFind.Filters = append(memoFind.Filters, request.Filter)
 	}
 

@@ -59,7 +59,12 @@ func TestGetUserStats_MoodLevels(t *testing.T) {
 
 	// mood_levels mirrors memo_created_timestamps one-to-one.
 	require.Len(t, stats.MoodLevels, len(stats.MemoCreatedTimestamps))
+	require.Len(t, stats.MoodMemoNames, len(stats.MemoCreatedTimestamps))
 	require.Len(t, stats.MoodLevels, 4)
+	assert.Contains(t, stats.MoodMemoNames, "memos/moody-past")
+	for _, name := range stats.MoodMemoNames {
+		assert.Regexp(t, `^memos/.+`, name)
+	}
 
 	// Group moods by the browser-visible date derived from each timestamp.
 	moodsByDate := map[string][]int32{}
@@ -92,5 +97,50 @@ func TestListAllUserStats_MoodLevels(t *testing.T) {
 
 	stats := response.Stats[0]
 	require.Len(t, stats.MoodLevels, len(stats.MemoCreatedTimestamps))
+	require.Len(t, stats.MoodMemoNames, len(stats.MemoCreatedTimestamps))
 	assert.ElementsMatch(t, []int32{1, 6}, stats.MoodLevels)
+}
+
+func TestUserStatsMoodLevelsVisibleOnlyToOwner(t *testing.T) {
+	ctx := context.Background()
+	svc := newIntegrationService(t)
+
+	author, err := svc.Store.CreateUser(ctx, &store.User{
+		Username: "author", Role: store.RoleAdmin, Email: "author@example.com",
+	})
+	require.NoError(t, err)
+	viewer, err := svc.Store.CreateUser(ctx, &store.User{
+		Username: "viewer", Role: store.RoleUser, Email: "viewer@example.com",
+	})
+	require.NoError(t, err)
+
+	_, err = svc.CreateMemo(userCtx(ctx, author.ID), &v1pb.CreateMemoRequest{
+		Memo: &v1pb.Memo{Content: "public memo", Visibility: v1pb.Visibility_PUBLIC, MoodLevel: 5},
+	})
+	require.NoError(t, err)
+
+	ownerStats, err := svc.GetUserStats(userCtx(ctx, author.ID), &v1pb.GetUserStatsRequest{Name: "users/author"})
+	require.NoError(t, err)
+	assert.Equal(t, []int32{5}, ownerStats.MoodLevels)
+	require.Len(t, ownerStats.MoodMemoNames, 1)
+	assert.Regexp(t, `^memos/.+`, ownerStats.MoodMemoNames[0])
+
+	viewerStats, err := svc.GetUserStats(userCtx(ctx, viewer.ID), &v1pb.GetUserStatsRequest{Name: "users/author"})
+	require.NoError(t, err)
+	assert.Empty(t, viewerStats.MoodLevels)
+	assert.Empty(t, viewerStats.MoodMemoNames)
+
+	publicStats, err := svc.GetUserStats(ctx, &v1pb.GetUserStatsRequest{Name: "users/author"})
+	require.NoError(t, err)
+	assert.Empty(t, publicStats.MoodLevels)
+	assert.Empty(t, publicStats.MoodMemoNames)
+
+	allStats, err := svc.ListAllUserStats(userCtx(ctx, viewer.ID), &v1pb.ListAllUserStatsRequest{})
+	require.NoError(t, err)
+	for _, stats := range allStats.Stats {
+		if stats.Name == "users/author/stats" {
+			assert.Empty(t, stats.MoodLevels)
+			assert.Empty(t, stats.MoodMemoNames)
+		}
+	}
 }

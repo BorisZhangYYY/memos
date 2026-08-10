@@ -858,6 +858,9 @@ type UserStats struct {
 	// The mood levels of the user's memos, one per memo.
 	// Mirrors memo_created_timestamps order; 0 means no mood set.
 	MoodLevels []int32 `protobuf:"varint,10,rep,packed,name=mood_levels,json=moodLevels,proto3" json:"mood_levels,omitempty"`
+	// The resource names of the user's memos, one per memo.
+	// Mirrors memo_created_timestamps order and is returned only to the owner.
+	MoodMemoNames []string `protobuf:"bytes,11,rep,name=mood_memo_names,json=moodMemoNames,proto3" json:"mood_memo_names,omitempty"`
 	// The pinned memos of the user.
 	PinnedMemos []string `protobuf:"bytes,5,rep,name=pinned_memos,json=pinnedMemos,proto3" json:"pinned_memos,omitempty"`
 	// Total memo count.
@@ -934,6 +937,13 @@ func (x *UserStats) GetMemoUpdatedTimestamps() []*timestamppb.Timestamp {
 func (x *UserStats) GetMoodLevels() []int32 {
 	if x != nil {
 		return x.MoodLevels
+	}
+	return nil
+}
+
+func (x *UserStats) GetMoodMemoNames() []string {
+	if x != nil {
+		return x.MoodMemoNames
 	}
 	return nil
 }
@@ -3417,7 +3427,7 @@ const file_api_v1_user_service_proto_rawDesc = "" +
 	"\x11DeleteUserRequest\x12-\n" +
 	"\x04name\x18\x01 \x01(\tB\x19\xe0A\x02\xfaA\x13\n" +
 	"\x11memos.api.v1/UserR\x04name\x12\x19\n" +
-	"\x05force\x18\x02 \x01(\bB\x03\xe0A\x01R\x05force\"\xae\x06\n" +
+	"\x05force\x18\x02 \x01(\bB\x03\xe0A\x01R\x05force\"\xee\x06\n" +
 	"\tUserStats\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12M\n" +
 	"\x0fmemo_type_stats\x18\x03 \x01(\v2%.memos.api.v1.UserStats.MemoTypeStatsR\rmemoTypeStats\x12B\n" +
@@ -3426,7 +3436,9 @@ const file_api_v1_user_service_proto_rawDesc = "" +
 	"\x17memo_updated_timestamps\x18\b \x03(\v2\x1a.google.protobuf.TimestampR\x15memoUpdatedTimestamps\x12\x1f\n" +
 	"\vmood_levels\x18\n" +
 	" \x03(\x05R\n" +
-	"moodLevels\x129\n" +
+	"moodLevels\x12>\n" +
+	"\x0fmood_memo_names\x18\v \x03(\tB\x16\xfaA\x13\n" +
+	"\x11memos.api.v1/MemoR\rmoodMemoNames\x129\n" +
 	"\fpinned_memos\x18\x05 \x03(\tB\x16\xfaA\x13\n" +
 	"\x11memos.api.v1/MemoR\vpinnedMemos\x12(\n" +
 	"\x10total_memo_count\x18\x06 \x01(\x05R\x0etotalMemoCount\x1a;\n" +

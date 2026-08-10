@@ -12,11 +12,13 @@ import {
   TagsIcon,
   UserIcon,
   UsersIcon,
+  WalletCardsIcon,
   WebhookIcon,
 } from "lucide-react";
 import { type ComponentType } from "react";
 import AccessTokenSection from "@/components/Settings/AccessTokenSection";
 import AISection from "@/components/Settings/AISection";
+import FinanceSettings from "@/components/Settings/FinanceSettings";
 import InstanceSection from "@/components/Settings/InstanceSection";
 import MemberSection from "@/components/Settings/MemberSection";
 import MemoRelatedSettings from "@/components/Settings/MemoRelatedSettings";
@@ -34,6 +36,7 @@ export type SettingSectionKey =
   | "my-account"
   | "access-token"
   | "preference"
+  | "finance"
   | "webhook"
   | "member"
   | "system"
@@ -77,6 +80,13 @@ export const SETTINGS_SECTIONS: SettingSectionDefinition[] = [
     labelKey: "setting.preference.label",
     icon: CogIcon,
     component: PreferencesSection,
+  },
+  {
+    key: "finance",
+    scope: "basic",
+    labelKey: "setting.finance.label",
+    icon: WalletCardsIcon,
+    component: FinanceSettings,
   },
   {
     key: "webhook",

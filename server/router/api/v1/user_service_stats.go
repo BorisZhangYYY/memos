@@ -71,6 +71,18 @@ func (s *APIV1Service) ListAllUserStats(ctx context.Context, request *v1pb.ListA
 		if err := s.validateFilter(ctx, request.Filter); err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "invalid filter: %v", err)
 		}
+		usesMood, err := filterUsesField(ctx, request.Filter, "mood_level")
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid filter: %v", err)
+		}
+		if usesMood {
+			if currentUser == nil {
+				return nil, status.Errorf(codes.PermissionDenied, "mood filters are private")
+			}
+			// Mood filters must never select another user's memos, including for
+			// administrators. The request filter remains an additional AND clause.
+			memoFind.CreatorID = &currentUser.ID
+		}
 		memoFind.Filters = append(memoFind.Filters, request.Filter)
 	}
 
@@ -94,6 +106,7 @@ func (s *APIV1Service) ListAllUserStats(ctx context.Context, request *v1pb.ListA
 	userMemoStatMap := make(map[int32]*v1pb.UserStats)
 	pinnedMemoUIDsByUserID := make(map[int32][]string)
 	moodLevelsByUserID := make(map[int32][]int32)
+	moodMemoNamesByUserID := make(map[int32][]string)
 	limit := 1000
 	offset := 0
 	memoFind.Limit = &limit
@@ -125,6 +138,7 @@ func (s *APIV1Service) ListAllUserStats(ctx context.Context, request *v1pb.ListA
 					},
 				}
 				moodLevelsByUserID[memo.CreatorID] = []int32{}
+				moodMemoNamesByUserID[memo.CreatorID] = []string{}
 			}
 
 			stats := userMemoStatMap[memo.CreatorID]
@@ -133,10 +147,13 @@ func (s *APIV1Service) ListAllUserStats(ctx context.Context, request *v1pb.ListA
 			stats.MemoUpdatedTimestamps = append(stats.MemoUpdatedTimestamps, timestamppb.New(time.Unix(memo.UpdatedTs, 0)))
 
 			// Track the mood level parallel to the created timestamps (0 = no mood).
-			if memo.Payload != nil {
-				moodLevelsByUserID[memo.CreatorID] = append(moodLevelsByUserID[memo.CreatorID], memo.Payload.MoodLevel)
-			} else {
-				moodLevelsByUserID[memo.CreatorID] = append(moodLevelsByUserID[memo.CreatorID], 0)
+			if currentUser != nil && currentUser.ID == memo.CreatorID {
+				moodMemoNamesByUserID[memo.CreatorID] = append(moodMemoNamesByUserID[memo.CreatorID], MemoNamePrefix+memo.UID)
+				if memo.Payload != nil {
+					moodLevelsByUserID[memo.CreatorID] = append(moodLevelsByUserID[memo.CreatorID], memo.Payload.MoodLevel)
+				} else {
+					moodLevelsByUserID[memo.CreatorID] = append(moodLevelsByUserID[memo.CreatorID], 0)
+				}
 			}
 
 			// Count memo stats
@@ -186,6 +203,7 @@ func (s *APIV1Service) ListAllUserStats(ctx context.Context, request *v1pb.ListA
 		}
 		userMemoStat.Name = fmt.Sprintf("%s/stats", BuildUserName(username))
 		userMemoStat.MoodLevels = moodLevelsByUserID[userID]
+		userMemoStat.MoodMemoNames = moodMemoNamesByUserID[userID]
 		for _, memoUID := range pinnedMemoUIDsByUserID[userID] {
 			userMemoStat.PinnedMemos = append(userMemoStat.PinnedMemos, MemoNamePrefix+memoUID)
 		}
@@ -238,6 +256,8 @@ func (s *APIV1Service) GetUserStats(ctx context.Context, request *v1pb.GetUserSt
 	pinnedMemos := []string{}
 	totalMemoCount := int32(0)
 	moodLevels := []int32{}
+	moodMemoNames := []string{}
+	canViewMood := currentUser != nil && currentUser.ID == userID
 
 	limit := 1000
 	offset := 0
@@ -259,10 +279,13 @@ func (s *APIV1Service) GetUserStats(ctx context.Context, request *v1pb.GetUserSt
 			createdTimestamps = append(createdTimestamps, timestamppb.New(time.Unix(memo.CreatedTs, 0)))
 			updatedTimestamps = append(updatedTimestamps, timestamppb.New(time.Unix(memo.UpdatedTs, 0)))
 			// Track the mood level parallel to the created timestamps (0 = no mood).
-			if memo.Payload != nil {
-				moodLevels = append(moodLevels, memo.Payload.MoodLevel)
-			} else {
-				moodLevels = append(moodLevels, 0)
+			if canViewMood {
+				moodMemoNames = append(moodMemoNames, MemoNamePrefix+memo.UID)
+				if memo.Payload != nil {
+					moodLevels = append(moodLevels, memo.Payload.MoodLevel)
+				} else {
+					moodLevels = append(moodLevels, 0)
+				}
 			}
 			// Count different memo types based on content.
 			if memo.Payload != nil {
@@ -298,6 +321,7 @@ func (s *APIV1Service) GetUserStats(ctx context.Context, request *v1pb.GetUserSt
 		PinnedMemos:           pinnedMemos,
 		TotalMemoCount:        totalMemoCount,
 		MoodLevels:            moodLevels,
+		MoodMemoNames:         moodMemoNames,
 		MemoTypeStats: &v1pb.UserStats_MemoTypeStats{
 			LinkCount: linkCount,
 			CodeCount: codeCount,

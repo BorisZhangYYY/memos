@@ -6,6 +6,18 @@ vi.mock("@/components/MemoEditor", () => ({
   default: () => <div data-testid="memo-editor" />,
 }));
 
+vi.mock("@/components/Finance/FinanceDashboard", () => ({
+  default: () => <div data-testid="finance-dashboard" />,
+}));
+
+vi.mock("@/components/Finance/FinanceTransactionDialog", () => ({
+  default: () => null,
+}));
+
+vi.mock("@/components/MoodDashboard", () => ({
+  default: () => <div data-testid="mood-dashboard" />,
+}));
+
 vi.mock("@/components/MemoView", () => ({
   default: () => <div data-testid="memo-view" />,
 }));
@@ -45,6 +57,10 @@ vi.mock("@/hooks", () => ({
 
 vi.mock("@/hooks/useCurrentUser", () => ({
   default: () => ({ name: "users/1" }),
+}));
+
+vi.mock("@/hooks/useNavigateTo", () => ({
+  default: () => vi.fn(),
 }));
 
 vi.mock("@/hooks/useUserQueries", () => ({

@@ -25,6 +25,18 @@ type Driver interface {
 	DeleteAttachment(ctx context.Context, delete *DeleteAttachment) error
 	DeleteAttachments(ctx context.Context, deletes []*DeleteAttachment) error
 
+	// Finance model related methods.
+	CreateFinanceWallet(ctx context.Context, create *FinanceWallet) (*FinanceWallet, error)
+	ListFinanceWallets(ctx context.Context, find *FindFinanceWallet) ([]*FinanceWallet, error)
+	UpdateFinanceWallet(ctx context.Context, update *UpdateFinanceWallet) (*FinanceWallet, error)
+	CreateFinanceCategory(ctx context.Context, create *FinanceCategory) (*FinanceCategory, error)
+	ListFinanceCategories(ctx context.Context, find *FindFinanceCategory) ([]*FinanceCategory, error)
+	UpdateFinanceCategory(ctx context.Context, update *UpdateFinanceCategory) (*FinanceCategory, error)
+	CreateFinanceTransaction(ctx context.Context, create *FinanceTransaction) (*FinanceTransaction, error)
+	ListFinanceTransactions(ctx context.Context, find *FindFinanceTransaction) ([]*FinanceTransaction, error)
+	UpdateFinanceTransaction(ctx context.Context, update *UpdateFinanceTransaction) (*FinanceTransaction, error)
+	DeleteFinanceTransaction(ctx context.Context, delete *DeleteFinanceTransaction) error
+
 	// Memo model related methods.
 	CreateMemo(ctx context.Context, create *Memo) (*Memo, error)
 	ListMemos(ctx context.Context, find *FindMemo) ([]*Memo, error)

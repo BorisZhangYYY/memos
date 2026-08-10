@@ -1495,6 +1495,327 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/v1/users/{user}/finance-categories:
+        get:
+            tags:
+                - FinanceService
+            operationId: FinanceService_ListFinanceCategories
+            parameters:
+                - name: user
+                  in: path
+                  description: The user id.
+                  required: true
+                  schema:
+                    type: string
+                - name: type
+                  in: query
+                  schema:
+                    enum:
+                        - TYPE_UNSPECIFIED
+                        - INCOME
+                        - EXPENSE
+                    type: string
+                    format: enum
+                - name: state
+                  in: query
+                  schema:
+                    enum:
+                        - STATE_UNSPECIFIED
+                        - NORMAL
+                        - ARCHIVED
+                    type: string
+                    format: enum
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListFinanceCategoriesResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        post:
+            tags:
+                - FinanceService
+            operationId: FinanceService_CreateFinanceCategory
+            parameters:
+                - name: user
+                  in: path
+                  description: The user id.
+                  required: true
+                  schema:
+                    type: string
+                - name: requestId
+                  in: query
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/FinanceCategory'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/FinanceCategory'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/users/{user}/finance-summary:
+        get:
+            tags:
+                - FinanceService
+            operationId: FinanceService_GetFinanceSummary
+            parameters:
+                - name: user
+                  in: path
+                  description: The user id.
+                  required: true
+                  schema:
+                    type: string
+                - name: startTime
+                  in: query
+                  schema:
+                    type: string
+                    format: date-time
+                - name: endTime
+                  in: query
+                  schema:
+                    type: string
+                    format: date-time
+                - name: timeZone
+                  in: query
+                  description: IANA time zone used for daily buckets, e.g. Asia/Shanghai.
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/FinanceSummary'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/users/{user}/finance-transactions:
+        get:
+            tags:
+                - FinanceService
+            operationId: FinanceService_ListFinanceTransactions
+            parameters:
+                - name: user
+                  in: path
+                  description: The user id.
+                  required: true
+                  schema:
+                    type: string
+                - name: startTime
+                  in: query
+                  schema:
+                    type: string
+                    format: date-time
+                - name: endTime
+                  in: query
+                  schema:
+                    type: string
+                    format: date-time
+                - name: wallet
+                  in: query
+                  schema:
+                    type: string
+                - name: type
+                  in: query
+                  schema:
+                    enum:
+                        - TYPE_UNSPECIFIED
+                        - INCOME
+                        - EXPENSE
+                        - TRANSFER
+                        - ADJUSTMENT
+                    type: string
+                    format: enum
+                - name: pageSize
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: pageToken
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListFinanceTransactionsResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        post:
+            tags:
+                - FinanceService
+            operationId: FinanceService_CreateFinanceTransaction
+            parameters:
+                - name: user
+                  in: path
+                  description: The user id.
+                  required: true
+                  schema:
+                    type: string
+                - name: requestId
+                  in: query
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/FinanceTransaction'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/FinanceTransaction'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/users/{user}/financeCategories/{financeCategory}:
+        patch:
+            tags:
+                - FinanceService
+            operationId: FinanceService_UpdateFinanceCategory
+            parameters:
+                - name: user
+                  in: path
+                  description: The user id.
+                  required: true
+                  schema:
+                    type: string
+                - name: financeCategory
+                  in: path
+                  description: The financeCategory id.
+                  required: true
+                  schema:
+                    type: string
+                - name: updateMask
+                  in: query
+                  schema:
+                    type: string
+                    format: field-mask
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/FinanceCategory'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/FinanceCategory'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/users/{user}/financeTransactions/{financeTransaction}:
+        delete:
+            tags:
+                - FinanceService
+            operationId: FinanceService_DeleteFinanceTransaction
+            parameters:
+                - name: user
+                  in: path
+                  description: The user id.
+                  required: true
+                  schema:
+                    type: string
+                - name: financeTransaction
+                  in: path
+                  description: The financeTransaction id.
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content: {}
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        patch:
+            tags:
+                - FinanceService
+            operationId: FinanceService_UpdateFinanceTransaction
+            parameters:
+                - name: user
+                  in: path
+                  description: The user id.
+                  required: true
+                  schema:
+                    type: string
+                - name: financeTransaction
+                  in: path
+                  description: The financeTransaction id.
+                  required: true
+                  schema:
+                    type: string
+                - name: updateMask
+                  in: query
+                  schema:
+                    type: string
+                    format: field-mask
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/FinanceTransaction'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/FinanceTransaction'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/v1/users/{user}/linkedIdentities:
         get:
             tags:
@@ -2109,6 +2430,153 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/v1/users/{user}/wallets:
+        get:
+            tags:
+                - FinanceService
+            operationId: FinanceService_ListFinanceWallets
+            parameters:
+                - name: user
+                  in: path
+                  description: The user id.
+                  required: true
+                  schema:
+                    type: string
+                - name: state
+                  in: query
+                  schema:
+                    enum:
+                        - STATE_UNSPECIFIED
+                        - NORMAL
+                        - ARCHIVED
+                    type: string
+                    format: enum
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListFinanceWalletsResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        post:
+            tags:
+                - FinanceService
+            operationId: FinanceService_CreateFinanceWallet
+            parameters:
+                - name: user
+                  in: path
+                  description: The user id.
+                  required: true
+                  schema:
+                    type: string
+                - name: requestId
+                  in: query
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/FinanceWallet'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/FinanceWallet'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/users/{user}/wallets/{wallet}:
+        patch:
+            tags:
+                - FinanceService
+            operationId: FinanceService_UpdateFinanceWallet
+            parameters:
+                - name: user
+                  in: path
+                  description: The user id.
+                  required: true
+                  schema:
+                    type: string
+                - name: wallet
+                  in: path
+                  description: The wallet id.
+                  required: true
+                  schema:
+                    type: string
+                - name: updateMask
+                  in: query
+                  schema:
+                    type: string
+                    format: field-mask
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/FinanceWallet'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/FinanceWallet'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/users/{user}/wallets/{wallet}:adjustBalance:
+        post:
+            tags:
+                - FinanceService
+            operationId: FinanceService_AdjustFinanceWalletBalance
+            parameters:
+                - name: user
+                  in: path
+                  description: The user id.
+                  required: true
+                  schema:
+                    type: string
+                - name: wallet
+                  in: path
+                  description: The wallet id.
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/AdjustFinanceWalletBalanceRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/FinanceTransaction'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/v1/users/{user}/webhooks:
         get:
             tags:
@@ -2363,6 +2831,24 @@ paths:
                                 $ref: '#/components/schemas/Status'
 components:
     schemas:
+        AdjustFinanceWalletBalanceRequest:
+            required:
+                - wallet
+                - actualBalanceMinor
+                - occurTime
+            type: object
+            properties:
+                wallet:
+                    type: string
+                actualBalanceMinor:
+                    type: string
+                note:
+                    type: string
+                occurTime:
+                    type: string
+                    format: date-time
+                requestId:
+                    type: string
         Attachment:
             required:
                 - filename
@@ -2691,6 +3177,144 @@ components:
                     type: string
                 avatarUrl:
                     type: string
+        FinanceCategory:
+            required:
+                - displayName
+            type: object
+            properties:
+                name:
+                    type: string
+                displayName:
+                    type: string
+                type:
+                    enum:
+                        - TYPE_UNSPECIFIED
+                        - INCOME
+                        - EXPENSE
+                    type: string
+                    format: enum
+                state:
+                    enum:
+                        - STATE_UNSPECIFIED
+                        - NORMAL
+                        - ARCHIVED
+                    type: string
+                    format: enum
+                createTime:
+                    readOnly: true
+                    type: string
+                    format: date-time
+                updateTime:
+                    readOnly: true
+                    type: string
+                    format: date-time
+        FinanceDailySummary:
+            type: object
+            properties:
+                date:
+                    type: string
+                incomeMinor:
+                    type: string
+                expenseMinor:
+                    type: string
+        FinanceSummary:
+            type: object
+            properties:
+                totalBalanceMinor:
+                    type: string
+                incomeMinor:
+                    type: string
+                expenseMinor:
+                    type: string
+                netMinor:
+                    type: string
+                dailySummaries:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/FinanceDailySummary'
+        FinanceTransaction:
+            required:
+                - type
+                - amountMinor
+                - wallet
+                - occurTime
+            type: object
+            properties:
+                name:
+                    type: string
+                type:
+                    enum:
+                        - TYPE_UNSPECIFIED
+                        - INCOME
+                        - EXPENSE
+                        - TRANSFER
+                        - ADJUSTMENT
+                    type: string
+                    format: enum
+                amountMinor:
+                    type: string
+                    description: Positive amount in minor units. Adjustments expose the absolute delta here.
+                wallet:
+                    type: string
+                destinationWallet:
+                    type: string
+                category:
+                    type: string
+                note:
+                    type: string
+                occurTime:
+                    type: string
+                    format: date-time
+                createTime:
+                    readOnly: true
+                    type: string
+                    format: date-time
+                updateTime:
+                    readOnly: true
+                    type: string
+                    format: date-time
+                adjustmentDeltaMinor:
+                    readOnly: true
+                    type: string
+                    description: Signed wallet delta for an adjustment. Ordinary transactions return zero.
+                balanceBeforeMinor:
+                    readOnly: true
+                    type: string
+                balanceAfterMinor:
+                    readOnly: true
+                    type: string
+        FinanceWallet:
+            required:
+                - displayName
+            type: object
+            properties:
+                name:
+                    type: string
+                displayName:
+                    type: string
+                initialBalanceMinor:
+                    type: string
+                    description: Amounts are stored in the currency's minor unit. For CNY, 1299 means ¥12.99.
+                balanceMinor:
+                    readOnly: true
+                    type: string
+                allowNegativeBalance:
+                    type: boolean
+                state:
+                    enum:
+                        - STATE_UNSPECIFIED
+                        - NORMAL
+                        - ARCHIVED
+                    type: string
+                    format: enum
+                createTime:
+                    readOnly: true
+                    type: string
+                    format: date-time
+                updateTime:
+                    readOnly: true
+                    type: string
+                    format: date-time
         GeneralSetting_CustomProfile:
             type: object
             properties:
@@ -3082,6 +3706,29 @@ components:
                     description: |-
                         A token that can be sent as `page_token` to retrieve the next page.
                          If this field is omitted, there are no subsequent pages.
+        ListFinanceCategoriesResponse:
+            type: object
+            properties:
+                categories:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/FinanceCategory'
+        ListFinanceTransactionsResponse:
+            type: object
+            properties:
+                transactions:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/FinanceTransaction'
+                nextPageToken:
+                    type: string
+        ListFinanceWalletsResponse:
+            type: object
+            properties:
+                wallets:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/FinanceWallet'
         ListIdentityProvidersResponse:
             type: object
             properties:
@@ -4021,6 +4668,13 @@ components:
                     description: |-
                         The mood levels of the user's memos, one per memo.
                          Mirrors memo_created_timestamps order; 0 means no mood set.
+                moodMemoNames:
+                    type: array
+                    items:
+                        type: string
+                    description: |-
+                        The resource names of the user's memos, one per memo.
+                         Mirrors memo_created_timestamps order and is returned only to the owner.
                 pinnedMemos:
                     type: array
                     items:
@@ -4086,6 +4740,8 @@ tags:
     - name: AIService
     - name: AttachmentService
     - name: AuthService
+    - name: FinanceService
+      description: FinanceService manages a user's private wallets and ledger.
     - name: IdentityProviderService
     - name: InstanceService
     - name: MemoService

@@ -1,5 +1,45 @@
 # Changelog
 
+## [0.32.0](https://github.com/BorisZhangYYY/memos/compare/v0.31.0...v0.32.0) (2026-08-10)
+
+### Summary
+
+This fork release adds a private personal-finance module to Memos. Users can
+manage wallets and custom income or expense categories, record exact CNY
+amounts, and keep real wallet balances synchronized through income, expense,
+transfer, and auditable reconciliation entries. The home page now presents mood
+and finance as switchable personal widgets with compact daily lists and complete
+year/month/day history views.
+
+### Features
+
+* **Wallets and real balances:** create accounts such as CMB or WeChat Pay,
+  store balances exactly in integer fen, and optionally allow a wallet to go
+  below zero.
+* **Income and expenses:** record categorized entries with occurrence times and
+  notes; income increases the selected wallet and expenses decrease it in the
+  same database transaction.
+* **Transfers and reconciliation:** move funds between wallets without changing
+  the combined balance, or correct a real-world discrepancy by creating an
+  auditable balance-adjustment entry instead of silently overwriting history.
+* **Custom categories:** manage separate income and expense categories from the
+  Settings page.
+* **Personal dashboard:** switch between mood records and finance in a single
+  memo-column-width widget. Both modules show today by default and provide
+  recent summaries plus year, month, date, and entry drill-down.
+* **Mood-to-Memo navigation:** select any mood entry to open the exact Memo that
+  recorded it.
+* **Private by design:** finance resources and mood-to-Memo mappings are
+  owner-only, including for public Memos and administrator accounts.
+* **Database support:** includes equivalent schema migrations and transaction
+  behavior for SQLite, MySQL, and PostgreSQL.
+
+### Interface Changes
+
+* Replaced the mood line chart and zoom controls with smaller, scrollable record
+  lists that match the surrounding Memos interface.
+* Added complete finance history alongside the existing 7-day and 30-day views.
+
 ## [0.31.0](https://github.com/BorisZhangYYY/memos/compare/v0.30.0...v0.31.0) (2026-08-08)
 
 ### Summary

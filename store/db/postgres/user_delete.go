@@ -111,6 +111,9 @@ func deleteUserTargetsTx(ctx context.Context, tx *sql.Tx, userID int32, targets 
 	if err := deleteUserIdentitiesTx(ctx, tx, userID); err != nil {
 		return err
 	}
+	if err := deleteUserFinanceTx(ctx, tx, userID); err != nil {
+		return err
+	}
 	if err := deleteUserSettingsTx(ctx, tx, userID); err != nil {
 		return err
 	}
@@ -124,6 +127,17 @@ func deleteUserTargetsTx(ctx context.Context, tx *sql.Tx, userID int32, targets 
 		return err
 	}
 	return nil
+}
+
+func deleteUserFinanceTx(ctx context.Context, tx *sql.Tx, userID int32) error {
+	if _, err := tx.ExecContext(ctx, `DELETE FROM finance_transaction WHERE creator_id = `+deleteUserPlaceholder(1), userID); err != nil {
+		return err
+	}
+	if _, err := tx.ExecContext(ctx, `DELETE FROM finance_category WHERE creator_id = `+deleteUserPlaceholder(1), userID); err != nil {
+		return err
+	}
+	_, err := tx.ExecContext(ctx, `DELETE FROM finance_wallet WHERE creator_id = `+deleteUserPlaceholder(1), userID)
+	return err
 }
 
 func listDeleteUserMemoTree(ctx context.Context, tx *sql.Tx, userID int32) ([]deleteUserMemoRef, error) {
