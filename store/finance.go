@@ -173,6 +173,8 @@ func FinanceTransactionEffects(transaction *FinanceTransaction) map[int32]int64 
 		}
 	case FinanceTransactionAdjustment:
 		effects[transaction.WalletID] += transaction.AdjustmentDeltaMinor
+	default:
+		// Unknown transaction types do not affect wallet balances.
 	}
 	return effects
 }

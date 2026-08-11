@@ -401,6 +401,8 @@ func conditionUsesField(condition filter.Condition, fieldName string) bool {
 		return condition.Field == fieldName
 	case *filter.ListComprehensionCondition:
 		return condition.Field == fieldName
+	default:
+		return false
 	}
 	return false
 }
@@ -417,6 +419,8 @@ func valueUsesField(value filter.ValueExpr, fieldName string) bool {
 		}
 	case *filter.FieldAccessorValue:
 		return value.Field == fieldName
+	default:
+		return false
 	}
 	return false
 }

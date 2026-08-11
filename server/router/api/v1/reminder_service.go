@@ -394,6 +394,8 @@ func (s *APIV1Service) ListReminders(ctx context.Context, request *v1pb.ListRemi
 		find.DueSet = pointer(true)
 	case v1pb.ListRemindersRequest_FLAGGED:
 		find.Flagged = pointer(true)
+	default:
+		// ALL and COMPLETED only use the status filter configured above.
 	}
 	values, err := s.Store.ListReminders(ctx, find)
 	if err != nil {
@@ -777,7 +779,8 @@ func addMonthsClamped(value time.Time, months int) time.Time {
 func addYearsClamped(value time.Time, years int) time.Time {
 	targetYear := value.Year() + years
 	day := value.Day()
-	if value.Month() == time.February && day == 29 && time.Date(targetYear, time.March, 0, 0, 0, 0, 0, time.UTC).Day() != 29 {
+	lastFebruaryDay := time.Date(targetYear, time.March, 1, 0, 0, 0, 0, time.UTC).AddDate(0, 0, -1).Day()
+	if value.Month() == time.February && day == 29 && lastFebruaryDay != 29 {
 		day = 28
 	}
 	return time.Date(targetYear, value.Month(), day, 0, 0, 0, 0, time.UTC)
@@ -796,8 +799,8 @@ func shiftReminderTime(value *store.Reminder, nextDate string) *int64 {
 	if err != nil {
 		return nil
 	}
-	next := time.Date(date.Year(), date.Month(), date.Day(), old.Hour(), old.Minute(), old.Second(), 0, location).Unix()
-	return &next
+	nextSec := time.Date(date.Year(), date.Month(), date.Day(), old.Hour(), old.Minute(), old.Second(), 0, location).Unix()
+	return &nextSec
 }
 
 func (s *APIV1Service) CompleteReminder(ctx context.Context, request *v1pb.CompleteReminderRequest) (*v1pb.Reminder, error) {
@@ -809,7 +812,7 @@ func (s *APIV1Service) CompleteReminder(ctx context.Context, request *v1pb.Compl
 		lists, memos, _ := s.reminderConversionData(ctx, []*store.Reminder{value})
 		return convertReminder(user, value, lists, memos), nil
 	}
-	now := time.Now().Unix()
+	nowSec := time.Now().Unix()
 	listRows, err := s.Store.ListReminderLists(ctx, &store.FindReminderList{ID: &value.ListID, CreatorID: &user.ID})
 	if err != nil || len(listRows) == 0 {
 		return nil, status.Errorf(codes.Internal, "failed to load reminder list")
@@ -817,13 +820,13 @@ func (s *APIV1Service) CompleteReminder(ctx context.Context, request *v1pb.Compl
 	list := listRows[0]
 	if _, err := s.Store.CreateReminderOccurrence(ctx, &store.ReminderOccurrence{
 		UID: uuid.NewString(), CreatorID: user.ID, ReminderUID: value.UID, ListUID: list.UID, ListName: list.Name, Title: value.Title,
-		ScheduledDate: value.DueDate, RemindTs: value.RemindTs, CompletedTs: now, Status: store.ReminderCompleted,
+		ScheduledDate: value.DueDate, RemindTs: value.RemindTs, CompletedTs: nowSec, Status: store.ReminderCompleted,
 	}); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to record reminder completion")
 	}
 	count := value.CompletedOccurrences + 1
 	statusValue := store.ReminderCompleted
-	completedTs := &now
+	completedTs := &nowSec
 	update := &store.UpdateReminder{ID: value.ID, CreatorID: user.ID, CompletedOccurrences: &count}
 	if value.RecurrenceType != store.ReminderRecurrenceNone {
 		nextDate, nextErr := nextReminderDate(value)

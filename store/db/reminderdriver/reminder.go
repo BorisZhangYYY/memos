@@ -66,10 +66,10 @@ func (a Adapter) insertID(ctx context.Context, query string, args ...any) (int32
 }
 
 func (a Adapter) CreateList(ctx context.Context, value *store.ReminderList) (*store.ReminderList, error) {
-	now := time.Now().Unix()
+	nowSec := time.Now().Unix()
 	id, err := a.insertID(ctx, `
 		INSERT INTO reminder_list (uid, creator_id, created_ts, updated_ts, row_status, name, color, icon, sort_order)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, value.UID, value.CreatorID, now, now, store.Normal, value.Name, value.Color, value.Icon, value.SortOrder)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, value.UID, value.CreatorID, nowSec, nowSec, store.Normal, value.Name, value.Color, value.Icon, value.SortOrder)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +152,7 @@ func scanList(row scanner, value *store.ReminderList) error {
 }
 
 func (a Adapter) CreateReminder(ctx context.Context, value *store.Reminder) (*store.Reminder, error) {
-	now := time.Now().Unix()
+	nowSec := time.Now().Unix()
 	weekdays, _ := json.Marshal(value.RecurrenceWeekdays)
 	tags, _ := json.Marshal(value.Tags)
 	id, err := a.insertID(ctx, `
@@ -164,7 +164,7 @@ func (a Adapter) CreateReminder(ctx context.Context, value *store.Reminder) (*st
 			location_longitude, location_radius_meters, location_trigger, status, completed_ts,
 			sort_order, early_notified_ts, notified_ts
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		value.UID, value.CreatorID, value.ListID, value.MemoID, now, now, store.Normal, value.Title,
+		value.UID, value.CreatorID, value.ListID, value.MemoID, nowSec, nowSec, store.Normal, value.Title,
 		value.DueDate, value.RemindTs, value.TimeZone, value.AdvanceNoticeSeconds, value.RecurrenceType,
 		value.RecurrenceInterval, string(weekdays), value.RecurrenceEndDate, value.RecurrenceMaxOccurrences,
 		value.CompletedOccurrences, value.Flagged, value.Priority, string(tags), value.LocationPlaceholder, value.LocationLatitude,
@@ -381,15 +381,15 @@ func scanReminder(row scanner) (*store.Reminder, error) {
 }
 
 func (a Adapter) CreateOccurrence(ctx context.Context, value *store.ReminderOccurrence) (*store.ReminderOccurrence, error) {
-	now := time.Now().Unix()
+	nowSec := time.Now().Unix()
 	id, err := a.insertID(ctx, `INSERT INTO reminder_occurrence
 		(uid, creator_id, reminder_uid, list_uid, list_name, title, created_ts, scheduled_date, remind_ts, completed_ts, status)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, value.UID, value.CreatorID, value.ReminderUID, value.ListUID, value.ListName,
-		value.Title, now, value.ScheduledDate, value.RemindTs, value.CompletedTs, value.Status)
+		value.Title, nowSec, value.ScheduledDate, value.RemindTs, value.CompletedTs, value.Status)
 	if err != nil {
 		return nil, err
 	}
-	value.ID, value.CreatedTs = id, now
+	value.ID, value.CreatedTs = id, nowSec
 	return value, nil
 }
 

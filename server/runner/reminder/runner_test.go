@@ -68,9 +68,9 @@ func TestRunOnceDeliversEarlyAndDueNotificationsExactlyOnce(t *testing.T) {
 	runner.RunOnce(ctx)
 	require.Len(t, sentMessages, 1)
 
-	futureTime := time.Now().Add(time.Minute).Unix()
+	futureTimeSec := time.Now().Add(time.Minute).Unix()
 	_, err = testingStore.CreateReminder(ctx, &store.Reminder{
-		UID: "early", CreatorID: user.ID, ListID: list.ID, Title: "Early reminder", RemindTs: &futureTime,
+		UID: "early", CreatorID: user.ID, ListID: list.ID, Title: "Early reminder", RemindTs: &futureTimeSec,
 		TimeZone: "Asia/Shanghai", AdvanceNoticeSeconds: 120,
 	})
 	require.NoError(t, err)

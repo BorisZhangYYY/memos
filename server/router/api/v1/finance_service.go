@@ -3,7 +3,7 @@ package v1
 import (
 	"context"
 	"errors"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 
@@ -303,8 +303,8 @@ func (s *APIV1Service) UpdateFinanceWallet(ctx context.Context, request *v1pb.Up
 	if err != nil {
 		return nil, err
 	}
-	now := time.Now().Unix()
-	update := &store.UpdateFinanceWallet{ID: wallet.ID, CreatorID: user.ID, UpdatedTs: &now}
+	nowSec := time.Now().Unix()
+	update := &store.UpdateFinanceWallet{ID: wallet.ID, CreatorID: user.ID, UpdatedTs: &nowSec}
 	for _, path := range request.UpdateMask.Paths {
 		switch path {
 		case "display_name":
@@ -398,8 +398,8 @@ func (s *APIV1Service) UpdateFinanceCategory(ctx context.Context, request *v1pb.
 	if err != nil {
 		return nil, err
 	}
-	now := time.Now().Unix()
-	update := &store.UpdateFinanceCategory{ID: category.ID, CreatorID: user.ID, UpdatedTs: &now}
+	nowSec := time.Now().Unix()
+	update := &store.UpdateFinanceCategory{ID: category.ID, CreatorID: user.ID, UpdatedTs: &nowSec}
 	for _, path := range request.UpdateMask.Paths {
 		switch path {
 		case "display_name":
@@ -761,7 +761,7 @@ func (s *APIV1Service) GetFinanceSummary(ctx context.Context, request *v1pb.GetF
 	for date := range daily {
 		dates = append(dates, date)
 	}
-	sort.Strings(dates)
+	slices.Sort(dates)
 	for _, date := range dates {
 		response.DailySummaries = append(response.DailySummaries, daily[date])
 	}

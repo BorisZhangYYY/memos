@@ -5,7 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 
@@ -83,13 +83,13 @@ func (a Adapter) CreateWallet(ctx context.Context, create *store.FinanceWallet) 
 	if create.InitialBalanceMinor < -store.MaxFinanceAmountMinor || create.InitialBalanceMinor > store.MaxFinanceAmountMinor {
 		return nil, store.ErrFinanceAmountOutOfRange
 	}
-	now := time.Now().Unix()
+	nowSec := time.Now().Unix()
 	id, err := a.insertID(ctx, a.DB, `
 		INSERT INTO finance_wallet (
 			uid, creator_id, created_ts, updated_ts, row_status, name,
 			initial_balance_minor, balance_minor, allow_negative_balance
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		create.UID, create.CreatorID, now, now, store.Normal, create.Name,
+		create.UID, create.CreatorID, nowSec, nowSec, store.Normal, create.Name,
 		create.InitialBalanceMinor, create.InitialBalanceMinor, create.AllowNegativeBalance)
 	if err != nil {
 		return nil, err
@@ -179,10 +179,10 @@ func (a Adapter) UpdateWallet(ctx context.Context, update *store.UpdateFinanceWa
 }
 
 func (a Adapter) CreateCategory(ctx context.Context, create *store.FinanceCategory) (*store.FinanceCategory, error) {
-	now := time.Now().Unix()
+	nowSec := time.Now().Unix()
 	id, err := a.insertID(ctx, a.DB, `
 		INSERT INTO finance_category (uid, creator_id, created_ts, updated_ts, row_status, name, type)
-		VALUES (?, ?, ?, ?, ?, ?, ?)`, create.UID, create.CreatorID, now, now, store.Normal, create.Name, create.Type)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`, create.UID, create.CreatorID, nowSec, nowSec, store.Normal, create.Name, create.Type)
 	if err != nil {
 		return nil, err
 	}
@@ -275,13 +275,13 @@ func (a Adapter) CreateTransaction(ctx context.Context, create *store.FinanceTra
 	if err := a.applyEffects(ctx, tx, wallets, store.FinanceTransactionEffects(create)); err != nil {
 		return nil, err
 	}
-	now := time.Now().Unix()
+	nowSec := time.Now().Unix()
 	id, err := a.insertID(ctx, tx, `
 		INSERT INTO finance_transaction (
 			uid, creator_id, created_ts, updated_ts, occurred_ts, type, amount_minor, wallet_id,
 			destination_wallet_id, category_id, note, adjustment_delta_minor, balance_before_minor, balance_after_minor
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		create.UID, create.CreatorID, now, now, create.OccurredTs, create.Type, create.AmountMinor, create.WalletID,
+		create.UID, create.CreatorID, nowSec, nowSec, create.OccurredTs, create.Type, create.AmountMinor, create.WalletID,
 		create.DestinationWalletID, create.CategoryID, create.Note, create.AdjustmentDeltaMinor,
 		create.BalanceBeforeMinor, create.BalanceAfterMinor)
 	if err != nil {
@@ -515,12 +515,12 @@ func walletIDs(transaction *store.FinanceTransaction) []int32 {
 	if transaction.DestinationWalletID != nil && *transaction.DestinationWalletID != transaction.WalletID {
 		ids = append(ids, *transaction.DestinationWalletID)
 	}
-	sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
+	slices.Sort(ids)
 	return ids
 }
 
 func (a Adapter) loadWallets(ctx context.Context, tx *sql.Tx, creatorID int32, ids []int32) (map[int32]*store.FinanceWallet, error) {
-	sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
+	slices.Sort(ids)
 	wallets := make(map[int32]*store.FinanceWallet, len(ids))
 	for _, id := range ids {
 		if _, exists := wallets[id]; exists {
@@ -592,12 +592,12 @@ func (a Adapter) applyEffects(ctx context.Context, tx *sql.Tx, wallets map[int32
 		}
 		wallet.BalanceMinor = next
 	}
-	now := time.Now().Unix()
+	nowSec := time.Now().Unix()
 	for walletID, wallet := range wallets {
 		if _, changed := effects[walletID]; !changed {
 			continue
 		}
-		if _, err := tx.ExecContext(ctx, a.bind("UPDATE finance_wallet SET balance_minor = ?, updated_ts = ? WHERE id = ?"), wallet.BalanceMinor, now, walletID); err != nil {
+		if _, err := tx.ExecContext(ctx, a.bind("UPDATE finance_wallet SET balance_minor = ?, updated_ts = ? WHERE id = ?"), wallet.BalanceMinor, nowSec, walletID); err != nil {
 			return err
 		}
 	}

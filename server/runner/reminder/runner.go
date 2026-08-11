@@ -41,8 +41,8 @@ func (r *Runner) Run(ctx context.Context) {
 
 // RunOnce delivers every early or due reminder notification currently ready.
 func (r *Runner) RunOnce(ctx context.Context) {
-	now := time.Now().Unix()
-	due, err := r.store.ListDueReminderNotifications(ctx, now)
+	nowSec := time.Now().Unix()
+	due, err := r.store.ListDueReminderNotifications(ctx, nowSec)
 	if err != nil {
 		slog.Warn("Failed to list due reminder notifications", slog.Any("err", err))
 		return
@@ -66,7 +66,7 @@ func (r *Runner) RunOnce(ctx context.Context) {
 			slog.Warn("Failed to create reminder inbox notification", slog.Any("err", err), slog.Int64("reminder_id", int64(value.ID)))
 			continue
 		}
-		if err := r.store.MarkReminderNotificationDelivered(ctx, value.ID, delivery.Early, now); err != nil {
+		if err := r.store.MarkReminderNotificationDelivered(ctx, value.ID, delivery.Early, nowSec); err != nil {
 			slog.Warn("Failed to mark reminder notification delivered", slog.Any("err", err), slog.Int64("reminder_id", int64(value.ID)))
 		}
 		if err := r.dispatcher.DispatchInboxEmail(ctx, inbox); err != nil {
