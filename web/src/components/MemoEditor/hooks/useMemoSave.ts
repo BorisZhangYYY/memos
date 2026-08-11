@@ -16,7 +16,8 @@ interface UseMemoSaveOptions {
   defaultVisibility?: Visibility;
   defaultCreateTime?: Date;
   discardDraft: () => void;
-  onConfirm?: (memoName: string) => void;
+  hasExternalChanges?: boolean;
+  onConfirm?: (memoName: string) => void | Promise<void>;
   onCancel?: () => void;
 }
 
@@ -31,6 +32,7 @@ export function useMemoSave({
   defaultVisibility,
   defaultCreateTime,
   discardDraft,
+  hasExternalChanges = false,
   onConfirm,
   onCancel,
 }: UseMemoSaveOptions): () => Promise<void> {
@@ -52,41 +54,43 @@ export function useMemoSave({
     try {
       const result = await memoService.save(state, { memoName, parentMemoName });
 
-      if (!result.hasChanges) {
+      if (!result.hasChanges && !hasExternalChanges) {
         toast.error(t("editor.no-changes-detected"));
         onCancel?.();
         return;
       }
 
-      // Prevent the autosave unmount flush from restoring the saved draft.
-      discardDraft();
+      if (result.hasChanges) {
+        // Prevent the autosave unmount flush from restoring the saved draft.
+        discardDraft();
 
-      const invalidationPromises = [
-        queryClient.invalidateQueries({ queryKey: memoKeys.lists() }),
-        queryClient.invalidateQueries({ queryKey: userKeys.stats() }),
-      ];
-      if (memoName) {
-        invalidationPromises.push(queryClient.invalidateQueries({ queryKey: memoKeys.detail(memoName) }));
-      }
-      if (parentMemoName) {
-        invalidationPromises.push(queryClient.invalidateQueries({ queryKey: memoKeys.comments(parentMemoName) }));
-      }
-      await Promise.all(invalidationPromises);
+        const invalidationPromises = [
+          queryClient.invalidateQueries({ queryKey: memoKeys.lists() }),
+          queryClient.invalidateQueries({ queryKey: userKeys.stats() }),
+        ];
+        if (memoName) {
+          invalidationPromises.push(queryClient.invalidateQueries({ queryKey: memoKeys.detail(memoName) }));
+        }
+        if (parentMemoName) {
+          invalidationPromises.push(queryClient.invalidateQueries({ queryKey: memoKeys.comments(parentMemoName) }));
+        }
+        await Promise.all(invalidationPromises);
 
-      dispatch(actions.reset());
-      if (!memoName && defaultVisibility) {
-        dispatch(actions.setMetadata({ visibility: defaultVisibility }));
-      }
-      // Reset creates a fresh editor state, so restore calendar-derived values
-      // for the next memo created without remounting this composer.
-      if (!memoName && defaultCreateTime) {
-        dispatch(actions.setTimestamps({ createTime: defaultCreateTime, updateTime: defaultCreateTime }));
+        dispatch(actions.reset());
+        if (!memoName && defaultVisibility) {
+          dispatch(actions.setMetadata({ visibility: defaultVisibility }));
+        }
+        // Reset creates a fresh editor state, so restore calendar-derived values
+        // for the next memo created without remounting this composer.
+        if (!memoName && defaultCreateTime) {
+          dispatch(actions.setTimestamps({ createTime: defaultCreateTime, updateTime: defaultCreateTime }));
+        }
       }
 
       if (!memoName && !parentMemoName) {
         markNewMemo(result.memoName);
       }
-      onConfirm?.(result.memoName);
+      await onConfirm?.(result.memoName);
     } catch (error) {
       handleError(error, toast.error, {
         context: "Failed to save memo",
@@ -102,6 +106,7 @@ export function useMemoSave({
     discardDraft,
     dispatch,
     getState,
+    hasExternalChanges,
     markNewMemo,
     memoName,
     onCancel,

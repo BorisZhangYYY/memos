@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -140,9 +141,44 @@ func (d *EmailDispatcher) buildInboxEmailMessage(inbox *store.Inbox, receiver *s
 		return d.buildMemoCommentEmailMessage(inbox.Message, receiver, senderName, memosByID)
 	case storepb.InboxMessage_MEMO_MENTION:
 		return d.buildMemoMentionEmailMessage(inbox.Message, receiver, senderName, memosByID)
+	case storepb.InboxMessage_REMINDER:
+		return d.buildReminderEmailMessage(inbox.Message, receiver)
 	default:
 		return nil, nil
 	}
+}
+
+func (d *EmailDispatcher) buildReminderEmailMessage(message *storepb.InboxMessage, receiver *store.User) (*email.Message, error) {
+	payload := message.GetReminder()
+	if payload == nil {
+		return nil, nil
+	}
+	url := d.baseURL() + "/reminders"
+	if payload.ReminderUid != "" {
+		url += "?selected=" + payload.ReminderUid
+	}
+	when := ""
+	if payload.RemindTs > 0 {
+		location := time.UTC
+		if payload.TimeZone != "" {
+			if reminderLocation, err := time.LoadLocation(payload.TimeZone); err == nil {
+				location = reminderLocation
+			}
+		}
+		when = time.Unix(payload.RemindTs, 0).In(location).Format(time.RFC1123Z)
+		if payload.TimeZone != "" {
+			when += " (" + payload.TimeZone + ")"
+		}
+	}
+	body := []string{fmt.Sprintf("Hi %s,", displayNameForEmail(receiver)), "", payload.Title}
+	if payload.Early {
+		body = append(body, "", "This is an early reminder.")
+	}
+	if when != "" {
+		body = append(body, "", "Due: "+when)
+	}
+	body = append(body, "", "Open in Memos:", url)
+	return &email.Message{To: []string{receiver.Email}, Subject: "[Memos] Reminder: " + payload.Title, Body: strings.Join(body, "\n")}, nil
 }
 
 func (d *EmailDispatcher) buildMemoCommentEmailMessage(message *storepb.InboxMessage, receiver *store.User, senderName string, memosByID map[int32]*store.Memo) (*email.Message, error) {

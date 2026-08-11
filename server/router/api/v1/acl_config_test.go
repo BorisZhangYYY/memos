@@ -77,6 +77,17 @@ func TestProtectedMethodsRequireAuth(t *testing.T) {
 		"/memos.api.v1.FinanceService/DeleteFinanceTransaction",
 		"/memos.api.v1.FinanceService/AdjustFinanceWalletBalance",
 		"/memos.api.v1.FinanceService/GetFinanceSummary",
+		// Reminder Service - all reminder data is private.
+		"/memos.api.v1.ReminderService/ListReminderLists",
+		"/memos.api.v1.ReminderService/CreateReminderList",
+		"/memos.api.v1.ReminderService/UpdateReminderList",
+		"/memos.api.v1.ReminderService/DeleteReminderList",
+		"/memos.api.v1.ReminderService/ListReminders",
+		"/memos.api.v1.ReminderService/CreateReminder",
+		"/memos.api.v1.ReminderService/UpdateReminder",
+		"/memos.api.v1.ReminderService/DeleteReminder",
+		"/memos.api.v1.ReminderService/CompleteReminder",
+		"/memos.api.v1.ReminderService/ClearCompletedReminders",
 	}
 
 	for _, method := range protectedMethods {

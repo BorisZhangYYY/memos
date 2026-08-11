@@ -1,4 +1,4 @@
-import { ChartLineIcon, WalletCardsIcon } from "lucide-react";
+import { ChartLineIcon, ListTodoIcon, WalletCardsIcon } from "lucide-react";
 import { Children, type ReactNode, useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -12,7 +12,7 @@ interface Props {
 
 const PersonalDashboardWidget = ({ children, labels, className }: Props) => {
   const panels = Children.toArray(children);
-  const icons = [ChartLineIcon, WalletCardsIcon];
+  const icons = [ChartLineIcon, WalletCardsIcon, ListTodoIcon];
   const [activeIndex, setActiveIndex] = useState(() => {
     try {
       const stored = Number(localStorage.getItem(STORAGE_KEY));
@@ -59,7 +59,7 @@ const PersonalDashboardWidget = ({ children, labels, className }: Props) => {
           })}
         </div>
       </div>
-      <div key={activeIndex} className="animate-in fade-in duration-150" role="tabpanel">
+      <div key={activeIndex} className="h-64 overflow-hidden animate-in fade-in duration-150" role="tabpanel">
         {panels[activeIndex]}
       </div>
     </section>

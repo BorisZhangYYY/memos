@@ -15,11 +15,21 @@ message InboxMessage {
     int32 related_memo_id = 2;
   }
 
+  message ReminderPayload {
+    int32 reminder_id = 1;
+    string reminder_uid = 2;
+    string title = 3;
+    int64 remind_ts = 4;
+    bool early = 5;
+    string time_zone = 6;
+  }
+
   // The type of the inbox message.
   Type type = 1;
   oneof payload {
     MemoCommentPayload memo_comment = 2;
     MemoMentionPayload memo_mention = 3;
+    ReminderPayload reminder = 4;
   }
 
   enum Type {
@@ -28,5 +38,7 @@ message InboxMessage {
     MEMO_COMMENT = 1;
     // Memo mention notification.
     MEMO_MENTION = 2;
+    // Scheduled reminder notification.
+    REMINDER = 3;
   }
 }

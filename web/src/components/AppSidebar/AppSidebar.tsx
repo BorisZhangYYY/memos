@@ -11,7 +11,6 @@ import {
   InfoIcon,
   LayoutListIcon,
   ListIcon,
-  ListTodoIcon,
   type LucideIcon,
   MapIcon,
   MenuIcon,
@@ -46,14 +45,7 @@ import useCurrentUser from "@/hooks/useCurrentUser";
 import { type MemoStatsContext, useFilteredMemoStats } from "@/hooks/useFilteredMemoStats";
 import useMediaQuery from "@/hooks/useMediaQuery";
 import { useNotifications, useUser } from "@/hooks/useUserQueries";
-import {
-  BUILTIN_TASKS_VIEW_ID,
-  getMemoScopePath,
-  getShortcutId,
-  isMemoScopeRoute,
-  type MemoScope,
-  resolveMemoScope,
-} from "@/lib/memo-views";
+import { getMemoScopePath, getShortcutId, isMemoScopeRoute, type MemoScope, resolveMemoScope } from "@/lib/memo-views";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/router/routes";
 import { State } from "@/types/proto/api/v1/common_pb";
@@ -121,12 +113,18 @@ const ViewsSection = ({ manageActive = false }: { manageActive?: boolean }) => {
         {t("common.views")}
       </SidebarSectionHeader>
       <div className="space-y-0.5">
-        <SidebarRow
-          active={!manageActive && selectedShortcut === BUILTIN_TASKS_VIEW_ID}
-          icon={ListTodoIcon}
-          label={t("common.tasks")}
-          onClick={() => handleView(BUILTIN_TASKS_VIEW_ID)}
-        />
+        {/*
+          Legacy Markdown task aggregation is intentionally disabled in favor of
+          structured reminders. Keep the original entry here so it can be
+          restored without reconstructing the old behavior.
+
+          <SidebarRow
+            active={!manageActive && selectedShortcut === BUILTIN_TASKS_VIEW_ID}
+            icon={ListTodoIcon}
+            label={t("common.tasks")}
+            onClick={() => handleView(BUILTIN_TASKS_VIEW_ID)}
+          />
+        */}
         {shortcuts.map((shortcut) => {
           const id = getShortcutId(shortcut.name);
           const active = !manageActive && selectedShortcut === id;
@@ -302,7 +300,12 @@ const InboxSidebarContent = () => {
   const { inboxFilter, setInboxFilter, setMobileOpen } = useAppSidebar();
   const { data: notifications = [] } = useNotifications();
   const rows: Array<{ value: InboxFilter; icon: LucideIcon; label: string; count: number }> = [
-    { value: "all", icon: ListIcon, label: t("common.all"), count: notifications.length },
+    {
+      value: "all",
+      icon: ListIcon,
+      label: t("common.all"),
+      count: notifications.filter((item) => item.status !== UserNotification_Status.ARCHIVED).length,
+    },
     {
       value: "unread",
       icon: BellIcon,
@@ -462,6 +465,19 @@ const GlobalNavigation = () => {
 
   const items: GlobalNavItem[] = currentUser
     ? [
+        /*
+          Structured reminders now open from the Home dashboard in a dialog,
+          like mood and finance. Keep this standalone navigation entry disabled
+          here so the previous route can be restored without recreating it.
+
+          {
+            id: "reminders",
+            label: t("common.reminders"),
+            path: ROUTES.REMINDERS,
+            icon: ListTodoIcon,
+            active: location.pathname === ROUTES.REMINDERS,
+          },
+        */
         {
           id: "attachments",
           label: t("common.attachments"),

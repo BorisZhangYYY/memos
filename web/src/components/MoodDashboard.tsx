@@ -179,17 +179,21 @@ const MoodDashboard = ({ points, embedded = false, onMemoSelect }: Props) => {
           </Button>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-muted/50 p-3 sm:max-w-md">
-          <div>
-            <div className="text-xs text-muted-foreground">{t("mood.dashboard.today-average")}</div>
-            <div className="mt-1 text-xl font-semibold">
-              {todayAverage > 0 ? `${emojis[Math.round(todayAverage) - 1]} ${todayAverage.toFixed(1)}` : "—"}
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {[
+            {
+              label: t("mood.dashboard.today-average"),
+              value: todayAverage > 0 ? `${emojis[Math.round(todayAverage) - 1]} ${todayAverage.toFixed(1)}` : "—",
+            },
+            { label: t("mood.dashboard.records"), value: String(todayPoints.length) },
+            { label: t("mood.dashboard.recent-average"), value: recentAverage > 0 ? recentAverage.toFixed(1) : "—" },
+            { label: t("mood.dashboard.recent-days"), value: String(recentDays.length) },
+          ].map((item) => (
+            <div key={item.label} className="min-w-0 rounded-lg bg-muted/50 p-3">
+              <div className="truncate text-xs text-muted-foreground">{item.label}</div>
+              <div className="mt-1 truncate font-mono text-base font-semibold">{item.value}</div>
             </div>
-          </div>
-          <div>
-            <div className="text-xs text-muted-foreground">{t("mood.dashboard.records")}</div>
-            <div className="mt-1 text-xl font-semibold">{todayPoints.length}</div>
-          </div>
+          ))}
         </div>
 
         {todayPoints.length === 0 ? (

@@ -22,6 +22,7 @@ import (
 	"github.com/usememos/memos/server/router/frontend"
 	"github.com/usememos/memos/server/router/mcp"
 	"github.com/usememos/memos/server/router/rss"
+	reminderrunner "github.com/usememos/memos/server/runner/reminder"
 	"github.com/usememos/memos/server/runner/s3presign"
 	"github.com/usememos/memos/store"
 )
@@ -154,9 +155,10 @@ func (s *Server) startBackgroundRunners(ctx context.Context) {
 	// Create a separate context for each background runner
 	// This allows us to control cancellation for each runner independently
 	s3Context, s3Cancel := context.WithCancel(ctx)
+	reminderContext, reminderCancel := context.WithCancel(ctx)
 
 	// Store the cancel function so we can properly shut down runners
-	s.backgroundRunnerCancels = append(s.backgroundRunnerCancels, s3Cancel)
+	s.backgroundRunnerCancels = append(s.backgroundRunnerCancels, s3Cancel, reminderCancel)
 
 	// Create and start S3 presign runner
 	s3presignRunner := s3presign.NewRunner(s.Store)
@@ -168,6 +170,15 @@ func (s *Server) startBackgroundRunners(ctx context.Context) {
 		defer s.backgroundRunnerWG.Done()
 		s3presignRunner.Run(s3Context)
 		slog.Info("s3presign runner stopped")
+	}()
+
+	reminderRunner := reminderrunner.NewRunner(s.Store, s.Profile)
+	reminderRunner.RunOnce(ctx)
+	s.backgroundRunnerWG.Add(1)
+	go func() {
+		defer s.backgroundRunnerWG.Done()
+		reminderRunner.Run(reminderContext)
+		slog.Info("reminder runner stopped")
 	}()
 
 	slog.Info("background runners started")

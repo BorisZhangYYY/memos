@@ -1,0 +1,237 @@
+syntax = "proto3";
+
+package memos.api.v1;
+
+import "api/v1/common.proto";
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "gen/api/v1";
+
+// ReminderService manages a user's private reminder lists and reminder items.
+service ReminderService {
+  rpc ListReminderLists(ListReminderListsRequest) returns (ListReminderListsResponse) {
+    option (google.api.http) = {get: "/api/v1/{parent=users/*}/reminder-lists"};
+  }
+  rpc CreateReminderList(CreateReminderListRequest) returns (ReminderList) {
+    option (google.api.http) = {
+      post: "/api/v1/{parent=users/*}/reminder-lists"
+      body: "reminder_list"
+    };
+  }
+  rpc UpdateReminderList(UpdateReminderListRequest) returns (ReminderList) {
+    option (google.api.http) = {
+      patch: "/api/v1/{reminder_list.name=users/*/reminderLists/*}"
+      body: "reminder_list"
+    };
+  }
+  rpc DeleteReminderList(DeleteReminderListRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/api/v1/{name=users/*/reminderLists/*}"};
+  }
+
+  rpc ListReminders(ListRemindersRequest) returns (ListRemindersResponse) {
+    option (google.api.http) = {get: "/api/v1/{parent=users/*}/reminders"};
+  }
+  rpc CreateReminder(CreateReminderRequest) returns (Reminder) {
+    option (google.api.http) = {
+      post: "/api/v1/{parent=users/*}/reminders"
+      body: "reminder"
+    };
+  }
+  rpc UpdateReminder(UpdateReminderRequest) returns (Reminder) {
+    option (google.api.http) = {
+      patch: "/api/v1/{reminder.name=users/*/reminders/*}"
+      body: "reminder"
+    };
+  }
+  rpc DeleteReminder(DeleteReminderRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/api/v1/{name=users/*/reminders/*}"};
+  }
+  rpc CompleteReminder(CompleteReminderRequest) returns (Reminder) {
+    option (google.api.http) = {
+      post: "/api/v1/{name=users/*/reminders/*}:complete"
+      body: "*"
+    };
+  }
+  rpc ClearCompletedReminders(ClearCompletedRemindersRequest) returns (ClearCompletedRemindersResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/{parent=users/*}/reminders:clearCompleted"
+      body: "*"
+    };
+  }
+}
+
+message ReminderList {
+  option (google.api.resource) = {
+    type: "memos.api.v1/ReminderList"
+    pattern: "users/{user}/reminderLists/{reminder_list}"
+    singular: "reminderList"
+    plural: "reminderLists"
+  };
+
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+  string display_name = 2 [(google.api.field_behavior) = REQUIRED];
+  string color = 3 [(google.api.field_behavior) = OPTIONAL];
+  string icon = 4 [(google.api.field_behavior) = OPTIONAL];
+  int32 sort_order = 5 [(google.api.field_behavior) = OPTIONAL];
+  State state = 6 [(google.api.field_behavior) = OPTIONAL];
+  google.protobuf.Timestamp create_time = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+  google.protobuf.Timestamp update_time = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+  int32 pending_count = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+message ReminderRecurrence {
+  enum Frequency {
+    FREQUENCY_UNSPECIFIED = 0;
+    DAILY = 1;
+    WEEKLY = 2;
+    MONTHLY = 3;
+    YEARLY = 4;
+  }
+
+  Frequency frequency = 1 [(google.api.field_behavior) = OPTIONAL];
+  int32 interval = 2 [(google.api.field_behavior) = OPTIONAL];
+  // Weekdays use 0=Sunday through 6=Saturday and apply to WEEKLY recurrences.
+  repeated int32 weekdays = 3 [(google.api.field_behavior) = OPTIONAL];
+  string end_date = 4 [(google.api.field_behavior) = OPTIONAL];
+  int32 max_occurrences = 5 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message ReminderLocation {
+  enum Trigger {
+    TRIGGER_UNSPECIFIED = 0;
+    ARRIVING = 1;
+    LEAVING = 2;
+  }
+
+  string placeholder = 1 [(google.api.field_behavior) = OPTIONAL];
+  double latitude = 2 [(google.api.field_behavior) = OPTIONAL];
+  double longitude = 3 [(google.api.field_behavior) = OPTIONAL];
+  double radius_meters = 4 [(google.api.field_behavior) = OPTIONAL];
+  Trigger trigger = 5 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message Reminder {
+  option (google.api.resource) = {
+    type: "memos.api.v1/Reminder"
+    pattern: "users/{user}/reminders/{reminder}"
+    singular: "reminder"
+    plural: "reminders"
+  };
+
+  enum Priority {
+    PRIORITY_UNSPECIFIED = 0;
+    LOW = 1;
+    MEDIUM = 2;
+    HIGH = 3;
+  }
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    PENDING = 1;
+    COMPLETED = 2;
+  }
+
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+  string creator = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+  string title = 3 [(google.api.field_behavior) = REQUIRED];
+  string reminder_list = 4 [(google.api.field_behavior) = REQUIRED];
+  // Optional linked memo. The memo timestamps remain independent of reminder dates.
+  string memo = 5 [(google.api.field_behavior) = OPTIONAL];
+  // Calendar date in YYYY-MM-DD form. It may be set without a notification time.
+  string due_date = 6 [(google.api.field_behavior) = OPTIONAL];
+  // Exact time at which the reminder is due and should notify.
+  google.protobuf.Timestamp remind_time = 7 [(google.api.field_behavior) = OPTIONAL];
+  string time_zone = 8 [(google.api.field_behavior) = OPTIONAL];
+  // An additional notification is delivered this many seconds before remind_time.
+  int64 advance_notice_seconds = 9 [(google.api.field_behavior) = OPTIONAL];
+  ReminderRecurrence recurrence = 10 [(google.api.field_behavior) = OPTIONAL];
+  bool flagged = 11 [(google.api.field_behavior) = OPTIONAL];
+  Priority priority = 12 [(google.api.field_behavior) = OPTIONAL];
+  repeated string tags = 13 [(google.api.field_behavior) = OPTIONAL];
+  ReminderLocation location = 14 [(google.api.field_behavior) = OPTIONAL];
+  Status status = 15 [(google.api.field_behavior) = OUTPUT_ONLY];
+  google.protobuf.Timestamp completion_time = 16 [(google.api.field_behavior) = OUTPUT_ONLY];
+  int32 sort_order = 17 [(google.api.field_behavior) = OPTIONAL];
+  State state = 18 [(google.api.field_behavior) = OPTIONAL];
+  google.protobuf.Timestamp create_time = 19 [(google.api.field_behavior) = OUTPUT_ONLY];
+  google.protobuf.Timestamp update_time = 20 [(google.api.field_behavior) = OUTPUT_ONLY];
+  int32 completed_occurrences = 21 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+message ListReminderListsRequest {
+  string parent = 1 [(google.api.field_behavior) = REQUIRED];
+  State state = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message ListReminderListsResponse {
+  repeated ReminderList reminder_lists = 1;
+}
+
+message CreateReminderListRequest {
+  string parent = 1 [(google.api.field_behavior) = REQUIRED];
+  ReminderList reminder_list = 2 [(google.api.field_behavior) = REQUIRED];
+  string reminder_list_id = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message UpdateReminderListRequest {
+  ReminderList reminder_list = 1 [(google.api.field_behavior) = REQUIRED];
+  google.protobuf.FieldMask update_mask = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message DeleteReminderListRequest {
+  string name = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message ListRemindersRequest {
+  enum View {
+    VIEW_UNSPECIFIED = 0;
+    TODAY = 1;
+    SCHEDULED = 2;
+    ALL = 3;
+    FLAGGED = 4;
+    COMPLETED = 5;
+  }
+
+  string parent = 1 [(google.api.field_behavior) = REQUIRED];
+  View view = 2 [(google.api.field_behavior) = OPTIONAL];
+  string reminder_list = 3 [(google.api.field_behavior) = OPTIONAL];
+  string query = 4 [(google.api.field_behavior) = OPTIONAL];
+  string time_zone = 5 [(google.api.field_behavior) = OPTIONAL];
+  State state = 6 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message ListRemindersResponse {
+  repeated Reminder reminders = 1;
+}
+
+message CreateReminderRequest {
+  string parent = 1 [(google.api.field_behavior) = REQUIRED];
+  Reminder reminder = 2 [(google.api.field_behavior) = REQUIRED];
+  string reminder_id = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message UpdateReminderRequest {
+  Reminder reminder = 1 [(google.api.field_behavior) = REQUIRED];
+  google.protobuf.FieldMask update_mask = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message DeleteReminderRequest {
+  string name = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message CompleteReminderRequest {
+  string name = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message ClearCompletedRemindersRequest {
+  string parent = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message ClearCompletedRemindersResponse {
+  // Number of completed reminders moved to the archived state.
+  int32 cleared_count = 1;
+}

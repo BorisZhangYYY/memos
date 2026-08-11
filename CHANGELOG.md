@@ -1,5 +1,48 @@
 # Changelog
 
+## [0.33.0](https://github.com/BorisZhangYYY/memos/compare/v0.32.0...v0.33.0) (2026-08-11)
+
+### Summary
+
+This fork release adds a structured reminder system to Memos. Reminders are
+managed independently from memo creation times, can be linked to existing memos,
+and provide reliable in-app and optional SMTP email notifications without
+requiring an AI agent.
+
+### Features
+
+* **Reminder center:** manage Today, Scheduled, All, Flagged, Completed, and
+  Archived views in a compact modal that matches the existing personal
+  dashboard.
+* **Structured reminder details:** set dates, exact times, early notifications,
+  repeat schedules, lists, flags, priorities, and optional location metadata.
+* **Memo relationships:** link up to three reminders to one memo, open the linked
+  memo from reminder details, and show reminder status directly on memo cards and
+  memo detail pages.
+* **Completion history:** completing a reminder records a durable statistics
+  snapshot for future daily and weekly summaries. Completed reminders can be
+  archived or deleted independently.
+* **Recurring reminders:** completing a repeating reminder advances it to its
+  next occurrence while preserving completion history.
+* **Notifications:** send early and due notifications to the in-app inbox;
+  completing, archiving, or deleting a reminder automatically removes obsolete
+  reminder notifications.
+* **SMTP email delivery:** instance administrators can configure a provider-
+  neutral SMTP account, send a test email, and deliver reminder notifications by
+  email in addition to the in-app inbox.
+* **Database and API support:** includes equivalent SQLite, MySQL, and PostgreSQL
+  migrations plus Connect, REST, OpenAPI, and MCP surfaces for reminder data.
+
+### Interface Changes
+
+* Added a compact reminder dashboard beside Mood and Finance on the home page.
+* Added reminder linking to the memo editor and first-line reminder indicators
+  to memo cards without replacing Markdown task-list checkboxes.
+* Restored the previous page and open reminder context after viewing a linked
+  memo.
+* Generalized finance and email settings copy so it no longer assumes specific
+  banks, wallets, or email providers.
+
 ## [0.32.0](https://github.com/BorisZhangYYY/memos/compare/v0.31.0...v0.32.0) (2026-08-10)
 
 ### Summary

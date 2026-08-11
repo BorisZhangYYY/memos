@@ -291,6 +291,20 @@ func (s *APIV1Service) convertInboxToUserNotificationWithUsersAndMemos(inbox *st
 					MemoMention: payload,
 				}
 			}
+		case storepb.InboxMessage_REMINDER:
+			payload := inbox.Message.GetReminder()
+			if payload != nil {
+				notification.Type = v1pb.UserNotification_REMINDER
+				reminderPayload := &v1pb.UserNotification_ReminderPayload{
+					Reminder: fmt.Sprintf("users/%s/reminders/%s", receiver.Username, payload.ReminderUid),
+					Title:    payload.Title,
+					Early:    payload.Early,
+				}
+				if payload.RemindTs > 0 {
+					reminderPayload.RemindTime = timestamppb.New(time.Unix(payload.RemindTs, 0))
+				}
+				notification.Payload = &v1pb.UserNotification_Reminder{Reminder: reminderPayload}
+			}
 		default:
 			notification.Type = v1pb.UserNotification_TYPE_UNSPECIFIED
 		}

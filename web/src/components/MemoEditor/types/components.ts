@@ -1,4 +1,5 @@
 import type { Location, Memo, Visibility } from "@/types/proto/api/v1/memo_service_pb";
+import type { Reminder } from "@/types/proto/api/v1/reminder_service_pb";
 import type { AudioRecorderStatus } from "../hooks/useAudioRecorder";
 
 export interface MemoEditorProps {
@@ -21,7 +22,8 @@ export interface MemoEditorProps {
    * in edit mode (when `memo` is set).
    */
   defaultCreateTime?: Date;
-  onConfirm?: (memoName: string) => void;
+  initialReminderNames?: string[];
+  onConfirm?: (memoName: string) => void | Promise<void>;
   onCancel?: () => void;
 }
 
@@ -39,6 +41,9 @@ export interface EditorToolbarProps {
   /** Whether the formatting toolbar is shown in normal mode (persisted preference). */
   isFormattingToolbarVisible: boolean;
   onToggleFormattingToolbar: () => void;
+  reminders: Reminder[];
+  linkedReminderNames: string[];
+  onLinkedReminderNamesChange: (names: string[]) => void;
 }
 
 export interface EditorMetadataProps {

@@ -3,6 +3,7 @@ import { sortBy } from "lodash-es";
 import { BellIcon } from "lucide-react";
 import MemoCommentMessage from "@/components/Inbox/MemoCommentMessage";
 import MemoMentionMessage from "@/components/Inbox/MemoMentionMessage";
+import ReminderMessage from "@/components/Inbox/ReminderMessage";
 import Placeholder from "@/components/Placeholder";
 import { useAppSidebar } from "@/contexts/AppSidebarContext";
 import { useNotifications } from "@/hooks/useUserQueries";
@@ -23,7 +24,7 @@ const Inboxes = () => {
   const notifications = allNotifications.filter((notification) => {
     if (filter === "unread") return notification.status === UserNotification_Status.UNREAD;
     if (filter === "archived") return notification.status === UserNotification_Status.ARCHIVED;
-    return true;
+    return notification.status !== UserNotification_Status.ARCHIVED;
   });
 
   const unreadCount = allNotifications.filter((n) => n.status === UserNotification_Status.UNREAD).length;
@@ -61,6 +62,9 @@ const Inboxes = () => {
                   }
                   if (notification.type === UserNotification_Type.MEMO_MENTION) {
                     return <MemoMentionMessage key={notification.name} notification={notification} />;
+                  }
+                  if (notification.type === UserNotification_Type.REMINDER) {
+                    return <ReminderMessage key={notification.name} notification={notification} />;
                   }
                   return null;
                 })}

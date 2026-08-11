@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import Home from "@/pages/Home";
 
@@ -16,6 +17,18 @@ vi.mock("@/components/Finance/FinanceTransactionDialog", () => ({
 
 vi.mock("@/components/MoodDashboard", () => ({
   default: () => <div data-testid="mood-dashboard" />,
+}));
+
+vi.mock("@/components/Reminder/ReminderDashboard", () => ({
+  default: () => <div data-testid="reminder-dashboard" />,
+}));
+
+vi.mock("@/components/Reminder/ReminderCenterDialog", () => ({
+  default: () => null,
+}));
+
+vi.mock("@/components/Reminder/ReminderDetailDialog", () => ({
+  default: () => null,
 }));
 
 vi.mock("@/components/MemoView", () => ({
@@ -63,6 +76,12 @@ vi.mock("@/hooks/useNavigateTo", () => ({
   default: () => vi.fn(),
 }));
 
+vi.mock("@/hooks/useReminderQueries", () => ({
+  useReminderLists: () => ({ data: [] }),
+  useReminders: () => ({ data: [] }),
+  useUpdateReminder: () => ({ mutateAsync: vi.fn() }),
+}));
+
 vi.mock("@/hooks/useUserQueries", () => ({
   useUserStats: () => ({ data: undefined }),
 }));
@@ -73,7 +92,11 @@ vi.mock("@/utils/i18n", () => ({
 
 describe("<Home>", () => {
   it("renders the editor and memo cards synchronously without blank placeholders", () => {
-    render(<Home />);
+    render(
+      <MemoryRouter>
+        <Home />
+      </MemoryRouter>,
+    );
 
     expect(screen.getByTestId("memo-editor")).toBeInTheDocument();
     expect(screen.getByTestId("memo-view")).toBeInTheDocument();

@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate, type RouteObject } from "react-router-dom";
+import { createBrowserRouter, Navigate, type RouteObject, useSearchParams } from "react-router-dom";
 import App from "@/App";
 import { ChunkLoadErrorFallback } from "@/components/ErrorBoundary";
 import MainLayout from "@/layouts/MainLayout";
@@ -33,6 +33,14 @@ const UserProfile = lazyWithReload(() => import("@/pages/UserProfile"));
 // Backward compatibility alias.
 export const Routes = ROUTES;
 export { ROUTES };
+
+const RemindersRedirect = () => {
+  const [searchParams] = useSearchParams();
+  const next = new URLSearchParams({ reminders: "1" });
+  const selected = searchParams.get("selected");
+  if (selected) next.set("selected", selected);
+  return <Navigate to={`${Routes.HOME}?${next.toString()}`} replace />;
+};
 
 /**
  * Static route configuration. Exported so tests can assert on the tree shape
@@ -106,6 +114,7 @@ export const routeConfig: RouteObject[] = [
                 element: <RequireFullInitializationRoute />,
                 children: [
                   { path: Routes.ATTACHMENTS, element: <Attachments /> },
+                  { path: Routes.REMINDERS, element: <RemindersRedirect /> },
                   { path: Routes.INBOX, element: <Inboxes /> },
                   { path: Routes.SETTING, element: <Setting /> },
                 ],

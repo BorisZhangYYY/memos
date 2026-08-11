@@ -23,11 +23,12 @@ Memos is an open-source, self-hosted note-taking app built for quick capture. It
 
 ## Fork Release（个人生活平台版）
 
-This fork adds a **mood tracking system** (per-memo 1-7 mood, calendar averages,
-trend chart, filtering, colored memo cards), a **visibility policy** (disable
-Public/Protected levels to hide published memos and the Explore page), and a
-**free HSV color picker** for mood emoji customization. Docker images are
-published to `ghcr.io/boriszhangyyy/memos` only.
+This fork adds **mood tracking**, **personal finance**, and **structured
+reminders** with memo relationships, in-app notifications, and optional SMTP
+email delivery. It also includes a **visibility policy** for disabling
+Public/Protected publishing levels and a free HSV color picker for mood emoji
+customization. Docker images are published to
+`ghcr.io/boriszhangyyy/memos` only.
 
 See [docs/fork-deploy.md](docs/fork-deploy.md) for installation, upgrade,
 MCP agent setup, and the full list of differences from upstream.

@@ -1,13 +1,15 @@
-import { BookmarkIcon } from "lucide-react";
+import { BellRingIcon, BookmarkIcon } from "lucide-react";
 import { useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import RelativeTime from "@/components/RelativeTime";
+import { MAX_REMINDERS_PER_MEMO } from "@/components/Reminder/constants";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useNewMemo } from "@/contexts/NewMemoContext";
 import useNavigateTo from "@/hooks/useNavigateTo";
 import i18n from "@/i18n";
 import { cn } from "@/lib/utils";
 import { Visibility } from "@/types/proto/api/v1/memo_service_pb";
+import { Reminder_Status } from "@/types/proto/api/v1/reminder_service_pb";
 import type { User } from "@/types/proto/api/v1/user_service_pb";
 import { useTranslate } from "@/utils/i18n";
 import { convertVisibilityToString } from "@/utils/memo";
@@ -19,7 +21,7 @@ import { useMemoActions } from "../hooks";
 import { useMemoViewContext, useMemoViewDerived } from "../MemoViewContext";
 import type { MemoHeaderProps } from "../types";
 
-const MemoHeader: React.FC<MemoHeaderProps> = ({ showCreator, showVisibility, showPinned }) => {
+const MemoHeader: React.FC<MemoHeaderProps> = ({ showCreator, showVisibility, showPinned, linkedReminders = [], onReminderSelect }) => {
   const t = useTranslate();
   const [reactionSelectorOpen, setReactionSelectorOpen] = useState(false);
 
@@ -53,58 +55,93 @@ const MemoHeader: React.FC<MemoHeaderProps> = ({ showCreator, showVisibility, sh
         ? `${t("common.last-updated-at")}: ${updateTime.toLocaleString(i18n.language)}`
         : undefined,
   };
+  const renderReminderPills = (expanded: boolean) => (
+    <div className="flex min-w-0 max-w-full items-center gap-1 overflow-hidden">
+      {linkedReminders.slice(0, MAX_REMINDERS_PER_MEMO).map((reminder) => (
+        <button
+          key={reminder.name}
+          type="button"
+          className={cn(
+            "inline-flex min-w-5 shrink items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-xs text-primary hover:bg-primary/15",
+            expanded ? "max-w-40" : "max-w-28",
+            reminder.status === Reminder_Status.COMPLETED && "bg-muted text-muted-foreground opacity-70",
+          )}
+          onClick={() => onReminderSelect?.(reminder.name)}
+          title={reminder.status === Reminder_Status.COMPLETED ? `${reminder.title} · ${t("reminder.completed")}` : reminder.title}
+          aria-label={`${t("reminder.details")}: ${reminder.title}`}
+        >
+          <BellRingIcon className="size-3.5 shrink-0" />
+          <span
+            className={cn(!expanded && "hidden sm:inline", "truncate", reminder.status === Reminder_Status.COMPLETED && "line-through")}
+          >
+            {reminder.title}
+          </span>
+        </button>
+      ))}
+    </div>
+  );
 
   return (
-    <div className="w-full flex flex-row justify-between items-center gap-2">
-      <div className="w-auto max-w-[calc(100%-8rem)] grow flex flex-row justify-start items-center">
-        {showCreator && creator ? (
-          <CreatorDisplay creator={creator} displayTime={displayTime} timeTooltip={timeTooltip} onGotoDetail={handleGotoMemoDetailPage} />
-        ) : (
-          <TimeDisplay displayTime={displayTime} timeTooltip={timeTooltip} onGotoDetail={handleGotoMemoDetailPage} />
-        )}
-        {memo.name === newMemoName && (
-          <span className="ml-2 shrink-0 rounded-full bg-primary/10 px-1.5 py-0.5 text-xs font-medium leading-none text-primary">
-            {t("memo.new-badge")}
-          </span>
-        )}
-      </div>
+    <div className="flex w-full flex-col gap-1.5">
+      <div className="flex w-full flex-row items-center justify-between gap-2">
+        <div className="flex w-auto max-w-[calc(100%-8rem)] grow flex-row items-center justify-start gap-2 overflow-hidden">
+          <div className="max-w-full shrink-0">
+            {showCreator && creator ? (
+              <CreatorDisplay
+                creator={creator}
+                displayTime={displayTime}
+                timeTooltip={timeTooltip}
+                onGotoDetail={handleGotoMemoDetailPage}
+              />
+            ) : (
+              <TimeDisplay displayTime={displayTime} timeTooltip={timeTooltip} onGotoDetail={handleGotoMemoDetailPage} />
+            )}
+          </div>
+          {memo.name === newMemoName && (
+            <span className="shrink-0 rounded-full bg-primary/10 px-1.5 py-0.5 text-xs font-medium leading-none text-primary">
+              {t("memo.new-badge")}
+            </span>
+          )}
+          {linkedReminders.length > 0 && renderReminderPills(!!showCreator)}
+        </div>
 
-      <div className="flex flex-row justify-end items-center select-none shrink-0 gap-2">
-        {currentUser && !isArchived && (
-          <ReactionSelector
-            className={cn("border-none w-auto h-auto", reactionSelectorOpen && "block!", "block sm:hidden sm:group-hover:block")}
-            memo={memo}
-            onOpenChange={setReactionSelectorOpen}
-          />
-        )}
+        <div className="flex shrink-0 select-none flex-row items-center justify-end gap-2">
+          {currentUser && !isArchived && (
+            <ReactionSelector
+              className={cn("border-none w-auto h-auto", reactionSelectorOpen && "block!", "block sm:hidden sm:group-hover:block")}
+              memo={memo}
+              onOpenChange={setReactionSelectorOpen}
+            />
+          )}
 
-        {showVisibility && memo.visibility !== Visibility.PRIVATE && (
-          <Tooltip>
-            <TooltipTrigger>
-              <span className="flex justify-center items-center rounded-md hover:opacity-80">
-                <VisibilityIcon visibility={memo.visibility} />
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>
-              {t(`memo.visibility.${convertVisibilityToString(memo.visibility).toLowerCase()}` as Parameters<typeof t>[0])}
-            </TooltipContent>
-          </Tooltip>
-        )}
-
-        {showPinned && memo.pinned && (
-          <TooltipProvider>
+          {showVisibility && memo.visibility !== Visibility.PRIVATE && (
             <Tooltip>
-              <TooltipTrigger render={<span className="cursor-pointer" />}>
-                <BookmarkIcon className="w-4 h-auto text-primary" onClick={unpinMemo} />
+              <TooltipTrigger>
+                <span className="flex justify-center items-center rounded-md hover:opacity-80">
+                  <VisibilityIcon visibility={memo.visibility} />
+                </span>
               </TooltipTrigger>
               <TooltipContent>
-                <p>{t("common.unpin")}</p>
+                {t(`memo.visibility.${convertVisibilityToString(memo.visibility).toLowerCase()}` as Parameters<typeof t>[0])}
               </TooltipContent>
             </Tooltip>
-          </TooltipProvider>
-        )}
+          )}
 
-        <MemoActionMenu memo={memo} readonly={readonly} onEdit={openEditor} />
+          {showPinned && memo.pinned && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger render={<span className="cursor-pointer" />}>
+                  <BookmarkIcon className="w-4 h-auto text-primary" onClick={unpinMemo} />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t("common.unpin")}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+
+          <MemoActionMenu memo={memo} readonly={readonly} onEdit={openEditor} />
+        </div>
       </div>
     </div>
   );

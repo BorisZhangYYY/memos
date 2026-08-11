@@ -172,7 +172,7 @@ describe("App sidebar logo", () => {
     expect(screen.getByText("Calendar")).toBeInTheDocument();
   });
 
-  it("uses a compact scope menu and places views below the calendar", async () => {
+  it("uses a compact scope menu and leaves tasks and reminders out of global navigation", async () => {
     render(
       <MemoryRouter initialEntries={["/"]}>
         <AppSidebar />
@@ -185,7 +185,8 @@ describe("App sidebar logo", () => {
     const viewOptions = screen.getByRole("button", { name: "memo.view-options" });
     const createView = screen.getByRole("button", { name: "common.create" });
     expect(viewOptions.compareDocumentPosition(createView) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(screen.getByRole("button", { name: "common.tasks" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "common.tasks" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "common.reminders" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "common.all" })).not.toBeInTheDocument();
 
     const scopeTrigger = screen.getByRole("button", { name: "common.home" });

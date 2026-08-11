@@ -29,6 +29,8 @@ const (
 	InboxMessage_MEMO_COMMENT InboxMessage_Type = 1
 	// Memo mention notification.
 	InboxMessage_MEMO_MENTION InboxMessage_Type = 2
+	// Scheduled reminder notification.
+	InboxMessage_REMINDER InboxMessage_Type = 3
 )
 
 // Enum value maps for InboxMessage_Type.
@@ -37,11 +39,13 @@ var (
 		0: "TYPE_UNSPECIFIED",
 		1: "MEMO_COMMENT",
 		2: "MEMO_MENTION",
+		3: "REMINDER",
 	}
 	InboxMessage_Type_value = map[string]int32{
 		"TYPE_UNSPECIFIED": 0,
 		"MEMO_COMMENT":     1,
 		"MEMO_MENTION":     2,
+		"REMINDER":         3,
 	}
 )
 
@@ -80,6 +84,7 @@ type InboxMessage struct {
 	//
 	//	*InboxMessage_MemoComment
 	//	*InboxMessage_MemoMention
+	//	*InboxMessage_Reminder
 	Payload       isInboxMessage_Payload `protobuf_oneof:"payload"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -147,6 +152,15 @@ func (x *InboxMessage) GetMemoMention() *InboxMessage_MemoMentionPayload {
 	return nil
 }
 
+func (x *InboxMessage) GetReminder() *InboxMessage_ReminderPayload {
+	if x != nil {
+		if x, ok := x.Payload.(*InboxMessage_Reminder); ok {
+			return x.Reminder
+		}
+	}
+	return nil
+}
+
 type isInboxMessage_Payload interface {
 	isInboxMessage_Payload()
 }
@@ -159,9 +173,15 @@ type InboxMessage_MemoMention struct {
 	MemoMention *InboxMessage_MemoMentionPayload `protobuf:"bytes,3,opt,name=memo_mention,json=memoMention,proto3,oneof"`
 }
 
+type InboxMessage_Reminder struct {
+	Reminder *InboxMessage_ReminderPayload `protobuf:"bytes,4,opt,name=reminder,proto3,oneof"`
+}
+
 func (*InboxMessage_MemoComment) isInboxMessage_Payload() {}
 
 func (*InboxMessage_MemoMention) isInboxMessage_Payload() {}
+
+func (*InboxMessage_Reminder) isInboxMessage_Payload() {}
 
 type InboxMessage_MemoCommentPayload struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -267,25 +287,119 @@ func (x *InboxMessage_MemoMentionPayload) GetRelatedMemoId() int32 {
 	return 0
 }
 
+type InboxMessage_ReminderPayload struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ReminderId    int32                  `protobuf:"varint,1,opt,name=reminder_id,json=reminderId,proto3" json:"reminder_id,omitempty"`
+	ReminderUid   string                 `protobuf:"bytes,2,opt,name=reminder_uid,json=reminderUid,proto3" json:"reminder_uid,omitempty"`
+	Title         string                 `protobuf:"bytes,3,opt,name=title,proto3" json:"title,omitempty"`
+	RemindTs      int64                  `protobuf:"varint,4,opt,name=remind_ts,json=remindTs,proto3" json:"remind_ts,omitempty"`
+	Early         bool                   `protobuf:"varint,5,opt,name=early,proto3" json:"early,omitempty"`
+	TimeZone      string                 `protobuf:"bytes,6,opt,name=time_zone,json=timeZone,proto3" json:"time_zone,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InboxMessage_ReminderPayload) Reset() {
+	*x = InboxMessage_ReminderPayload{}
+	mi := &file_store_inbox_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InboxMessage_ReminderPayload) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InboxMessage_ReminderPayload) ProtoMessage() {}
+
+func (x *InboxMessage_ReminderPayload) ProtoReflect() protoreflect.Message {
+	mi := &file_store_inbox_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InboxMessage_ReminderPayload.ProtoReflect.Descriptor instead.
+func (*InboxMessage_ReminderPayload) Descriptor() ([]byte, []int) {
+	return file_store_inbox_proto_rawDescGZIP(), []int{0, 2}
+}
+
+func (x *InboxMessage_ReminderPayload) GetReminderId() int32 {
+	if x != nil {
+		return x.ReminderId
+	}
+	return 0
+}
+
+func (x *InboxMessage_ReminderPayload) GetReminderUid() string {
+	if x != nil {
+		return x.ReminderUid
+	}
+	return ""
+}
+
+func (x *InboxMessage_ReminderPayload) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *InboxMessage_ReminderPayload) GetRemindTs() int64 {
+	if x != nil {
+		return x.RemindTs
+	}
+	return 0
+}
+
+func (x *InboxMessage_ReminderPayload) GetEarly() bool {
+	if x != nil {
+		return x.Early
+	}
+	return false
+}
+
+func (x *InboxMessage_ReminderPayload) GetTimeZone() string {
+	if x != nil {
+		return x.TimeZone
+	}
+	return ""
+}
+
 var File_store_inbox_proto protoreflect.FileDescriptor
 
 const file_store_inbox_proto_rawDesc = "" +
 	"\n" +
-	"\x11store/inbox.proto\x12\vmemos.store\"\xe3\x03\n" +
+	"\x11store/inbox.proto\x12\vmemos.store\"\xf8\x05\n" +
 	"\fInboxMessage\x122\n" +
 	"\x04type\x18\x01 \x01(\x0e2\x1e.memos.store.InboxMessage.TypeR\x04type\x12Q\n" +
 	"\fmemo_comment\x18\x02 \x01(\v2,.memos.store.InboxMessage.MemoCommentPayloadH\x00R\vmemoComment\x12Q\n" +
-	"\fmemo_mention\x18\x03 \x01(\v2,.memos.store.InboxMessage.MemoMentionPayloadH\x00R\vmemoMention\x1aU\n" +
+	"\fmemo_mention\x18\x03 \x01(\v2,.memos.store.InboxMessage.MemoMentionPayloadH\x00R\vmemoMention\x12G\n" +
+	"\breminder\x18\x04 \x01(\v2).memos.store.InboxMessage.ReminderPayloadH\x00R\breminder\x1aU\n" +
 	"\x12MemoCommentPayload\x12\x17\n" +
 	"\amemo_id\x18\x01 \x01(\x05R\x06memoId\x12&\n" +
 	"\x0frelated_memo_id\x18\x02 \x01(\x05R\rrelatedMemoId\x1aU\n" +
 	"\x12MemoMentionPayload\x12\x17\n" +
 	"\amemo_id\x18\x01 \x01(\x05R\x06memoId\x12&\n" +
-	"\x0frelated_memo_id\x18\x02 \x01(\x05R\rrelatedMemoId\"@\n" +
+	"\x0frelated_memo_id\x18\x02 \x01(\x05R\rrelatedMemoId\x1a\xbb\x01\n" +
+	"\x0fReminderPayload\x12\x1f\n" +
+	"\vreminder_id\x18\x01 \x01(\x05R\n" +
+	"reminderId\x12!\n" +
+	"\freminder_uid\x18\x02 \x01(\tR\vreminderUid\x12\x14\n" +
+	"\x05title\x18\x03 \x01(\tR\x05title\x12\x1b\n" +
+	"\tremind_ts\x18\x04 \x01(\x03R\bremindTs\x12\x14\n" +
+	"\x05early\x18\x05 \x01(\bR\x05early\x12\x1b\n" +
+	"\ttime_zone\x18\x06 \x01(\tR\btimeZone\"N\n" +
 	"\x04Type\x12\x14\n" +
 	"\x10TYPE_UNSPECIFIED\x10\x00\x12\x10\n" +
 	"\fMEMO_COMMENT\x10\x01\x12\x10\n" +
-	"\fMEMO_MENTION\x10\x02B\t\n" +
+	"\fMEMO_MENTION\x10\x02\x12\f\n" +
+	"\bREMINDER\x10\x03B\t\n" +
 	"\apayloadB\x95\x01\n" +
 	"\x0fcom.memos.storeB\n" +
 	"InboxProtoP\x01Z)github.com/usememos/memos/proto/gen/store\xa2\x02\x03MSX\xaa\x02\vMemos.Store\xca\x02\vMemos\\Store\xe2\x02\x17Memos\\Store\\GPBMetadata\xea\x02\fMemos::Storeb\x06proto3"
@@ -303,22 +417,24 @@ func file_store_inbox_proto_rawDescGZIP() []byte {
 }
 
 var file_store_inbox_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_store_inbox_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_store_inbox_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_store_inbox_proto_goTypes = []any{
 	(InboxMessage_Type)(0),                  // 0: memos.store.InboxMessage.Type
 	(*InboxMessage)(nil),                    // 1: memos.store.InboxMessage
 	(*InboxMessage_MemoCommentPayload)(nil), // 2: memos.store.InboxMessage.MemoCommentPayload
 	(*InboxMessage_MemoMentionPayload)(nil), // 3: memos.store.InboxMessage.MemoMentionPayload
+	(*InboxMessage_ReminderPayload)(nil),    // 4: memos.store.InboxMessage.ReminderPayload
 }
 var file_store_inbox_proto_depIdxs = []int32{
 	0, // 0: memos.store.InboxMessage.type:type_name -> memos.store.InboxMessage.Type
 	2, // 1: memos.store.InboxMessage.memo_comment:type_name -> memos.store.InboxMessage.MemoCommentPayload
 	3, // 2: memos.store.InboxMessage.memo_mention:type_name -> memos.store.InboxMessage.MemoMentionPayload
-	3, // [3:3] is the sub-list for method output_type
-	3, // [3:3] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	4, // 3: memos.store.InboxMessage.reminder:type_name -> memos.store.InboxMessage.ReminderPayload
+	4, // [4:4] is the sub-list for method output_type
+	4, // [4:4] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_store_inbox_proto_init() }
@@ -329,6 +445,7 @@ func file_store_inbox_proto_init() {
 	file_store_inbox_proto_msgTypes[0].OneofWrappers = []any{
 		(*InboxMessage_MemoComment)(nil),
 		(*InboxMessage_MemoMention)(nil),
+		(*InboxMessage_Reminder)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -336,7 +453,7 @@ func file_store_inbox_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_store_inbox_proto_rawDesc), len(file_store_inbox_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   3,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

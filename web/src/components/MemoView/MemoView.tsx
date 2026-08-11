@@ -1,3 +1,4 @@
+import { LinkIcon } from "lucide-react";
 import { type ComponentType, memo, Suspense, useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useResolvedUser } from "@/components/MemoContent/MentionResolutionContext";
@@ -11,6 +12,7 @@ import { getMoodColor } from "@/lib/mood";
 import { findTagMetadata } from "@/lib/tag";
 import { cn } from "@/lib/utils";
 import { State } from "@/types/proto/api/v1/common_pb";
+import { useTranslate } from "@/utils/i18n";
 import { lazyWithReload } from "@/utils/lazy";
 import { isSuperUser } from "@/utils/user";
 import { MemoBody, MemoCommentListView, MemoHeader } from "./components";
@@ -23,6 +25,7 @@ const MemoShareImageDialog = lazyWithReload(() => import("../MemoActionMenu/Memo
 const PreviewImageDialog = lazyWithReload(() => import("../PreviewImageDialog"));
 
 const MemoView: React.FC<MemoViewProps> = (props: MemoViewProps) => {
+  const t = useTranslate();
   const { memo: memoData, className, parentPage: parentPageProp, compact, showCreator, showVisibility, showPinned } = props;
   const cardRef = useRef<HTMLDivElement>(null);
   const [showEditor, setShowEditor] = useState(false);
@@ -140,7 +143,24 @@ const MemoView: React.FC<MemoViewProps> = (props: MemoViewProps) => {
           {moodEmojis[moodLevel - 1]}
         </span>
       )}
-      <MemoHeader showCreator={showCreator} showVisibility={showVisibility} showPinned={showPinned} />
+      <MemoHeader
+        showCreator={showCreator}
+        showVisibility={showVisibility}
+        showPinned={showPinned}
+        linkedReminders={props.linkedReminders}
+        onReminderSelect={props.onReminderSelect}
+      />
+
+      {props.onLinkToMemo && props.linkingReminderTitle && (
+        <button
+          type="button"
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-sm font-medium text-primary hover:bg-primary/10"
+          onClick={() => props.onLinkToMemo?.(memoData.name)}
+        >
+          <LinkIcon className="size-4" />
+          {t("reminder.link-memo-to", { title: props.linkingReminderTitle })}
+        </button>
+      )}
 
       <MemoBody compact={compact} />
 

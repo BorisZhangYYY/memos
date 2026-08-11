@@ -21,6 +21,10 @@ Memos is a self-hosted note-taking app.
 - Add public API endpoints to `server/router/api/v1/acl_config.go`.
 - Ask before adding heavy dependencies, changing auth/token behavior, or altering Docker/release workflows.
 
+## Test Environment
+
+See [docs/test-env.md](docs/test-env.md).
+
 ## Commands
 
 Run from the repository root unless a command starts with `cd`.

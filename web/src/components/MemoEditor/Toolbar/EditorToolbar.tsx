@@ -7,6 +7,7 @@ import { useEditorContext, useEditorSelector } from "../state";
 import type { EditorToolbarProps } from "../types";
 import InsertMenu from "./InsertMenu";
 import MoodSelector from "./MoodSelector";
+import ReminderSelector from "./ReminderSelector";
 import VisibilitySelector from "./VisibilitySelector";
 
 export const EditorToolbar: FC<EditorToolbarProps> = ({
@@ -16,6 +17,9 @@ export const EditorToolbar: FC<EditorToolbarProps> = ({
   onAudioRecorderClick,
   isFormattingToolbarVisible,
   onToggleFormattingToolbar,
+  reminders,
+  linkedReminderNames,
+  onLinkedReminderNamesChange,
 }) => {
   const t = useTranslate();
   const { actions, dispatch } = useEditorContext();
@@ -60,6 +64,7 @@ export const EditorToolbar: FC<EditorToolbarProps> = ({
         />
         <VisibilitySelector value={visibility} onChange={handleVisibilityChange} />
         <MoodSelector moodLevel={moodLevel} onChange={handleMoodChange} />
+        <ReminderSelector reminders={reminders} linkedReminderNames={linkedReminderNames} onChange={onLinkedReminderNamesChange} />
       </div>
 
       <div className="flex flex-row justify-end items-center gap-2">

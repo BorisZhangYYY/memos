@@ -185,7 +185,7 @@ const NotificationSection = () => {
           <Input
             className="w-full sm:w-80"
             value={emailSetting.smtpHost}
-            placeholder="smtp.gmail.com"
+            placeholder="smtp.example.com"
             aria-required={emailSetting.enabled}
             onChange={(e) => updateEmailSetting({ smtpHost: e.target.value })}
           />
@@ -215,7 +215,7 @@ const NotificationSection = () => {
             className="w-full sm:w-80"
             type="email"
             value={emailSetting.smtpUsername}
-            placeholder="your.name@gmail.com"
+            placeholder="user@example.com"
             autoComplete="username"
             onChange={(e) => updateEmailSetting({ smtpUsername: e.target.value })}
           />
@@ -233,7 +233,7 @@ const NotificationSection = () => {
             className="w-full sm:w-80"
             type="password"
             value={emailSetting.smtpPassword}
-            placeholder={hasExistingEmailSetting ? t("setting.notification.smtp-password-placeholder-existing") : "abcd efgh ijkl mnop"}
+            placeholder={hasExistingEmailSetting ? t("setting.notification.smtp-password-placeholder-existing") : "••••••••••••"}
             autoComplete="new-password"
             onChange={(e) => updateEmailSetting({ smtpPassword: e.target.value })}
           />
@@ -247,7 +247,7 @@ const NotificationSection = () => {
             className="w-full sm:w-80"
             type="email"
             value={emailSetting.fromEmail}
-            placeholder="your.name@gmail.com"
+            placeholder="user@example.com"
             aria-required={emailSetting.enabled}
             onChange={(e) => updateEmailSetting({ fromEmail: e.target.value })}
           />

@@ -663,6 +663,88 @@ func (s *ConnectServiceHandler) GetFinanceSummary(ctx context.Context, req *conn
 	return connect.NewResponse(resp), nil
 }
 
+// ReminderService
+
+func (s *ConnectServiceHandler) ListReminderLists(ctx context.Context, req *connect.Request[v1pb.ListReminderListsRequest]) (*connect.Response[v1pb.ListReminderListsResponse], error) {
+	resp, err := s.APIV1Service.ListReminderLists(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) CreateReminderList(ctx context.Context, req *connect.Request[v1pb.CreateReminderListRequest]) (*connect.Response[v1pb.ReminderList], error) {
+	resp, err := s.APIV1Service.CreateReminderList(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) UpdateReminderList(ctx context.Context, req *connect.Request[v1pb.UpdateReminderListRequest]) (*connect.Response[v1pb.ReminderList], error) {
+	resp, err := s.APIV1Service.UpdateReminderList(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) DeleteReminderList(ctx context.Context, req *connect.Request[v1pb.DeleteReminderListRequest]) (*connect.Response[emptypb.Empty], error) {
+	resp, err := s.APIV1Service.DeleteReminderList(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) ListReminders(ctx context.Context, req *connect.Request[v1pb.ListRemindersRequest]) (*connect.Response[v1pb.ListRemindersResponse], error) {
+	resp, err := s.APIV1Service.ListReminders(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) CreateReminder(ctx context.Context, req *connect.Request[v1pb.CreateReminderRequest]) (*connect.Response[v1pb.Reminder], error) {
+	resp, err := s.APIV1Service.CreateReminder(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) UpdateReminder(ctx context.Context, req *connect.Request[v1pb.UpdateReminderRequest]) (*connect.Response[v1pb.Reminder], error) {
+	resp, err := s.APIV1Service.UpdateReminder(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) DeleteReminder(ctx context.Context, req *connect.Request[v1pb.DeleteReminderRequest]) (*connect.Response[emptypb.Empty], error) {
+	resp, err := s.APIV1Service.DeleteReminder(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) CompleteReminder(ctx context.Context, req *connect.Request[v1pb.CompleteReminderRequest]) (*connect.Response[v1pb.Reminder], error) {
+	resp, err := s.APIV1Service.CompleteReminder(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) ClearCompletedReminders(ctx context.Context, req *connect.Request[v1pb.ClearCompletedRemindersRequest]) (*connect.Response[v1pb.ClearCompletedRemindersResponse], error) {
+	resp, err := s.APIV1Service.ClearCompletedReminders(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
 // IdentityProviderService
 
 func (s *ConnectServiceHandler) ListIdentityProviders(ctx context.Context, req *connect.Request[v1pb.ListIdentityProvidersRequest]) (*connect.Response[v1pb.ListIdentityProvidersResponse], error) {

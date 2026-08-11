@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
+import { MAX_REMINDERS_PER_MEMO } from "@/components/Reminder/constants";
 import { useAuth } from "@/contexts/AuthContext";
 import { useInstance } from "@/contexts/InstanceContext";
 import { useLocalStorage } from "@/hooks";
 import useCurrentUser from "@/hooks/useCurrentUser";
+import { useReminders, useUpdateReminder } from "@/hooks/useReminderQueries";
 import { cn } from "@/lib/utils";
 import { InstanceSetting_Key } from "@/types/proto/api/v1/instance_service_pb";
+import { ListRemindersRequest_View } from "@/types/proto/api/v1/reminder_service_pb";
 import { useTranslate } from "@/utils/i18n";
 import { convertVisibilityFromString } from "@/utils/memo";
 import { AudioRecorderPanel, EditorContent, EditorMetadata, FocusModeOverlay, TimestampPopover } from "./components";
@@ -33,6 +36,7 @@ const MemoEditorImpl: React.FC<MemoEditorProps> = ({
   onFocusModeExit,
   placeholder,
   defaultCreateTime,
+  initialReminderNames,
   onConfirm,
   onCancel,
 }) => {
@@ -49,11 +53,41 @@ const MemoEditorImpl: React.FC<MemoEditorProps> = ({
   const { aiSetting, fetchSetting } = useInstance();
   const [isAudioRecorderOpen, setIsAudioRecorderOpen] = useState(false);
   const [isTranscribingAudio, setIsTranscribingAudio] = useState(false);
+  const { data: reminders = [], isSuccess: remindersLoaded } = useReminders(currentUser?.name, {
+    view: ListRemindersRequest_View.ALL,
+  });
+  const updateReminder = useUpdateReminder();
+  const [linkedReminderNames, setLinkedReminderNames] = useState<string[]>([]);
+  const reminderBaselineRef = useRef<string[] | null>(null);
+  const reminderEditorKeyRef = useRef("");
   // Persisted preference: also show the formatting toolbar in normal mode. Focus
   // mode always shows it regardless; this only governs the non-focus layout.
   const [isFormattingToolbarVisible, setFormattingToolbarVisible] = useLocalStorage(FORMATTING_TOOLBAR_STORAGE_KEY, false);
 
   const memoName = memo?.name;
+  const reminderEditorKey = memoName ?? `new:${cacheKey ?? "default"}:${[...(initialReminderNames ?? [])].sort().join(",")}`;
+
+  useEffect(() => {
+    if (reminderEditorKeyRef.current !== reminderEditorKey) {
+      reminderEditorKeyRef.current = reminderEditorKey;
+      reminderBaselineRef.current = null;
+    }
+    if (!remindersLoaded || reminderBaselineRef.current) return;
+    const initialNames = initialReminderNames?.length
+      ? initialReminderNames
+      : memoName
+        ? reminders.filter((reminder) => reminder.memo === memoName).map((reminder) => reminder.name)
+        : [];
+    const uniqueNames = [...new Set(initialNames)];
+    reminderBaselineRef.current = uniqueNames;
+    setLinkedReminderNames(uniqueNames);
+  }, [initialReminderNames, memoName, reminderEditorKey, reminders, remindersLoaded]);
+
+  const hasReminderLinkChanges = useMemo(() => {
+    const baseline = reminderBaselineRef.current;
+    if (!baseline) return false;
+    return [...baseline].sort().join("\n") !== [...linkedReminderNames].sort().join("\n");
+  }, [linkedReminderNames]);
   const canTranscribe = useMemo(() => {
     const providerId = aiSetting.transcription?.providerId ?? "";
     if (!providerId) return false;
@@ -238,15 +272,44 @@ const MemoEditorImpl: React.FC<MemoEditorProps> = ({
     }
   };
 
-  const handleSave = useMemoSave({
+  const handleMemoSaved = useCallback(
+    async (savedMemoName: string) => {
+      const desired = new Set(linkedReminderNames);
+      const currentlyLinked = new Set(reminders.filter((reminder) => reminder.memo === savedMemoName).map((reminder) => reminder.name));
+      const candidates = new Set([...desired, ...currentlyLinked]);
+      await Promise.all(
+        [...candidates].map(async (name) => {
+          const reminder = reminders.find((item) => item.name === name);
+          if (!reminder) return;
+          const nextMemo = desired.has(name) ? savedMemoName : "";
+          if (reminder.memo === nextMemo) return;
+          await updateReminder.mutateAsync({ reminder: { name, memo: nextMemo }, updateMask: ["memo"] });
+        }),
+      );
+      reminderBaselineRef.current = memoName ? [...linkedReminderNames] : [];
+      if (!memoName) setLinkedReminderNames([]);
+      await onConfirm?.(savedMemoName);
+    },
+    [linkedReminderNames, memoName, onConfirm, reminders, updateReminder],
+  );
+
+  const saveMemo = useMemoSave({
     memoName,
     parentMemoName,
     defaultVisibility,
     defaultCreateTime,
     discardDraft,
-    onConfirm,
+    hasExternalChanges: hasReminderLinkChanges,
+    onConfirm: handleMemoSaved,
     onCancel: onCancel ? handleCancel : undefined,
   });
+  const handleSave = useCallback(async () => {
+    if (linkedReminderNames.length > MAX_REMINDERS_PER_MEMO) {
+      toast.error(t("reminder.link-limit", { count: MAX_REMINDERS_PER_MEMO }));
+      return;
+    }
+    await saveMemo();
+  }, [linkedReminderNames.length, saveMemo, t]);
 
   return (
     <>
@@ -309,6 +372,9 @@ const MemoEditorImpl: React.FC<MemoEditorProps> = ({
             onAudioRecorderClick={handleAudioRecorderClick}
             isFormattingToolbarVisible={isFormattingToolbarVisible}
             onToggleFormattingToolbar={handleToggleFormattingToolbar}
+            reminders={reminders}
+            linkedReminderNames={linkedReminderNames}
+            onLinkedReminderNamesChange={setLinkedReminderNames}
           />
         </div>
       </div>

@@ -5,15 +5,19 @@ import { Link, Navigate, useLocation, useParams } from "react-router-dom";
 import MemoCommentSection from "@/components/MemoCommentSection";
 import { MentionResolutionProvider } from "@/components/MemoContent/MentionResolutionContext";
 import MemoView from "@/components/MemoView";
+import ReminderDetailDialog from "@/components/Reminder/ReminderDetailDialog";
 import { useAppSidebar } from "@/contexts/AppSidebarContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useInstance } from "@/contexts/InstanceContext";
+import useCurrentUser from "@/hooks/useCurrentUser";
 import useMemoDetailError from "@/hooks/useMemoDetailError";
 import { useInfiniteMemoComments, useMemo } from "@/hooks/useMemoQueries";
 import { useSharedMemo, withShareAttachmentLinks } from "@/hooks/useMemoShareQueries";
+import { useReminderLists, useReminders } from "@/hooks/useReminderQueries";
 import { memoNamePrefix } from "@/lib/resource-names";
 import type { Attachment } from "@/types/proto/api/v1/attachment_service_pb";
 import type { Memo } from "@/types/proto/api/v1/memo_service_pb";
+import { ListRemindersRequest_View } from "@/types/proto/api/v1/reminder_service_pb";
 
 const MemoSidebarRegistration = ({
   memo,
@@ -40,7 +44,9 @@ const MemoSidebarRegistration = ({
 const MemoDetail = () => {
   const { isInitialized: authInitialized } = useAuth();
   const { isInitialized: instanceInitialized } = useInstance();
+  const currentUser = useCurrentUser();
   const [shareImageDialogOpen, setShareImageDialogOpen] = useState(false);
+  const [selectedReminderName, setSelectedReminderName] = useState<string>();
   const params = useParams();
   const location = useLocation();
   const { state: locationState, hash } = location;
@@ -64,6 +70,27 @@ const MemoDetail = () => {
   const error = isShareMode ? shareError : directError;
   const isLoading = isShareMode ? shareLoading : directLoading;
   const memoName = memo?.name ?? memoNameFromParams;
+  const reminderQueriesEnabled = !isShareMode && !!currentUser;
+  const { data: pendingReminders = [] } = useReminders(currentUser?.name, {
+    view: ListRemindersRequest_View.ALL,
+    enabled: reminderQueriesEnabled,
+  });
+  const { data: completedReminders = [] } = useReminders(currentUser?.name, {
+    view: ListRemindersRequest_View.COMPLETED,
+    enabled: reminderQueriesEnabled,
+  });
+  const { data: reminderLists = [] } = useReminderLists(reminderQueriesEnabled ? currentUser?.name : undefined);
+  const linkedReminders = useReactMemo(
+    () => [...pendingReminders, ...completedReminders].filter((reminder) => reminder.memo === memoName),
+    [completedReminders, memoName, pendingReminders],
+  );
+  const selectedReminder = useReactMemo(
+    () =>
+      selectedReminderName
+        ? linkedReminders.find((reminder) => reminder.name === selectedReminderName || reminder.name.endsWith(`/${selectedReminderName}`))
+        : undefined,
+    [linkedReminders, selectedReminderName],
+  );
   const displayMemo = useReactMemo(() => {
     if (!memo) return undefined;
     if (!isShareMode) return memo;
@@ -143,6 +170,8 @@ const MemoDetail = () => {
               showCreator
               showVisibility
               showPinned
+              linkedReminders={linkedReminders}
+              onReminderSelect={setSelectedReminderName}
               onShareImageDialogOpenChange={setShareImageDialogOpen}
             />
             {!isShareMode && (
@@ -157,6 +186,17 @@ const MemoDetail = () => {
             )}
           </div>
         </div>
+        {currentUser && (
+          <ReminderDetailDialog
+            reminder={selectedReminder}
+            lists={reminderLists}
+            parent={currentUser.name}
+            open={!!selectedReminder}
+            onOpenChange={(open) => {
+              if (!open) setSelectedReminderName(undefined);
+            }}
+          />
+        )}
       </MentionResolutionProvider>
     </section>
   );

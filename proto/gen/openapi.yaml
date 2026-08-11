@@ -2144,6 +2144,372 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/v1/users/{user}/reminder-lists:
+        get:
+            tags:
+                - ReminderService
+            operationId: ReminderService_ListReminderLists
+            parameters:
+                - name: user
+                  in: path
+                  description: The user id.
+                  required: true
+                  schema:
+                    type: string
+                - name: state
+                  in: query
+                  schema:
+                    enum:
+                        - STATE_UNSPECIFIED
+                        - NORMAL
+                        - ARCHIVED
+                    type: string
+                    format: enum
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListReminderListsResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        post:
+            tags:
+                - ReminderService
+            operationId: ReminderService_CreateReminderList
+            parameters:
+                - name: user
+                  in: path
+                  description: The user id.
+                  required: true
+                  schema:
+                    type: string
+                - name: reminderListId
+                  in: query
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ReminderList'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ReminderList'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/users/{user}/reminderLists/{reminderList}:
+        delete:
+            tags:
+                - ReminderService
+            operationId: ReminderService_DeleteReminderList
+            parameters:
+                - name: user
+                  in: path
+                  description: The user id.
+                  required: true
+                  schema:
+                    type: string
+                - name: reminderList
+                  in: path
+                  description: The reminderList id.
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content: {}
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        patch:
+            tags:
+                - ReminderService
+            operationId: ReminderService_UpdateReminderList
+            parameters:
+                - name: user
+                  in: path
+                  description: The user id.
+                  required: true
+                  schema:
+                    type: string
+                - name: reminderList
+                  in: path
+                  description: The reminderList id.
+                  required: true
+                  schema:
+                    type: string
+                - name: updateMask
+                  in: query
+                  schema:
+                    type: string
+                    format: field-mask
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ReminderList'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ReminderList'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/users/{user}/reminders:
+        get:
+            tags:
+                - ReminderService
+            operationId: ReminderService_ListReminders
+            parameters:
+                - name: user
+                  in: path
+                  description: The user id.
+                  required: true
+                  schema:
+                    type: string
+                - name: view
+                  in: query
+                  schema:
+                    enum:
+                        - VIEW_UNSPECIFIED
+                        - TODAY
+                        - SCHEDULED
+                        - ALL
+                        - FLAGGED
+                        - COMPLETED
+                    type: string
+                    format: enum
+                - name: reminderList
+                  in: query
+                  schema:
+                    type: string
+                - name: query
+                  in: query
+                  schema:
+                    type: string
+                - name: timeZone
+                  in: query
+                  schema:
+                    type: string
+                - name: state
+                  in: query
+                  schema:
+                    enum:
+                        - STATE_UNSPECIFIED
+                        - NORMAL
+                        - ARCHIVED
+                    type: string
+                    format: enum
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListRemindersResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        post:
+            tags:
+                - ReminderService
+            operationId: ReminderService_CreateReminder
+            parameters:
+                - name: user
+                  in: path
+                  description: The user id.
+                  required: true
+                  schema:
+                    type: string
+                - name: reminderId
+                  in: query
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/Reminder'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Reminder'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/users/{user}/reminders/{reminder}:
+        delete:
+            tags:
+                - ReminderService
+            operationId: ReminderService_DeleteReminder
+            parameters:
+                - name: user
+                  in: path
+                  description: The user id.
+                  required: true
+                  schema:
+                    type: string
+                - name: reminder
+                  in: path
+                  description: The reminder id.
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content: {}
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        patch:
+            tags:
+                - ReminderService
+            operationId: ReminderService_UpdateReminder
+            parameters:
+                - name: user
+                  in: path
+                  description: The user id.
+                  required: true
+                  schema:
+                    type: string
+                - name: reminder
+                  in: path
+                  description: The reminder id.
+                  required: true
+                  schema:
+                    type: string
+                - name: updateMask
+                  in: query
+                  schema:
+                    type: string
+                    format: field-mask
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/Reminder'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Reminder'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/users/{user}/reminders/{reminder}:complete:
+        post:
+            tags:
+                - ReminderService
+            operationId: ReminderService_CompleteReminder
+            parameters:
+                - name: user
+                  in: path
+                  description: The user id.
+                  required: true
+                  schema:
+                    type: string
+                - name: reminder
+                  in: path
+                  description: The reminder id.
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CompleteReminderRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Reminder'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/users/{user}/reminders:clearCompleted:
+        post:
+            tags:
+                - ReminderService
+            operationId: ReminderService_ClearCompletedReminders
+            parameters:
+                - name: user
+                  in: path
+                  description: The user id.
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ClearCompletedRemindersRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ClearCompletedRemindersResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/v1/users/{user}/settings:
         get:
             tags:
@@ -2955,6 +3321,20 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/User'
+        ClearCompletedRemindersRequest:
+            required:
+                - parent
+            type: object
+            properties:
+                parent:
+                    type: string
+        ClearCompletedRemindersResponse:
+            type: object
+            properties:
+                clearedCount:
+                    type: integer
+                    description: Number of completed reminders moved to the archived state.
+                    format: int32
         Color:
             type: object
             properties:
@@ -3110,6 +3490,13 @@ components:
                      };
 
                      // ...
+        CompleteReminderRequest:
+            required:
+                - name
+            type: object
+            properties:
+                name:
+                    type: string
         CreateLinkedIdentityRequest:
             required:
                 - parent
@@ -3821,6 +4208,20 @@ components:
                 nextPageToken:
                     type: string
                     description: A token for the next page of results.
+        ListReminderListsResponse:
+            type: object
+            properties:
+                reminderLists:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/ReminderList'
+        ListRemindersResponse:
+            type: object
+            properties:
+                reminders:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Reminder'
         ListShortcutsResponse:
             type: object
             properties:
@@ -4202,6 +4603,170 @@ components:
                     type: string
                     description: When the access token expires.
                     format: date-time
+        Reminder:
+            required:
+                - title
+                - reminderList
+            type: object
+            properties:
+                name:
+                    type: string
+                creator:
+                    readOnly: true
+                    type: string
+                title:
+                    type: string
+                reminderList:
+                    type: string
+                memo:
+                    type: string
+                    description: Optional linked memo. The memo timestamps remain independent of reminder dates.
+                dueDate:
+                    type: string
+                    description: Calendar date in YYYY-MM-DD form. It may be set without a notification time.
+                remindTime:
+                    type: string
+                    description: Exact time at which the reminder is due and should notify.
+                    format: date-time
+                timeZone:
+                    type: string
+                advanceNoticeSeconds:
+                    type: string
+                    description: An additional notification is delivered this many seconds before remind_time.
+                recurrence:
+                    $ref: '#/components/schemas/ReminderRecurrence'
+                flagged:
+                    type: boolean
+                priority:
+                    enum:
+                        - PRIORITY_UNSPECIFIED
+                        - LOW
+                        - MEDIUM
+                        - HIGH
+                    type: string
+                    format: enum
+                tags:
+                    type: array
+                    items:
+                        type: string
+                location:
+                    $ref: '#/components/schemas/ReminderLocation'
+                status:
+                    readOnly: true
+                    enum:
+                        - STATUS_UNSPECIFIED
+                        - PENDING
+                        - COMPLETED
+                    type: string
+                    format: enum
+                completionTime:
+                    readOnly: true
+                    type: string
+                    format: date-time
+                sortOrder:
+                    type: integer
+                    format: int32
+                state:
+                    enum:
+                        - STATE_UNSPECIFIED
+                        - NORMAL
+                        - ARCHIVED
+                    type: string
+                    format: enum
+                createTime:
+                    readOnly: true
+                    type: string
+                    format: date-time
+                updateTime:
+                    readOnly: true
+                    type: string
+                    format: date-time
+                completedOccurrences:
+                    readOnly: true
+                    type: integer
+                    format: int32
+        ReminderList:
+            required:
+                - displayName
+            type: object
+            properties:
+                name:
+                    type: string
+                displayName:
+                    type: string
+                color:
+                    type: string
+                icon:
+                    type: string
+                sortOrder:
+                    type: integer
+                    format: int32
+                state:
+                    enum:
+                        - STATE_UNSPECIFIED
+                        - NORMAL
+                        - ARCHIVED
+                    type: string
+                    format: enum
+                createTime:
+                    readOnly: true
+                    type: string
+                    format: date-time
+                updateTime:
+                    readOnly: true
+                    type: string
+                    format: date-time
+                pendingCount:
+                    readOnly: true
+                    type: integer
+                    format: int32
+        ReminderLocation:
+            type: object
+            properties:
+                placeholder:
+                    type: string
+                latitude:
+                    type: number
+                    format: double
+                longitude:
+                    type: number
+                    format: double
+                radiusMeters:
+                    type: number
+                    format: double
+                trigger:
+                    enum:
+                        - TRIGGER_UNSPECIFIED
+                        - ARRIVING
+                        - LEAVING
+                    type: string
+                    format: enum
+        ReminderRecurrence:
+            type: object
+            properties:
+                frequency:
+                    enum:
+                        - FREQUENCY_UNSPECIFIED
+                        - DAILY
+                        - WEEKLY
+                        - MONTHLY
+                        - YEARLY
+                    type: string
+                    format: enum
+                interval:
+                    type: integer
+                    format: int32
+                weekdays:
+                    type: array
+                    items:
+                        type: integer
+                        format: int32
+                    description: Weekdays use 0=Sunday through 6=Saturday and apply to WEEKLY recurrences.
+                endDate:
+                    type: string
+                maxOccurrences:
+                    type: integer
+                    format: int32
         SetMemoAttachmentsRequest:
             required:
                 - name
@@ -4513,6 +5078,7 @@ components:
                         - TYPE_UNSPECIFIED
                         - MEMO_COMMENT
                         - MEMO_MENTION
+                        - REMINDER
                     type: string
                     description: The type of the notification.
                     format: enum
@@ -4524,6 +5090,10 @@ components:
                     readOnly: true
                     allOf:
                         - $ref: '#/components/schemas/UserNotification_MemoMentionPayload'
+                reminder:
+                    readOnly: true
+                    allOf:
+                        - $ref: '#/components/schemas/UserNotification_ReminderPayload'
         UserNotification_MemoCommentPayload:
             type: object
             properties:
@@ -4562,6 +5132,19 @@ components:
                 relatedMemoSnippet:
                     type: string
                     description: Preview text of the related parent memo.
+        UserNotification_ReminderPayload:
+            type: object
+            properties:
+                reminder:
+                    type: string
+                    description: The reminder resource that caused the notification.
+                title:
+                    type: string
+                remindTime:
+                    type: string
+                    format: date-time
+                early:
+                    type: boolean
         UserSetting:
             type: object
             properties:
@@ -4745,5 +5328,7 @@ tags:
     - name: IdentityProviderService
     - name: InstanceService
     - name: MemoService
+    - name: ReminderService
+      description: ReminderService manages a user's private reminder lists and reminder items.
     - name: ShortcutService
     - name: UserService

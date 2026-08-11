@@ -43,6 +43,7 @@ func (s *ConnectServiceHandler) RegisterConnectHandlers(mux *http.ServeMux, opts
 		wrap(apiv1connect.NewAIServiceHandler(s, opts...)),
 		wrap(apiv1connect.NewShortcutServiceHandler(s, opts...)),
 		wrap(apiv1connect.NewFinanceServiceHandler(s, opts...)),
+		wrap(apiv1connect.NewReminderServiceHandler(s, opts...)),
 		wrap(apiv1connect.NewIdentityProviderServiceHandler(s, opts...)),
 	}
 

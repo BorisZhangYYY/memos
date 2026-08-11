@@ -1,4 +1,5 @@
 import type { Memo } from "@/types/proto/api/v1/memo_service_pb";
+import type { Reminder } from "@/types/proto/api/v1/reminder_service_pb";
 
 export interface MemoViewProps {
   memo: Memo;
@@ -10,12 +11,18 @@ export interface MemoViewProps {
   parentPage?: string;
   shareImageDialogOpen?: boolean;
   onShareImageDialogOpenChange?: (open: boolean) => void;
+  linkedReminders?: Reminder[];
+  onReminderSelect?: (reminderName: string) => void;
+  linkingReminderTitle?: string;
+  onLinkToMemo?: (memoName: string) => void;
 }
 
 export interface MemoHeaderProps {
   showCreator?: boolean;
   showVisibility?: boolean;
   showPinned?: boolean;
+  linkedReminders?: Reminder[];
+  onReminderSelect?: (reminderName: string) => void;
 }
 
 export interface MemoBodyProps {

@@ -37,6 +37,19 @@ type Driver interface {
 	UpdateFinanceTransaction(ctx context.Context, update *UpdateFinanceTransaction) (*FinanceTransaction, error)
 	DeleteFinanceTransaction(ctx context.Context, delete *DeleteFinanceTransaction) error
 
+	// Reminder model related methods.
+	CreateReminderList(ctx context.Context, create *ReminderList) (*ReminderList, error)
+	ListReminderLists(ctx context.Context, find *FindReminderList) ([]*ReminderList, error)
+	UpdateReminderList(ctx context.Context, update *UpdateReminderList) (*ReminderList, error)
+	CreateReminder(ctx context.Context, create *Reminder) (*Reminder, error)
+	ListReminders(ctx context.Context, find *FindReminder) ([]*Reminder, error)
+	UpdateReminder(ctx context.Context, update *UpdateReminder) (*Reminder, error)
+	DeleteReminder(ctx context.Context, delete *DeleteReminder) error
+	CreateReminderOccurrence(ctx context.Context, create *ReminderOccurrence) (*ReminderOccurrence, error)
+	ListReminderOccurrences(ctx context.Context, find *FindReminderOccurrence) ([]*ReminderOccurrence, error)
+	ListDueReminderNotifications(ctx context.Context, now int64) ([]*ReminderNotification, error)
+	MarkReminderNotificationDelivered(ctx context.Context, reminderID int32, early bool, deliveredTs int64) error
+
 	// Memo model related methods.
 	CreateMemo(ctx context.Context, create *Memo) (*Memo, error)
 	ListMemos(ctx context.Context, find *FindMemo) ([]*Memo, error)

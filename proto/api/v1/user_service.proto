@@ -831,6 +831,7 @@ message UserNotification {
   oneof payload {
     MemoCommentPayload memo_comment = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
     MemoMentionPayload memo_mention = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+    ReminderPayload reminder = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
   }
 
   message MemoCommentPayload {
@@ -865,6 +866,14 @@ message UserNotification {
     string related_memo_snippet = 4;
   }
 
+  message ReminderPayload {
+    // The reminder resource that caused the notification.
+    string reminder = 1;
+    string title = 2;
+    google.protobuf.Timestamp remind_time = 3;
+    bool early = 4;
+  }
+
   enum Status {
     STATUS_UNSPECIFIED = 0;
     UNREAD = 1;
@@ -875,6 +884,7 @@ message UserNotification {
     TYPE_UNSPECIFIED = 0;
     MEMO_COMMENT = 1;
     MEMO_MENTION = 2;
+    REMINDER = 3;
   }
 }
 

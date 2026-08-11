@@ -283,7 +283,7 @@ func (s *APIV1Service) TestInstanceEmailSetting(ctx context.Context, request *v1
 	}
 
 	if err := notification.SendTestEmail(emailSetting, recipientEmail); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to send test email: %v. Check that the SMTP port matches encryption: Gmail uses port 587 with STARTTLS on and SSL/TLS off; port 465 requires SSL/TLS on", err)
+		return nil, status.Errorf(codes.Internal, "failed to send test email: %v. Check that the SMTP port matches the encryption mode required by your email provider", err)
 	}
 
 	return &emptypb.Empty{}, nil

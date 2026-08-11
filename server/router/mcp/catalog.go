@@ -29,6 +29,12 @@ var curatedOperationIDs = []string{
 	"AttachmentService_GetAttachment",
 	"AttachmentService_DeleteAttachment",
 	"ShortcutService_ListShortcuts",
+	"ReminderService_ListReminderLists",
+	"ReminderService_CreateReminderList",
+	"ReminderService_ListReminders",
+	"ReminderService_CreateReminder",
+	"ReminderService_UpdateReminder",
+	"ReminderService_CompleteReminder",
 	// The only allowed auth/identity operation: a read-only "whoami" so agents
 	// can resolve the current user (e.g. for ShortcutService_ListShortcuts).
 	"AuthService_GetCurrentUser",
