@@ -44,8 +44,19 @@ export const useLocation = (initialLocation?: Location) => {
     const isValid = type === "lat" ? !isNaN(num) && num >= -90 && num <= 90 : !isNaN(num) && num >= -180 && num <= 180;
     setState((prev) => {
       const next = { ...prev, [type === "lat" ? "latInput" : "lngInput"]: value };
-      if (isValid && prev.position) {
-        const newPos = type === "lat" ? { lat: num, lng: prev.position.lng } : { lat: prev.position.lat, lng: num };
+      const nextLat = type === "lat" ? num : Number.parseFloat(prev.latInput);
+      const nextLng = type === "lng" ? num : Number.parseFloat(prev.lngInput);
+      const hasValidPair =
+        isValid &&
+        Number.isFinite(nextLat) &&
+        nextLat >= -90 &&
+        nextLat <= 90 &&
+        Number.isFinite(nextLng) &&
+        nextLng >= -180 &&
+        nextLng <= 180;
+      if (hasValidPair) {
+        const newPos = { lat: nextLat, lng: nextLng };
+        if (!locationInitializedRef.current) setLocationInitialized(true);
         return { ...next, position: newPos, latInput: String(newPos.lat), lngInput: String(newPos.lng) };
       }
       return next;
@@ -70,13 +81,13 @@ export const useLocation = (initialLocation?: Location) => {
   // Stable — reads latest state via ref, no closure over state.
   const getLocation = useCallback((): Location | undefined => {
     const { position, placeholder } = stateRef.current;
-    if (!position || !placeholder.trim()) {
+    if (!position) {
       return undefined;
     }
     return create(LocationSchema, {
       latitude: position.lat,
       longitude: position.lng,
-      placeholder,
+      placeholder: placeholder.trim() || `${position.lat.toFixed(6)}, ${position.lng.toFixed(6)}`,
     });
   }, []);
 

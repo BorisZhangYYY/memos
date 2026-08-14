@@ -633,6 +633,9 @@ func (r *renderer) renderListComprehension(cond *ListComprehensionCondition) (re
 // kinds the same exact, case-sensitive semantics.
 func (r *renderer) renderTagComprehension(field Field, pred PredicateExpr, kind ComprehensionKind) (renderResult, error) {
 	arrayExpr := jsonArrayExpr(r.dialect, field)
+	if r.dialect == DialectMySQL {
+		return r.renderMySQLTagComprehension(arrayExpr, pred, kind)
+	}
 	elemCond, err := r.tagElementPredicateSQL("tag_item.value", pred)
 	if err != nil {
 		return renderResult{}, err
@@ -644,10 +647,6 @@ func (r *renderer) renderTagComprehension(field Field, pred PredicateExpr, kind 
 		arrayExpr = fmt.Sprintf("COALESCE(%s, JSON_ARRAY())", arrayExpr)
 		elements = fmt.Sprintf("json_each(%s) AS tag_item", arrayExpr)
 		length = fmt.Sprintf("json_array_length(%s)", arrayExpr)
-	case DialectMySQL:
-		arrayExpr = fmt.Sprintf("COALESCE(%s, JSON_ARRAY())", arrayExpr)
-		elements = fmt.Sprintf("JSON_TABLE(%s, '$[*]' COLUMNS (value LONGTEXT PATH '$')) AS tag_item", arrayExpr)
-		length = fmt.Sprintf("JSON_LENGTH(%s)", arrayExpr)
 	case DialectPostgres:
 		arrayExpr = fmt.Sprintf("COALESCE(%s, '[]'::jsonb)", arrayExpr)
 		elements = fmt.Sprintf("jsonb_array_elements_text(%s) AS tag_item(value)", arrayExpr)
@@ -663,6 +662,47 @@ func (r *renderer) renderTagComprehension(field Field, pred PredicateExpr, kind 
 		return renderResult{sql: fmt.Sprintf("(%s > 0 AND NOT EXISTS (SELECT 1 FROM %s WHERE NOT (%s)))", length, elements, elemCond)}, nil
 	case ComprehensionExistsOne:
 		return renderResult{sql: fmt.Sprintf("(SELECT COUNT(*) FROM %s WHERE %s) = 1", elements, elemCond)}, nil
+	default:
+		return renderResult{}, errors.Errorf("unsupported comprehension kind %s", kind)
+	}
+}
+
+// renderMySQLTagComprehension uses JSON_SEARCH instead of a correlated
+// JSON_TABLE subquery. MySQL can incorrectly return no rows when such a
+// subquery references a JSON column from an outer query that also has joins.
+// JSON_SEARCH returns every matching array path, so its result length supports
+// exists, all, and exists_one without a correlated table expression.
+func (r *renderer) renderMySQLTagComprehension(arrayExpr string, pred PredicateExpr, kind ComprehensionKind) (renderResult, error) {
+	var pattern string
+	switch p := pred.(type) {
+	case *EqualsPredicate:
+		pattern = escapeTagLikeLiteral(p.Value)
+	case *StartsWithPredicate:
+		pattern = tagLikePattern(TextMatchPrefix, p.Prefix)
+	case *EndsWithPredicate:
+		pattern = tagLikePattern(TextMatchSuffix, p.Suffix)
+	case *ContainsPredicate:
+		pattern = tagLikePattern(TextMatchContains, p.Substring)
+	default:
+		return renderResult{}, errors.Errorf("unsupported tag predicate %T", pred)
+	}
+
+	arrayExpr = fmt.Sprintf("COALESCE(%s, JSON_ARRAY())", arrayExpr)
+	search := fmt.Sprintf(
+		"JSON_SEARCH(%s, 'all', CAST(%s AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_bin, '!')",
+		arrayExpr,
+		r.addArg(pattern),
+	)
+	matches := fmt.Sprintf("COALESCE(JSON_LENGTH(%s), 0)", search)
+	length := fmt.Sprintf("JSON_LENGTH(%s)", arrayExpr)
+
+	switch kind {
+	case ComprehensionExists:
+		return renderResult{sql: matches + " > 0"}, nil
+	case ComprehensionAll:
+		return renderResult{sql: fmt.Sprintf("(%s > 0 AND %s = %s)", length, matches, length)}, nil
+	case ComprehensionExistsOne:
+		return renderResult{sql: matches + " = 1"}, nil
 	default:
 		return renderResult{}, errors.Errorf("unsupported comprehension kind %s", kind)
 	}
@@ -726,7 +766,7 @@ func (r *renderer) tagElementTextMatch(element string, mode TextMatchMode, value
 }
 
 func tagLikePattern(mode TextMatchMode, value string) string {
-	escaped := strings.NewReplacer("!", "!!", "%", "!%", "_", "!_").Replace(value)
+	escaped := escapeTagLikeLiteral(value)
 	switch mode {
 	case TextMatchPrefix:
 		return escaped + "%"
@@ -735,6 +775,10 @@ func tagLikePattern(mode TextMatchMode, value string) string {
 	default:
 		return "%" + escaped + "%"
 	}
+}
+
+func escapeTagLikeLiteral(value string) string {
+	return strings.NewReplacer("!", "!!", "%", "!%", "_", "!_").Replace(value)
 }
 
 func (r *renderer) jsonBoolPredicate(field Field) (string, error) {

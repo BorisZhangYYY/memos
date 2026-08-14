@@ -1,5 +1,42 @@
 # Changelog
 
+## [0.33.1](https://github.com/BorisZhangYYY/memos/compare/v0.33.0...v0.33.1) (2026-08-14)
+
+### Summary
+
+This release completes the Agent-facing MCP workflow surface, adds an optional
+personal profile card, improves location selection and map presentation, and
+hardens finance ledger consistency without introducing product-specific Agent
+skills or personal tag conventions.
+
+### Features
+
+* **Expanded MCP workflows:** adds the existing Finance, statistics, safe user
+  settings, and reminder cleanup operations to the curated MCP allowlist while
+  keeping authentication, user administration, tokens, SSO, instance mutation,
+  public sharing, webhooks, and transcription unavailable to agents.
+* **Agent-friendly schemas:** exposes stricter, self-describing tool inputs for
+  reminder dates, finance timestamps and balances, partial updates, and persona
+  fields so a generic MCP client can use the tools without a bundled skill.
+* **Personal profile card:** adds an optional private persona card with Markdown
+  presentation, editable interests and goals, theme-aware styling, and JSON
+  export. Persona data remains portable through the regular user settings API.
+* **Location picker:** adds explicit browser geolocation, clearer selection and
+  error states, theme-aware map tiles, localized controls, attribution, and
+  configurable tile endpoints.
+
+### Bug Fixes
+
+* **Finance ledger consistency:** rebuilds chronological balance snapshots after
+  backdated, updated, or deleted transactions and serializes SQLite ledger
+  mutations to prevent stale concurrent writes.
+* **Tag filtering:** preserves CEL list arguments across SQLite, MySQL, and
+  PostgreSQL so tag-based Agent queries behave consistently on all supported
+  databases.
+* **Development version detection:** adds a stable-version development launcher
+  so Web Clipper compatibility checks no longer reject a local source build as
+  an unsupported `dev` version.
+
 ## [0.33.0](https://github.com/BorisZhangYYY/memos/compare/v0.32.0...v0.33.0) (2026-08-11)
 
 ### Summary

@@ -31,7 +31,7 @@ Run from the repository root unless a command starts with `cd`.
 
 ```bash
 # Backend
-go run ./cmd/memos --port 8081    # Start backend dev server
+./scripts/run-dev-backend.sh --port 8081 # Start backend dev server with a stable version marker
 go test ./...                      # Run all Go tests
 go test -v ./store/...             # Store tests, including DB drivers via TestContainers
 go test -v -race ./server/...      # Server tests with race detector

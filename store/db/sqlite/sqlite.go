@@ -41,6 +41,9 @@ func NewDB(profile *profile.Profile) (store.Driver, error) {
 	// good practice to be explicit and prevent future surprises on SQLite upgrades.
 	// - Journal mode set to WAL: it's the recommended journal mode for most applications
 	// as it prevents locking issues.
+	// - Immediate transactions acquire the write reservation before reading. This
+	// prevents concurrent ledger mutations from failing while upgrading a stale
+	// read transaction to a writer.
 	// - mmap size set to 0: it disables memory mapping, which can cause OOM errors on some systems.
 	//
 	// Notes:
@@ -50,7 +53,7 @@ func NewDB(profile *profile.Profile) (store.Driver, error) {
 	// - https://pkg.go.dev/modernc.org/sqlite#Driver.Open
 	// - https://www.sqlite.org/sharedcache.html
 	// - https://www.sqlite.org/pragma.html
-	sqliteDB, err := sql.Open("sqlite", profile.DSN+"?_pragma=foreign_keys(0)&_pragma=busy_timeout(10000)&_pragma=journal_mode(WAL)&_pragma=mmap_size(0)")
+	sqliteDB, err := sql.Open("sqlite", profile.DSN+"?_pragma=foreign_keys(0)&_pragma=busy_timeout(10000)&_pragma=journal_mode(WAL)&_pragma=mmap_size(0)&_txlock=immediate")
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to open db with dsn: %s", profile.DSN)
 	}

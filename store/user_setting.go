@@ -465,6 +465,12 @@ func convertUserSettingFromRaw(raw *UserSetting) (*storepb.UserSetting, error) {
 			return nil, errors.Wrap(err, "unmarshal tags user setting")
 		}
 		userSetting.Value = &storepb.UserSetting_Tags{Tags: tagsUserSetting}
+	case storepb.UserSetting_PERSONA:
+		personaUserSetting := &storepb.PersonaUserSetting{}
+		if err := protojsonUnmarshaler.Unmarshal([]byte(raw.Value), personaUserSetting); err != nil {
+			return nil, errors.Wrap(err, "failed to unmarshal persona user setting")
+		}
+		userSetting.Value = &storepb.UserSetting_Persona{Persona: personaUserSetting}
 	case storepb.UserSetting_REFRESH_TOKENS:
 		refreshTokensUserSetting := &storepb.RefreshTokensUserSetting{}
 		if err := protojsonUnmarshaler.Unmarshal([]byte(raw.Value), refreshTokensUserSetting); err != nil {
@@ -515,6 +521,13 @@ func convertUserSettingToRaw(userSetting *storepb.UserSetting) (*UserSetting, er
 		value, err := protojson.Marshal(tagsUserSetting)
 		if err != nil {
 			return nil, errors.Wrap(err, "marshal tags user setting")
+		}
+		raw.Value = string(value)
+	case storepb.UserSetting_PERSONA:
+		personaUserSetting := userSetting.GetPersona()
+		value, err := protojson.Marshal(personaUserSetting)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to marshal persona user setting")
 		}
 		raw.Value = string(value)
 	case storepb.UserSetting_REFRESH_TOKENS:

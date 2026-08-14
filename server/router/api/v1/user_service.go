@@ -22,6 +22,18 @@ import (
 
 const maxBatchGetUsers = 100
 
+const (
+	maxPersonaHeadlineLength           = 280
+	maxPersonaPreferredAddressLength   = 80
+	maxPersonaCommunicationStyleLength = 1000
+	maxPersonaRoutineLength            = 2000
+	maxPersonaLifeStageLength          = 1000
+	maxPersonaInterestTags             = 50
+	maxPersonaInterestTagLength        = 60
+	maxPersonaGoals                    = 20
+	maxPersonaGoalLength               = 300
+)
+
 func validatePassword(password string) error {
 	if password == "" {
 		return errors.New("password must not be empty")
@@ -47,6 +59,51 @@ func validateUserTagsSetting(setting *v1pb.UserSetting_TagsSetting) error {
 			if err := validateInstanceColor(metadata.GetBackgroundColor()); err != nil {
 				return errors.Wrapf(err, "background_color for %q", tag)
 			}
+		}
+	}
+	return nil
+}
+
+func validateUserPersonaSetting(setting *v1pb.UserSetting_PersonaSetting) error {
+	if setting == nil {
+		return errors.New("persona setting is required")
+	}
+	fields := []struct {
+		name  string
+		value string
+		max   int
+	}{
+		{"headline", setting.Headline, maxPersonaHeadlineLength},
+		{"preferred_address", setting.PreferredAddress, maxPersonaPreferredAddressLength},
+		{"communication_style", setting.CommunicationStyle, maxPersonaCommunicationStyleLength},
+		{"routine_preferences", setting.RoutinePreferences, maxPersonaRoutineLength},
+		{"life_stage", setting.LifeStage, maxPersonaLifeStageLength},
+	}
+	for _, field := range fields {
+		if len([]rune(field.value)) > field.max {
+			return errors.Errorf("%s exceeds %d characters", field.name, field.max)
+		}
+	}
+	if len(setting.InterestTags) > maxPersonaInterestTags {
+		return errors.Errorf("interest_tags exceeds %d items", maxPersonaInterestTags)
+	}
+	for _, tag := range setting.InterestTags {
+		if strings.TrimSpace(tag) == "" {
+			return errors.New("interest_tags cannot contain an empty item")
+		}
+		if len([]rune(tag)) > maxPersonaInterestTagLength {
+			return errors.Errorf("interest tag exceeds %d characters", maxPersonaInterestTagLength)
+		}
+	}
+	if len(setting.Goals) > maxPersonaGoals {
+		return errors.Errorf("goals exceeds %d items", maxPersonaGoals)
+	}
+	for _, goal := range setting.Goals {
+		if strings.TrimSpace(goal) == "" {
+			return errors.New("goals cannot contain an empty item")
+		}
+		if len([]rune(goal)) > maxPersonaGoalLength {
+			return errors.Errorf("goal exceeds %d characters", maxPersonaGoalLength)
 		}
 	}
 	return nil

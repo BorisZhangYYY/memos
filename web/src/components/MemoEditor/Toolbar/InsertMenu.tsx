@@ -25,7 +25,6 @@ const InsertMenu = (props: InsertMenuProps) => {
   const { actions, dispatch } = useEditorContext();
   const relations = useEditorSelector((s) => s.metadata.relations);
   const {
-    location: initialLocation,
     onLocationChange,
     onToggleFocusMode,
     onToggleFormattingToolbar,
@@ -53,7 +52,6 @@ const InsertMenu = (props: InsertMenuProps) => {
   const location = useLocation(props.location);
   const {
     state: locationState,
-    locationInitialized,
     handlePositionChange: handleLocationPositionChange,
     getLocation,
     reset: locationReset,
@@ -87,19 +85,7 @@ const InsertMenu = (props: InsertMenuProps) => {
 
   const handleLocationClick = useCallback(() => {
     setLocationDialogOpen(true);
-    if (!initialLocation && !locationInitialized) {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            handleLocationPositionChange({ lat: position.coords.latitude, lng: position.coords.longitude });
-          },
-          (error) => {
-            console.error("Geolocation error:", error);
-          },
-        );
-      }
-    }
-  }, [initialLocation, locationInitialized, handleLocationPositionChange]);
+  }, []);
 
   const handleLocationConfirm = useCallback(() => {
     const newLocation = getLocation();
@@ -134,7 +120,7 @@ const InsertMenu = (props: InsertMenuProps) => {
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger render={<Button variant="secondary" size="icon" disabled={isUploading} />}>
+        <DropdownMenuTrigger render={<Button variant="secondary" size="icon" disabled={isUploading} aria-label={t("common.add")} />}>
           {isUploading ? <LoaderIcon className="size-4 animate-spin" /> : <PlusIcon className="size-4" />}
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">

@@ -40,7 +40,11 @@ cd web && pnpm install && pnpm release
 cd ..
 
 # 构建单二进制
-GOPROXY=https://goproxy.cn,direct go build -o memos ./cmd/memos
+VERSION="$(git describe --tags --abbrev=0 | sed 's/^v//')"
+COMMIT="$(git rev-parse --short HEAD)"
+GOPROXY=https://goproxy.cn,direct go build \
+  -ldflags="-X github.com/usememos/memos/internal/version.Version=${VERSION} -X github.com/usememos/memos/internal/version.Commit=${COMMIT}" \
+  -o memos ./cmd/memos
 ./memos --data ~/memos-data --port 5230
 ```
 
@@ -49,7 +53,7 @@ GOPROXY=https://goproxy.cn,direct go build -o memos ./cmd/memos
 - 默认（本地裸跑）：启动命令的**当前工作目录**下的 `memos_prod.db`（SQLite）
 - 建议始终用 `--data <目录>` 显式指定，启动时终端会打印 `Data directory:` / `Database:` 确认
 - **迁移/备份 = 拷贝整个数据目录**（`memos_prod.db` 即全部数据：日记、心情、设置）
-- 开发模式：`go run ./cmd/memos --data ~/memos-test-data --port 8081`，前端 `cd web && pnpm dev`（:3001 代理到 :8081）
+- 开发模式：`./scripts/run-dev-backend.sh --data ~/memos-test-data --port 8081`，前端 `cd web && pnpm dev`（:3001 代理到 :8081）
 
 ## 接入 Agent（MCP）
 

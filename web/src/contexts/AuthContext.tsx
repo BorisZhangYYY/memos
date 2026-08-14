@@ -7,6 +7,7 @@ import type { Shortcut } from "@/types/proto/api/v1/shortcut_service_pb";
 import type {
   User,
   UserSetting_GeneralSetting,
+  UserSetting_PersonaSetting,
   UserSetting_TagsSetting,
   UserSetting_WebhooksSetting,
 } from "@/types/proto/api/v1/user_service_pb";
@@ -14,6 +15,7 @@ import type {
 interface AuthState {
   currentUser: User | undefined;
   userGeneralSetting: UserSetting_GeneralSetting | undefined;
+  userPersonaSetting: UserSetting_PersonaSetting | undefined;
   userWebhooksSetting: UserSetting_WebhooksSetting | undefined;
   userTagsSetting: UserSetting_TagsSetting | undefined;
   shortcuts: Shortcut[];
@@ -38,6 +40,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 const UNAUTHENTICATED_STATE: AuthState = {
   currentUser: undefined,
   userGeneralSetting: undefined,
+  userPersonaSetting: undefined,
   userWebhooksSetting: undefined,
   userTagsSetting: undefined,
   shortcuts: [],
@@ -52,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({
     currentUser: undefined,
     userGeneralSetting: undefined,
+    userPersonaSetting: undefined,
     userWebhooksSetting: undefined,
     userTagsSetting: undefined,
     shortcuts: [],
@@ -66,8 +70,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const generalSetting = settings.find((s) => s.value.case === "generalSetting");
       const webhooksSetting = settings.find((s) => s.value.case === "webhooksSetting");
       const tagsSetting = settings.find((s) => s.value.case === "tagsSetting");
+      const personaSetting = settings.find((s) => s.value.case === "personaSetting");
       const userSettings = {
         userGeneralSetting: generalSetting?.value.case === "generalSetting" ? generalSetting.value.value : undefined,
+        userPersonaSetting: personaSetting?.value.case === "personaSetting" ? personaSetting.value.value : undefined,
         userWebhooksSetting: webhooksSetting?.value.case === "webhooksSetting" ? webhooksSetting.value.value : undefined,
         userTagsSetting: tagsSetting?.value.case === "tagsSetting" ? tagsSetting.value.value : undefined,
       };

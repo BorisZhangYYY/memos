@@ -12,6 +12,7 @@ import {
   UserSetting,
   UserSetting_GeneralSetting,
   UserSetting_Key,
+  UserSetting_PersonaSetting,
   UserSettingSchema,
   UserStats,
 } from "@/types/proto/api/v1/user_service_pb";
@@ -242,6 +243,33 @@ export function useUpdateUserGeneralSetting(currentUserName?: string) {
         updateMask: create(FieldMaskSchema, { paths: updateMask }),
       });
       return updatedSetting;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [...userKeys.all, "settings"] });
+    },
+  });
+}
+
+export function useUpdateUserPersonaSetting(currentUserName?: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ personaSetting, updateMask }: { personaSetting: UserSetting_PersonaSetting; updateMask: string[] }) => {
+      if (!currentUserName) {
+        throw new Error("No current user");
+      }
+
+      const setting = create(UserSettingSchema, {
+        name: buildUserSettingName(currentUserName, UserSetting_Key.PERSONA),
+        value: {
+          case: "personaSetting",
+          value: personaSetting,
+        },
+      });
+      return userServiceClient.updateUserSetting({
+        setting,
+        updateMask: create(FieldMaskSchema, { paths: updateMask }),
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [...userKeys.all, "settings"] });

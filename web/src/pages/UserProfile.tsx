@@ -1,12 +1,15 @@
 import copy from "copy-to-clipboard";
 import { ExternalLinkIcon } from "lucide-react";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useParams, useSearchParams } from "react-router-dom";
+import EditPersonaDialog from "@/components/EditPersonaDialog";
 import MemoView from "@/components/MemoView";
 import PagedMemoList, { getMemoKey } from "@/components/PagedMemoList";
+import PersonaCard from "@/components/PersonaCard";
 import UserAvatar from "@/components/UserAvatar";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 import { useMemoFilters, useMemoSorting } from "@/hooks";
 import { useUser } from "@/hooks/useUserQueries";
 import { State } from "@/types/proto/api/v1/common_pb";
@@ -47,6 +50,8 @@ const ProfileHeader = ({ user, onCopyProfileLink, shareLabel }: { user: User; on
 
 const UserProfile = () => {
   const t = useTranslate();
+  const { currentUser, userPersonaSetting } = useAuth();
+  const [personaDialogOpen, setPersonaDialogOpen] = useState(false);
   const username = useParams().username;
   const [searchParams] = useSearchParams();
   const activeTab = (searchParams.get("view") === "map" ? "map" : "memos") as TabView;
@@ -74,6 +79,30 @@ const UserProfile = () => {
     toast.success(t("message.copied"));
   };
 
+  const handleExportPersona = () => {
+    if (!user || !userPersonaSetting) return;
+    const payload = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      user: user.name,
+      persona: {
+        headline: userPersonaSetting.headline,
+        preferredAddress: userPersonaSetting.preferredAddress,
+        communicationStyle: userPersonaSetting.communicationStyle,
+        interestTags: userPersonaSetting.interestTags,
+        routinePreferences: userPersonaSetting.routinePreferences,
+        lifeStage: userPersonaSetting.lifeStage,
+        goals: userPersonaSetting.goals,
+      },
+    };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }));
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `${user.username}-persona.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
+
   if (isLoading) return null;
 
   return (
@@ -81,6 +110,13 @@ const UserProfile = () => {
       {user ? (
         <>
           <ProfileHeader user={user} onCopyProfileLink={handleCopyProfileLink} shareLabel={t("common.share")} />
+
+          {currentUser?.name === user.name && activeTab === "memos" && (
+            <div className="mx-auto mt-5 w-full max-w-2xl px-4 sm:px-0">
+              <PersonaCard persona={userPersonaSetting} onEdit={() => setPersonaDialogOpen(true)} onExport={handleExportPersona} />
+              <EditPersonaDialog open={personaDialogOpen} onOpenChange={setPersonaDialogOpen} persona={userPersonaSetting} />
+            </div>
+          )}
 
           <div className="mt-4 flex-1">
             <div className="mx-auto w-full max-w-2xl">

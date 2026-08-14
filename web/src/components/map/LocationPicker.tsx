@@ -1,10 +1,11 @@
 import L, { LatLng } from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { ExternalLinkIcon, MinusIcon, PlusIcon } from "lucide-react";
+import { ExternalLinkIcon, LocateFixedIcon, MinusIcon, PlusIcon } from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { MapContainer, Marker, useMap, useMapEvents } from "react-leaflet";
 import { cn } from "@/lib/utils";
+import { useTranslate } from "@/utils/i18n";
 import { defaultMarkerIcon, ThemedTileLayer } from "./map-utils";
 import type { MapPoint } from "./types";
 
@@ -15,11 +16,14 @@ interface LocationMarkerProps {
   position: LatLng | undefined;
   onChange: (position: MapPoint) => void;
   readonly?: boolean;
+  onLocationStatusChange: (status: LocationStatus) => void;
 }
 
-const LocationMarker = ({ position: initialPosition, onChange, readonly: readOnly }: LocationMarkerProps) => {
+type LocationStatus = "idle" | "locating" | "selected" | "error";
+
+const LocationMarker = ({ position: initialPosition, onChange, readonly: readOnly, onLocationStatusChange }: LocationMarkerProps) => {
   const [position, setPosition] = useState(initialPosition);
-  const initializedRef = useRef(false);
+  const lastExternalPositionRef = useRef<string | undefined>(undefined);
 
   const map = useMapEvents({
     click(e) {
@@ -28,25 +32,32 @@ const LocationMarker = ({ position: initialPosition, onChange, readonly: readOnl
       }
 
       setPosition(e.latlng);
-      map.locate();
       onChange(fromLatLng(e.latlng));
+      onLocationStatusChange("selected");
     },
-    locationfound() {},
+    locationfound(e) {
+      if (readOnly) return;
+      setPosition(e.latlng);
+      map.setView(e.latlng, 15);
+      onChange(fromLatLng(e.latlng));
+      onLocationStatusChange("selected");
+    },
+    locationerror() {
+      onLocationStatusChange("error");
+    },
   });
-
-  useEffect(() => {
-    if (!initializedRef.current) {
-      map.locate();
-      initializedRef.current = true;
-    }
-  }, [map]);
 
   useEffect(() => {
     if (initialPosition) {
       setPosition(initialPosition);
-      map.setView(initialPosition);
+      const positionKey = `${initialPosition.lat},${initialPosition.lng}`;
+      if (lastExternalPositionRef.current !== positionKey) {
+        map.setView(initialPosition, 13);
+        lastExternalPositionRef.current = positionKey;
+      }
     } else {
       setPosition(undefined);
+      lastExternalPositionRef.current = undefined;
     }
   }, [initialPosition, map]);
 
@@ -82,24 +93,50 @@ const GlassButton = ({ icon, onClick, ariaLabel, title }: GlassButtonProps) => {
 // Container for all map control buttons
 interface ControlButtonsProps {
   position: MapPoint | undefined;
+  readOnly: boolean;
+  labels: {
+    currentLocation: string;
+    openMap: string;
+    zoomIn: string;
+    zoomOut: string;
+  };
+  onLocate: () => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
   onOpenGoogleMaps: () => void;
 }
 
-const ControlButtons = ({ position, onZoomIn, onZoomOut, onOpenGoogleMaps }: ControlButtonsProps) => {
+const ControlButtons = ({ position, readOnly, labels, onLocate, onZoomIn, onZoomOut, onOpenGoogleMaps }: ControlButtonsProps) => {
   return (
     <div className="flex flex-col gap-1.5">
+      {!readOnly && (
+        <GlassButton
+          icon={<LocateFixedIcon size={16} className="text-foreground" />}
+          onClick={onLocate}
+          ariaLabel={labels.currentLocation}
+          title={labels.currentLocation}
+        />
+      )}
       {position && (
         <GlassButton
           icon={<ExternalLinkIcon size={16} className="text-foreground" />}
           onClick={onOpenGoogleMaps}
-          ariaLabel="Open location in Google Maps"
-          title="Open in Google Maps"
+          ariaLabel={labels.openMap}
+          title={labels.openMap}
         />
       )}
-      <GlassButton icon={<PlusIcon size={16} className="text-foreground" />} onClick={onZoomIn} ariaLabel="Zoom in" title="Zoom in" />
-      <GlassButton icon={<MinusIcon size={16} className="text-foreground" />} onClick={onZoomOut} ariaLabel="Zoom out" title="Zoom out" />
+      <GlassButton
+        icon={<PlusIcon size={16} className="text-foreground" />}
+        onClick={onZoomIn}
+        ariaLabel={labels.zoomIn}
+        title={labels.zoomIn}
+      />
+      <GlassButton
+        icon={<MinusIcon size={16} className="text-foreground" />}
+        onClick={onZoomOut}
+        ariaLabel={labels.zoomOut}
+        title={labels.zoomOut}
+      />
     </div>
   );
 };
@@ -130,17 +167,25 @@ class MapControlsContainer extends L.Control {
 
 interface MapControlsProps {
   position: MapPoint | undefined;
+  readOnly: boolean;
+  onLocateStart: () => void;
+  labels: ControlButtonsProps["labels"];
 }
 
-const MapControls = ({ position }: MapControlsProps) => {
+const MapControls = ({ position, readOnly, onLocateStart, labels }: MapControlsProps) => {
   const map = useMap();
   const controlRef = useRef<MapControlsContainer | null>(null);
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
 
-  const handleOpenInGoogleMaps = () => {
+  const handleOpenInMap = () => {
     if (!position) return;
-    const url = `https://www.google.com/maps?q=${position.lat},${position.lng}`;
+    const url = `https://www.openstreetmap.org/?mlat=${position.lat}&mlon=${position.lng}#map=16/${position.lat}/${position.lng}`;
     window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  const handleLocate = () => {
+    onLocateStart();
+    map.locate({ enableHighAccuracy: true, maximumAge: 60_000, timeout: 10_000 });
   };
 
   const handleZoomIn = () => {
@@ -172,7 +217,15 @@ const MapControls = ({ position }: MapControlsProps) => {
   }
 
   return createPortal(
-    <ControlButtons position={position} onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} onOpenGoogleMaps={handleOpenInGoogleMaps} />,
+    <ControlButtons
+      position={position}
+      readOnly={readOnly}
+      labels={labels}
+      onLocate={handleLocate}
+      onZoomIn={handleZoomIn}
+      onZoomOut={handleZoomOut}
+      onOpenGoogleMaps={handleOpenInMap}
+    />,
     container,
   );
 };
@@ -205,37 +258,60 @@ interface LocationPickerProps {
   className?: string;
 }
 
-const DEFAULT_CENTER: MapPoint = { lat: 48.8584, lng: 2.2945 };
+const DEFAULT_CENTER: MapPoint = { lat: 20, lng: 0 };
 const noopOnLocationChange = () => {};
 
 const LocationPicker = ({ readonly: readOnly = false, latlng, onChange = noopOnLocationChange, className }: LocationPickerProps) => {
+  const t = useTranslate();
+  const [locationStatus, setLocationStatus] = useState<LocationStatus>(latlng ? "selected" : "idle");
   const mapCenter = useMemo(() => toLatLng(latlng ?? DEFAULT_CENTER), [latlng?.lat, latlng?.lng]);
-  const markerPosition = mapCenter;
-  const statusLabel = readOnly ? "Pinned location" : latlng ? "Selected location" : "Choose a location";
+  const markerPosition = latlng ? mapCenter : undefined;
+  const statusLabel = readOnly
+    ? t("editor.location-picker.pinned")
+    : locationStatus === "locating"
+      ? t("editor.location-picker.locating")
+      : locationStatus === "error"
+        ? t("editor.location-picker.location-error")
+        : latlng || locationStatus === "selected"
+          ? t("editor.location-picker.selected")
+          : t("editor.location-picker.choose");
+  const labels = {
+    currentLocation: t("editor.location-picker.current-location"),
+    openMap: t("editor.location-picker.open-map"),
+    zoomIn: t("editor.location-picker.zoom-in"),
+    zoomOut: t("editor.location-picker.zoom-out"),
+  };
 
   return (
     <div
       className={cn(
         "memo-location-map relative isolate h-72 w-full overflow-hidden rounded-xl border border-border bg-background shadow-sm",
+        "[&_.leaflet-control-attribution]:!bg-background/90 [&_.leaflet-control-attribution]:!text-[10px] [&_.leaflet-control-attribution]:!text-muted-foreground",
+        "[&_.leaflet-control-attribution_a]:!text-primary",
         className,
       )}
     >
       <MapContainer
         className="h-full w-full !bg-muted"
         center={mapCenter}
-        zoom={13}
+        zoom={latlng ? 13 : 2}
         scrollWheelZoom={false}
         zoomControl={false}
-        attributionControl={false}
+        attributionControl
       >
         <ThemedTileLayer />
-        <LocationMarker position={markerPosition} readonly={readOnly} onChange={onChange} />
-        <MapControls position={latlng} />
+        <LocationMarker position={markerPosition} readonly={readOnly} onChange={onChange} onLocationStatusChange={setLocationStatus} />
+        <MapControls position={latlng} readOnly={readOnly} labels={labels} onLocateStart={() => setLocationStatus("locating")} />
         <MapCleanup />
       </MapContainer>
 
-      <div className="pointer-events-none absolute left-3 top-3 z-[450] flex items-center gap-2">
-        <div className="rounded-full border border-border bg-background/92 px-2.5 py-1 text-[11px] font-medium tracking-[0.02em] text-foreground/80 shadow-sm backdrop-blur-sm">
+      <div className="pointer-events-none absolute left-3 top-3 z-[450] flex items-center gap-2" role="status" aria-live="polite">
+        <div
+          className={cn(
+            "rounded-full border bg-background/92 px-2.5 py-1 text-[11px] font-medium tracking-[0.02em] shadow-sm backdrop-blur-sm",
+            locationStatus === "error" ? "border-destructive/40 text-destructive" : "border-border text-foreground/80",
+          )}
+        >
           {statusLabel}
         </div>
       </div>

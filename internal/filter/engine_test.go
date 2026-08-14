@@ -100,7 +100,7 @@ func TestRenderTagMembershipIsExactPerDialect(t *testing.T) {
 		fragments []string
 	}{
 		{DialectSQLite, []string{"json_each(", "COLLATE BINARY"}},
-		{DialectMySQL, []string{"JSON_TABLE(", "CAST(tag_item.value AS BINARY)"}},
+		{DialectMySQL, []string{"JSON_SEARCH(", "COLLATE utf8mb4_bin"}},
 		{DialectPostgres, []string{"jsonb_array_elements_text(", `(tag_item.value COLLATE "C")`}},
 	}
 	for _, tc := range cases {
@@ -110,7 +110,11 @@ func TestRenderTagMembershipIsExactPerDialect(t *testing.T) {
 			require.Contains(t, stmt.SQL, fragment, tc.dialect)
 		}
 		require.NotContains(t, stmt.SQL, " LIKE ", tc.dialect)
-		require.Equal(t, []any{tag}, stmt.Args, tc.dialect)
+		if tc.dialect == DialectMySQL {
+			require.Equal(t, []any{escapeTagLikeLiteral(tag)}, stmt.Args, tc.dialect)
+		} else {
+			require.Equal(t, []any{tag}, stmt.Args, tc.dialect)
+		}
 	}
 }
 
@@ -126,7 +130,7 @@ func TestRenderTagExistsEqualityIsExactPerDialect(t *testing.T) {
 		fragments []string
 	}{
 		{DialectSQLite, []string{"json_each(", "COLLATE BINARY"}},
-		{DialectMySQL, []string{"JSON_TABLE(", "CAST(tag_item.value AS BINARY)"}},
+		{DialectMySQL, []string{"JSON_SEARCH(", "COLLATE utf8mb4_bin"}},
 		{DialectPostgres, []string{"jsonb_array_elements_text(", `(tag_item.value COLLATE "C")`}},
 	}
 	for _, tc := range cases {
@@ -136,7 +140,11 @@ func TestRenderTagExistsEqualityIsExactPerDialect(t *testing.T) {
 			require.Contains(t, stmt.SQL, fragment, tc.dialect)
 		}
 		require.NotContains(t, stmt.SQL, " LIKE ", tc.dialect)
-		require.Equal(t, []any{tag}, stmt.Args, tc.dialect)
+		if tc.dialect == DialectMySQL {
+			require.Equal(t, []any{escapeTagLikeLiteral(tag)}, stmt.Args, tc.dialect)
+		} else {
+			require.Equal(t, []any{tag}, stmt.Args, tc.dialect)
+		}
 	}
 }
 
@@ -148,8 +156,8 @@ func TestRenderTagComprehensionEqualityIsExactAndUnboundedOnMySQL(t *testing.T) 
 	for _, expression := range []string{`tags.all(t, t == "Work")`, `tags.exists_one(t, t == "Work")`} {
 		stmt, err := engine.CompileToStatement(context.Background(), expression, RenderOptions{Dialect: DialectMySQL})
 		require.NoError(t, err)
-		require.Contains(t, stmt.SQL, "value LONGTEXT PATH '$'")
-		require.Contains(t, stmt.SQL, "CAST(tag_item.value AS BINARY) = CAST(? AS BINARY)")
+		require.Contains(t, stmt.SQL, "JSON_SEARCH(")
+		require.Contains(t, stmt.SQL, "COLLATE utf8mb4_bin")
 		require.NotContains(t, stmt.SQL, "VARCHAR(512)")
 		require.Equal(t, []any{"Work"}, stmt.Args)
 	}
@@ -211,9 +219,8 @@ func TestRenderTagStringPredicatesAreExactPerDialect(t *testing.T) {
 
 				mysqlStmt, err := engine.CompileToStatement(context.Background(), expression, RenderOptions{Dialect: DialectMySQL})
 				require.NoError(t, err)
-				require.Contains(t, mysqlStmt.SQL, "JSON_TABLE(")
-				require.Contains(t, mysqlStmt.SQL, comprehension.sqlFragment)
-				require.Contains(t, mysqlStmt.SQL, "CAST(tag_item.value AS BINARY)")
+				require.Contains(t, mysqlStmt.SQL, "JSON_SEARCH(")
+				require.Contains(t, mysqlStmt.SQL, "COLLATE utf8mb4_bin")
 
 				postgresStmt, err := engine.CompileToStatement(context.Background(), expression, RenderOptions{Dialect: DialectPostgres})
 				require.NoError(t, err)
@@ -222,8 +229,7 @@ func TestRenderTagStringPredicatesAreExactPerDialect(t *testing.T) {
 				require.Contains(t, postgresStmt.SQL, `(tag_item.value COLLATE "C")`)
 
 				if predicate.usesLike {
-					require.Contains(t, mysqlStmt.SQL, " LIKE ")
-					require.Contains(t, mysqlStmt.SQL, "ESCAPE '!'")
+					require.Contains(t, mysqlStmt.SQL, "JSON_SEARCH(")
 					require.Contains(t, postgresStmt.SQL, " LIKE ")
 					require.Contains(t, postgresStmt.SQL, "ESCAPE '!'")
 					require.Equal(t, []any{predicate.likePattern}, mysqlStmt.Args)
@@ -231,7 +237,7 @@ func TestRenderTagStringPredicatesAreExactPerDialect(t *testing.T) {
 				} else {
 					require.NotContains(t, mysqlStmt.SQL, " LIKE ")
 					require.NotContains(t, postgresStmt.SQL, " LIKE ")
-					require.Equal(t, []any{"Work_%!"}, mysqlStmt.Args)
+					require.Equal(t, []any{escapeTagLikeLiteral("Work_%!")}, mysqlStmt.Args)
 					require.Equal(t, []any{"Work_%!"}, postgresStmt.Args)
 				}
 			})
@@ -434,7 +440,7 @@ func TestRenderTagsAllPerDialect(t *testing.T) {
 	}{
 		{DialectSQLite, []string{"NOT EXISTS", "json_each(", "json_array_length(", "instr(tag_item.value, ?) = 1"}, []any{"work/"}},
 		{DialectPostgres, []string{"NOT EXISTS", "jsonb_array_elements_text(", "jsonb_array_length(", `(tag_item.value COLLATE "C") LIKE`}, []any{"work/%"}},
-		{DialectMySQL, []string{"NOT EXISTS", "JSON_TABLE(", "JSON_LENGTH(", "CAST(tag_item.value AS BINARY) LIKE"}, []any{"work/%"}},
+		{DialectMySQL, []string{"JSON_SEARCH(", "JSON_LENGTH(", "COLLATE utf8mb4_bin"}, []any{"work/%"}},
 	}
 	for _, tc := range cases {
 		stmt, err := engine.CompileToStatement(context.Background(), `tags.all(t, t.startsWith("work/"))`, RenderOptions{Dialect: tc.dialect})

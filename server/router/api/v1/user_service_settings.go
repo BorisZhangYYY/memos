@@ -3,6 +3,7 @@ package v1
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -151,6 +152,57 @@ func (s *APIV1Service) UpdateUserSetting(ctx context.Context, request *v1pb.Upda
 				TagsSetting: incomingTags,
 			},
 		}
+	case storepb.UserSetting_PERSONA:
+		existingUserSetting, _ := s.Store.GetUserSetting(ctx, &store.FindUserSetting{
+			UserID: &userID,
+			Key:    storeKey,
+		})
+		persona := &v1pb.UserSetting_PersonaSetting{}
+		if existingUserSetting != nil && existingUserSetting.GetPersona() != nil {
+			existing := existingUserSetting.GetPersona()
+			persona = &v1pb.UserSetting_PersonaSetting{
+				Headline:           existing.Headline,
+				PreferredAddress:   existing.PreferredAddress,
+				CommunicationStyle: existing.CommunicationStyle,
+				InterestTags:       existing.InterestTags,
+				RoutinePreferences: existing.RoutinePreferences,
+				LifeStage:          existing.LifeStage,
+				Goals:              existing.Goals,
+			}
+		}
+		incoming := request.Setting.GetPersonaSetting()
+		if incoming == nil {
+			return nil, status.Errorf(codes.InvalidArgument, "persona setting is required")
+		}
+		for _, field := range request.UpdateMask.Paths {
+			switch field {
+			case "headline":
+				persona.Headline = strings.TrimSpace(incoming.Headline)
+			case "preferred_address":
+				persona.PreferredAddress = strings.TrimSpace(incoming.PreferredAddress)
+			case "communication_style":
+				persona.CommunicationStyle = strings.TrimSpace(incoming.CommunicationStyle)
+			case "interest_tags":
+				persona.InterestTags = normalizePersonaInterestTags(incoming.InterestTags)
+			case "routine_preferences":
+				persona.RoutinePreferences = strings.TrimSpace(incoming.RoutinePreferences)
+			case "life_stage":
+				persona.LifeStage = strings.TrimSpace(incoming.LifeStage)
+			case "goals":
+				persona.Goals = normalizePersonaList(incoming.Goals)
+			default:
+				return nil, status.Errorf(codes.InvalidArgument, "unsupported update mask path for persona setting: %s", field)
+			}
+		}
+		if err := validateUserPersonaSetting(persona); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid persona setting: %v", err)
+		}
+		updatedSetting = &v1pb.UserSetting{
+			Name: request.Setting.Name,
+			Value: &v1pb.UserSetting_PersonaSetting_{
+				PersonaSetting: persona,
+			},
+		}
 	default:
 		return nil, status.Errorf(codes.InvalidArgument, "setting type %s should not be updated via UpdateUserSetting", storeKey.String())
 	}
@@ -167,6 +219,38 @@ func (s *APIV1Service) UpdateUserSetting(ctx context.Context, request *v1pb.Upda
 	}
 
 	return s.GetUserSetting(ctx, &v1pb.GetUserSettingRequest{Name: request.Setting.Name})
+}
+
+func normalizePersonaList(values []string) []string {
+	result := make([]string, 0, len(values))
+	seen := make(map[string]struct{}, len(values))
+	for _, value := range values {
+		value = strings.TrimSpace(value)
+		if value == "" {
+			continue
+		}
+		if _, ok := seen[value]; ok {
+			continue
+		}
+		seen[value] = struct{}{}
+		result = append(result, value)
+	}
+	return result
+}
+
+func normalizePersonaInterestTags(values []string) []string {
+	items := make([]string, 0, len(values))
+	for _, value := range values {
+		items = append(items, strings.FieldsFunc(value, func(r rune) bool {
+			switch r {
+			case ';', '；', ',', '，', '、', '\r', '\n':
+				return true
+			default:
+				return false
+			}
+		})...)
+	}
+	return normalizePersonaList(items)
 }
 
 func (s *APIV1Service) ListUserSettings(ctx context.Context, request *v1pb.ListUserSettingsRequest) (*v1pb.ListUserSettingsResponse, error) {

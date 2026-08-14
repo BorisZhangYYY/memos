@@ -90,6 +90,8 @@ func convertSettingKeyToStore(key string) (storepb.UserSetting_Key, error) {
 		return storepb.UserSetting_WEBHOOKS, nil
 	case v1pb.UserSetting_Key_name[int32(v1pb.UserSetting_TAGS)]:
 		return storepb.UserSetting_TAGS, nil
+	case v1pb.UserSetting_Key_name[int32(v1pb.UserSetting_PERSONA)]:
+		return storepb.UserSetting_PERSONA, nil
 	default:
 		return storepb.UserSetting_KEY_UNSPECIFIED, errors.Errorf("unknown setting key: %s", key)
 	}
@@ -106,6 +108,8 @@ func convertSettingKeyFromStore(key storepb.UserSetting_Key) string {
 		return v1pb.UserSetting_Key_name[int32(v1pb.UserSetting_WEBHOOKS)]
 	case storepb.UserSetting_TAGS:
 		return v1pb.UserSetting_Key_name[int32(v1pb.UserSetting_TAGS)]
+	case storepb.UserSetting_PERSONA:
+		return v1pb.UserSetting_Key_name[int32(v1pb.UserSetting_PERSONA)]
 	default:
 		return "unknown"
 	}
@@ -171,6 +175,10 @@ func convertUserSettingFromStore(storeSetting *storepb.UserSetting, user *store.
 			setting.Value = &v1pb.UserSetting_TagsSetting_{
 				TagsSetting: &v1pb.UserSetting_TagsSetting{Tags: map[string]*v1pb.UserSetting_TagMetadata{}},
 			}
+		case storepb.UserSetting_PERSONA:
+			setting.Value = &v1pb.UserSetting_PersonaSetting_{
+				PersonaSetting: &v1pb.UserSetting_PersonaSetting{},
+			}
 		default:
 			return nil
 		}
@@ -220,6 +228,22 @@ func convertUserSettingFromStore(storeSetting *storepb.UserSetting, user *store.
 	case storepb.UserSetting_TAGS:
 		setting.Value = &v1pb.UserSetting_TagsSetting_{
 			TagsSetting: convertUserTagsSettingFromStore(storeSetting.GetTags()),
+		}
+	case storepb.UserSetting_PERSONA:
+		persona := storeSetting.GetPersona()
+		if persona == nil {
+			persona = &storepb.PersonaUserSetting{}
+		}
+		setting.Value = &v1pb.UserSetting_PersonaSetting_{
+			PersonaSetting: &v1pb.UserSetting_PersonaSetting{
+				Headline:           persona.Headline,
+				PreferredAddress:   persona.PreferredAddress,
+				CommunicationStyle: persona.CommunicationStyle,
+				InterestTags:       persona.InterestTags,
+				RoutinePreferences: persona.RoutinePreferences,
+				LifeStage:          persona.LifeStage,
+				Goals:              persona.Goals,
+			},
 		}
 	default:
 		return nil
@@ -274,6 +298,22 @@ func convertUserSettingToStore(apiSetting *v1pb.UserSetting, userID int32, key s
 			}
 		} else {
 			return nil, errors.Errorf("tags setting is required")
+		}
+	case storepb.UserSetting_PERSONA:
+		if persona := apiSetting.GetPersonaSetting(); persona != nil {
+			storeSetting.Value = &storepb.UserSetting_Persona{
+				Persona: &storepb.PersonaUserSetting{
+					Headline:           persona.Headline,
+					PreferredAddress:   persona.PreferredAddress,
+					CommunicationStyle: persona.CommunicationStyle,
+					InterestTags:       persona.InterestTags,
+					RoutinePreferences: persona.RoutinePreferences,
+					LifeStage:          persona.LifeStage,
+					Goals:              persona.Goals,
+				},
+			}
+		} else {
+			return nil, errors.Errorf("persona setting is required")
 		}
 	default:
 		return nil, errors.Errorf("unsupported setting key: %v", key)

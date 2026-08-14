@@ -2,6 +2,7 @@ package mcp
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
@@ -9,7 +10,15 @@ import (
 )
 
 func TestCuratedOperationIDsStayPersonalDataFocused(t *testing.T) {
-	require.Len(t, curatedOperationIDs, 26)
+	require.Len(t, curatedOperationIDs, 46)
+	allowedUserOperations := map[string]bool{
+		"UserService_GetUserStats":      true,
+		"UserService_GetUserSetting":    true,
+		"UserService_UpdateUserSetting": true,
+	}
+	allowedInstanceOperations := map[string]bool{
+		"InstanceService_GetInstanceStats": true,
+	}
 
 	for _, operationID := range curatedOperationIDs {
 		require.NotContains(t, operationID, "Admin")
@@ -18,16 +27,75 @@ func TestCuratedOperationIDsStayPersonalDataFocused(t *testing.T) {
 		if operationID != "AuthService_GetCurrentUser" {
 			require.NotContains(t, operationID, "AuthService_")
 		}
-		require.NotContains(t, operationID, "UserService_")
+		if strings.HasPrefix(operationID, "UserService_") {
+			require.True(t, allowedUserOperations[operationID], operationID)
+		}
 		require.NotContains(t, operationID, "AIService_")
 		require.NotContains(t, operationID, "IdentityProviderService_")
-		require.NotContains(t, operationID, "InstanceService_")
+		if strings.HasPrefix(operationID, "InstanceService_") {
+			require.True(t, allowedInstanceOperations[operationID], operationID)
+		}
 		require.NotContains(t, operationID, "PersonalAccessToken")
 		require.NotContains(t, operationID, "PAT")
 		require.NotContains(t, operationID, "Webhook")
 		require.NotContains(t, operationID, "Share")
 		require.NotContains(t, operationID, "BatchDelete")
 		require.NotContains(t, operationID, "Transcribe")
+	}
+}
+
+func TestCuratedOperationIDsIncludeRequiredPersonalWorkflows(t *testing.T) {
+	curated := make(map[string]bool, len(curatedOperationIDs))
+	for _, operationID := range curatedOperationIDs {
+		curated[operationID] = true
+	}
+	for _, operationID := range []string{
+		"ReminderService_UpdateReminderList",
+		"ReminderService_DeleteReminderList",
+		"ReminderService_DeleteReminder",
+		"ReminderService_ClearCompletedReminders",
+		"FinanceService_ListFinanceWallets",
+		"FinanceService_CreateFinanceWallet",
+		"FinanceService_UpdateFinanceWallet",
+		"FinanceService_ListFinanceCategories",
+		"FinanceService_CreateFinanceCategory",
+		"FinanceService_UpdateFinanceCategory",
+		"FinanceService_ListFinanceTransactions",
+		"FinanceService_CreateFinanceTransaction",
+		"FinanceService_UpdateFinanceTransaction",
+		"FinanceService_DeleteFinanceTransaction",
+		"FinanceService_AdjustFinanceWalletBalance",
+		"FinanceService_GetFinanceSummary",
+		"InstanceService_GetInstanceStats",
+		"UserService_GetUserStats",
+		"UserService_GetUserSetting",
+		"UserService_UpdateUserSetting",
+	} {
+		require.True(t, curated[operationID], operationID)
+	}
+}
+
+func TestCuratedOperationIDsKeepDangerousSurfaceClosed(t *testing.T) {
+	curated := make(map[string]bool, len(curatedOperationIDs))
+	for _, operationID := range curatedOperationIDs {
+		curated[operationID] = true
+	}
+	for _, operationID := range []string{
+		"AuthService_SignIn",
+		"AuthService_SignOut",
+		"AuthService_RefreshToken",
+		"UserService_CreateUser",
+		"UserService_UpdateUser",
+		"UserService_DeleteUser",
+		"UserService_CreatePersonalAccessToken",
+		"UserService_CreateUserWebhook",
+		"UserService_CreateLinkedIdentity",
+		"InstanceService_UpdateInstanceSetting",
+		"InstanceService_TestInstanceEmailSetting",
+		"MemoService_CreateMemoShare",
+		"AIService_Transcribe",
+	} {
+		require.False(t, curated[operationID], operationID)
 	}
 }
 
@@ -178,6 +246,218 @@ func TestBuildToolFromOperationTailorsRequestBodySchemas(t *testing.T) {
 			for _, property := range test.omittedProperties {
 				require.NotContains(t, bodyProperties, property)
 			}
+		})
+	}
+}
+
+func TestNewWorkflowToolsExposeUsableInputSchemas(t *testing.T) {
+	spec, err := loadOpenAPISpec("../../../proto/gen/openapi.yaml")
+	require.NoError(t, err)
+	registry, err := buildOperationRegistry(spec)
+	require.NoError(t, err)
+
+	tests := []struct {
+		operationID string
+		arguments   map[string]any
+	}{
+		{
+			operationID: "FinanceService_CreateFinanceCategory",
+			arguments: map[string]any{
+				"user": "users/boris",
+				"body": map[string]any{"displayName": "Food", "type": "EXPENSE"},
+			},
+		},
+		{
+			operationID: "FinanceService_AdjustFinanceWalletBalance",
+			arguments: map[string]any{
+				"user":   "users/boris",
+				"wallet": "users/boris/wallets/cash",
+				"body": map[string]any{
+					"actualBalanceMinor": "12345",
+					"occurTime":          "2026-08-13T10:00:00Z",
+				},
+			},
+		},
+		{
+			operationID: "ReminderService_UpdateReminder",
+			arguments: map[string]any{
+				"user":       "users/boris",
+				"reminder":   "users/boris/reminders/task",
+				"updateMask": "title",
+				"body":       map[string]any{"title": "Updated"},
+			},
+		},
+		{
+			operationID: "UserService_UpdateUserSetting",
+			arguments: map[string]any{
+				"user":       "users/boris",
+				"setting":    "PERSONA",
+				"updateMask": "headline,interest_tags",
+				"body": map[string]any{
+					"personaSetting": map[string]any{
+						"headline":     "Builder",
+						"interestTags": []any{"AI"},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.operationID, func(t *testing.T) {
+			tool, _ := buildToolFromOperation(registry[test.operationID])
+			input, ok := tool.InputSchema.(jsonSchema)
+			require.True(t, ok)
+			require.NoError(t, validateToolArguments(input, test.arguments))
+		})
+	}
+}
+
+func TestAgentFacingSchemasRejectUnknownAndReadOnlyFields(t *testing.T) {
+	spec, err := loadOpenAPISpec("../../../proto/gen/openapi.yaml")
+	require.NoError(t, err)
+	registry, err := buildOperationRegistry(spec)
+	require.NoError(t, err)
+
+	walletTool, _ := buildToolFromOperation(registry["FinanceService_CreateFinanceWallet"])
+	walletInput := walletTool.InputSchema.(jsonSchema)
+	require.Contains(t, walletTool.Description, "initialBalanceMinor")
+	require.NoError(t, validateToolArguments(walletInput, map[string]any{
+		"user": "boris",
+		"body": map[string]any{
+			"displayName":          "Cash",
+			"initialBalanceMinor":  "10000",
+			"allowNegativeBalance": false,
+		},
+	}))
+	require.ErrorContains(t, validateToolArguments(walletInput, map[string]any{
+		"user": "boris",
+		"body": map[string]any{"displayName": "Cash", "balanceMinor": "10000"},
+	}), "unknown argument")
+
+	transactionTool, _ := buildToolFromOperation(registry["FinanceService_CreateFinanceTransaction"])
+	transactionInput := transactionTool.InputSchema.(jsonSchema)
+	require.Contains(t, transactionTool.Description, "body.occurTime is required")
+	require.ErrorContains(t, validateToolArguments(transactionInput, map[string]any{
+		"user": "boris",
+		"body": map[string]any{
+			"type":        "INCOME",
+			"amountMinor": "100",
+			"wallet":      "users/boris/financeWallets/cash",
+		},
+	}), `missing required argument "body.occurTime"`)
+
+	reminderTool, _ := buildToolFromOperation(registry["ReminderService_CreateReminder"])
+	reminderInput := reminderTool.InputSchema.(jsonSchema)
+	require.Contains(t, reminderTool.Description, "remindTime")
+	require.NoError(t, validateToolArguments(reminderInput, map[string]any{
+		"user": "boris",
+		"body": map[string]any{
+			"title":        "Review",
+			"reminderList": "users/boris/reminderLists/default",
+			"remindTime":   "2026-08-14T10:00:00Z",
+		},
+	}))
+	require.ErrorContains(t, validateToolArguments(reminderInput, map[string]any{
+		"user": "boris",
+		"body": map[string]any{
+			"title":        "Review",
+			"reminderList": "users/boris/reminderLists/default",
+			"dueTime":      "2026-08-14T10:00:00Z",
+			"details":      "silently ignored before this guard",
+		},
+	}), "unknown argument")
+}
+
+func TestUserSettingToolsExposeSafeDiscoverableKeys(t *testing.T) {
+	spec, err := loadOpenAPISpec("../../../proto/gen/openapi.yaml")
+	require.NoError(t, err)
+	registry, err := buildOperationRegistry(spec)
+	require.NoError(t, err)
+
+	getTool, _ := buildToolFromOperation(registry["UserService_GetUserSetting"])
+	getInput := getTool.InputSchema.(jsonSchema)
+	getProperties := schemaProperties(getInput["properties"])
+	settingSchema, ok := asSchemaMap(getProperties["setting"])
+	require.True(t, ok)
+	require.Equal(t, []string{"GENERAL", "TAGS", "PERSONA"}, settingSchema["enum"])
+	require.Contains(t, settingSchema["description"], "Uppercase")
+	require.NoError(t, validateToolArguments(getInput, map[string]any{"user": "boris", "setting": "PERSONA"}))
+	require.Error(t, validateToolArguments(getInput, map[string]any{"user": "boris", "setting": "persona"}))
+	require.Error(t, validateToolArguments(getInput, map[string]any{"user": "boris", "setting": "WEBHOOKS"}))
+
+	updateTool, _ := buildToolFromOperation(registry["UserService_UpdateUserSetting"])
+	updateInput := updateTool.InputSchema.(jsonSchema)
+	updateProperties := schemaProperties(updateInput["properties"])
+	updateMask, ok := asSchemaMap(updateProperties["updateMask"])
+	require.True(t, ok)
+	require.Contains(t, updateMask["description"], "interest_tags")
+	body := schemaProperties(updateProperties["body"])
+	require.NotContains(t, schemaProperties(body["properties"]), "webhooksSetting")
+	require.NoError(t, validateToolArguments(updateInput, map[string]any{
+		"user":       "boris",
+		"setting":    "PERSONA",
+		"updateMask": "headline,interest_tags",
+		"body": map[string]any{
+			"personaSetting": map[string]any{"headline": "Builder", "interestTags": []any{"AI"}},
+		},
+	}))
+	require.ErrorContains(t, validateToolArguments(updateInput, map[string]any{
+		"user":       "boris",
+		"setting":    "PERSONA",
+		"updateMask": "headline",
+		"body": map[string]any{
+			"personaSetting": map[string]any{"headline": "Builder", "unknownField": true},
+		},
+	}), "unknown argument")
+}
+
+func TestSetMemoAttachmentsDescribesDestructiveReplacement(t *testing.T) {
+	spec, err := loadOpenAPISpec("../../../proto/gen/openapi.yaml")
+	require.NoError(t, err)
+	registry, err := buildOperationRegistry(spec)
+	require.NoError(t, err)
+
+	tool, _ := buildToolFromOperation(registry["MemoService_SetMemoAttachments"])
+	require.Contains(t, tool.Description, "permanently deleted")
+}
+
+func TestNewWorkflowToolsRejectIncompleteMutations(t *testing.T) {
+	spec, err := loadOpenAPISpec("../../../proto/gen/openapi.yaml")
+	require.NoError(t, err)
+	registry, err := buildOperationRegistry(spec)
+	require.NoError(t, err)
+
+	for _, test := range []struct {
+		operationID string
+		arguments   map[string]any
+	}{
+		{
+			operationID: "FinanceService_GetFinanceSummary",
+			arguments:   map[string]any{"user": "users/boris"},
+		},
+		{
+			operationID: "ReminderService_UpdateReminder",
+			arguments: map[string]any{
+				"user":     "users/boris",
+				"reminder": "users/boris/reminders/task",
+				"body":     map[string]any{"title": "Updated"},
+			},
+		},
+		{
+			operationID: "UserService_UpdateUserSetting",
+			arguments: map[string]any{
+				"user":    "users/boris",
+				"setting": "users/boris/settings/PERSONA",
+				"body":    map[string]any{},
+			},
+		},
+	} {
+		t.Run(test.operationID, func(t *testing.T) {
+			tool, _ := buildToolFromOperation(registry[test.operationID])
+			input, ok := tool.InputSchema.(jsonSchema)
+			require.True(t, ok)
+			require.Error(t, validateToolArguments(input, test.arguments))
 		})
 	}
 }

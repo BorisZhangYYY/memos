@@ -34,6 +34,9 @@ web/coverage/
 
 # Local test environment credentials (never commit).
 docs/test-env.md
+*.db
+*.db-shm
+*.db-wal
 
 
 # Superpowers skill workspace (design drafts, session state).

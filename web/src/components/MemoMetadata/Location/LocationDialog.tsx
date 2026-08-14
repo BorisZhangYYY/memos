@@ -43,7 +43,7 @@ export const LocationDialog = ({
           <DialogTitle>{t("tooltip.select-location")}</DialogTitle>
         </VisuallyHidden>
         <VisuallyHidden>
-          <DialogDescription>Select a location on the map or enter coordinates manually</DialogDescription>
+          <DialogDescription>{t("editor.location-picker.description")}</DialogDescription>
         </VisuallyHidden>
         <div className="flex flex-col">
           <div className="w-full h-64 overflow-hidden rounded-t-md bg-muted/30">
@@ -53,11 +53,11 @@ export const LocationDialog = ({
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1">
                 <Label htmlFor="memo-location-lat" className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Lat
+                  {t("editor.location-picker.latitude")}
                 </Label>
                 <Input
                   id="memo-location-lat"
-                  placeholder="Lat"
+                  placeholder={t("editor.location-picker.latitude")}
                   type="number"
                   step="any"
                   min="-90"
@@ -69,11 +69,11 @@ export const LocationDialog = ({
               </div>
               <div className="grid gap-1">
                 <Label htmlFor="memo-location-lng" className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Lng
+                  {t("editor.location-picker.longitude")}
                 </Label>
                 <Input
                   id="memo-location-lng"
-                  placeholder="Lng"
+                  placeholder={t("editor.location-picker.longitude")}
                   type="number"
                   step="any"
                   min="-180"
@@ -90,7 +90,7 @@ export const LocationDialog = ({
               </Label>
               <Textarea
                 id="memo-location-placeholder"
-                placeholder="Choose a position first."
+                placeholder={t("editor.location-picker.place-placeholder")}
                 value={placeholder}
                 disabled={!position}
                 onChange={(e) => onPlaceholderChange(e.target.value)}
@@ -101,7 +101,7 @@ export const LocationDialog = ({
               <Button variant="ghost" onClick={onCancel}>
                 {t("common.close")}
               </Button>
-              <Button onClick={onConfirm} disabled={!position || placeholder.trim().length === 0}>
+              <Button onClick={onConfirm} disabled={!position}>
                 {t("common.confirm")}
               </Button>
             </div>

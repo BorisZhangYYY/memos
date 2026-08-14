@@ -3,6 +3,7 @@ package mcp
 import (
 	"maps"
 	"regexp"
+	"slices"
 	"strings"
 
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
@@ -31,10 +32,35 @@ var curatedOperationIDs = []string{
 	"ShortcutService_ListShortcuts",
 	"ReminderService_ListReminderLists",
 	"ReminderService_CreateReminderList",
+	"ReminderService_UpdateReminderList",
+	"ReminderService_DeleteReminderList",
 	"ReminderService_ListReminders",
 	"ReminderService_CreateReminder",
 	"ReminderService_UpdateReminder",
+	"ReminderService_DeleteReminder",
 	"ReminderService_CompleteReminder",
+	"ReminderService_ClearCompletedReminders",
+	// Private finance ledger: wallets, categories, transactions, reconciliation,
+	// transfers (created as transaction type TRANSFER), and aggregate summaries.
+	"FinanceService_ListFinanceWallets",
+	"FinanceService_CreateFinanceWallet",
+	"FinanceService_UpdateFinanceWallet",
+	"FinanceService_ListFinanceCategories",
+	"FinanceService_CreateFinanceCategory",
+	"FinanceService_UpdateFinanceCategory",
+	"FinanceService_ListFinanceTransactions",
+	"FinanceService_CreateFinanceTransaction",
+	"FinanceService_UpdateFinanceTransaction",
+	"FinanceService_DeleteFinanceTransaction",
+	"FinanceService_AdjustFinanceWalletBalance",
+	"FinanceService_GetFinanceSummary",
+	// Read-only structured statistics and private user-setting access. API
+	// authorization still keeps settings owner-only and applies memo visibility
+	// rules to user statistics.
+	"InstanceService_GetInstanceStats",
+	"UserService_GetUserStats",
+	"UserService_GetUserSetting",
+	"UserService_UpdateUserSetting",
 	// The only allowed auth/identity operation: a read-only "whoami" so agents
 	// can resolve the current user (e.g. for ShortcutService_ListShortcuts).
 	"AuthService_GetCurrentUser",
@@ -59,6 +85,14 @@ type requestBodySchemaOverride struct {
 	// properties. It replaces a cleared required list for partial updates so an
 	// empty body is rejected up front instead of failing later at the API.
 	minProperties int
+	// requiredArguments adds top-level path/query/body argument names that the
+	// generated OpenAPI marks optional even though the service requires them.
+	requiredArguments []string
+}
+
+type argumentSchemaOverride struct {
+	description string
+	enum        []string
 }
 
 // requestBodySchemaOverrides adjusts resource schemas to match how each HTTP
@@ -89,6 +123,99 @@ var requestBodySchemaOverrides = map[string]requestBodySchemaOverride{
 		required:          []string{"reaction"},
 		omittedProperties: []string{"name"},
 	},
+	"ReminderService_UpdateReminderList": {
+		clearRequired:     true,
+		omittedProperties: []string{"name"},
+		minProperties:     1,
+		requiredArguments: []string{"updateMask"},
+	},
+	"ReminderService_CreateReminder": {
+		omittedProperties: []string{"name", "state"},
+	},
+	"ReminderService_UpdateReminder": {
+		clearRequired:     true,
+		omittedProperties: []string{"name"},
+		minProperties:     1,
+		requiredArguments: []string{"updateMask"},
+	},
+	"ReminderService_CompleteReminder": {
+		clearRequired:     true,
+		omittedProperties: []string{"name"},
+	},
+	"ReminderService_ClearCompletedReminders": {
+		clearRequired:     true,
+		omittedProperties: []string{"parent"},
+	},
+	"FinanceService_CreateFinanceCategory": {
+		required:          []string{"displayName", "type"},
+		omittedProperties: []string{"name", "state"},
+	},
+	"FinanceService_CreateFinanceWallet": {
+		required:          []string{"displayName"},
+		omittedProperties: []string{"name", "state"},
+	},
+	"FinanceService_CreateFinanceTransaction": {
+		omittedProperties: []string{"name"},
+	},
+	"FinanceService_UpdateFinanceWallet": {
+		clearRequired:     true,
+		omittedProperties: []string{"name", "initialBalanceMinor"},
+		minProperties:     1,
+		requiredArguments: []string{"updateMask"},
+	},
+	"FinanceService_UpdateFinanceCategory": {
+		clearRequired:     true,
+		omittedProperties: []string{"name", "type"},
+		minProperties:     1,
+		requiredArguments: []string{"updateMask"},
+	},
+	"FinanceService_UpdateFinanceTransaction": {
+		clearRequired:     true,
+		omittedProperties: []string{"name"},
+		minProperties:     1,
+		requiredArguments: []string{"updateMask"},
+	},
+	"FinanceService_AdjustFinanceWalletBalance": {
+		required:          []string{"actualBalanceMinor", "occurTime"},
+		omittedProperties: []string{"wallet"},
+	},
+	"FinanceService_GetFinanceSummary": {
+		requiredArguments: []string{"startTime", "endTime", "timeZone"},
+	},
+	"UserService_UpdateUserSetting": {
+		clearRequired:     true,
+		omittedProperties: []string{"name", "webhooksSetting"},
+		minProperties:     1,
+		requiredArguments: []string{"updateMask"},
+	},
+}
+
+var argumentSchemaOverrides = map[string]map[string]argumentSchemaOverride{
+	"UserService_GetUserSetting": {
+		"setting": {
+			description: "Uppercase setting key. Allowed values are GENERAL, TAGS, and PERSONA; webhook settings are intentionally unavailable to agents.",
+			enum:        []string{"GENERAL", "TAGS", "PERSONA"},
+		},
+	},
+	"UserService_UpdateUserSetting": {
+		"setting": {
+			description: "Uppercase setting key. Allowed values are GENERAL, TAGS, and PERSONA; webhook settings are intentionally unavailable to agents.",
+			enum:        []string{"GENERAL", "TAGS", "PERSONA"},
+		},
+		"updateMask": {
+			description: "Comma-separated proto field names in snake_case. PERSONA supports headline, preferred_address, communication_style, interest_tags, routine_preferences, life_stage, and goals; GENERAL supports memo_visibility, theme, and locale; TAGS supports tags.",
+		},
+	},
+}
+
+var operationDescriptionOverrides = map[string]string{
+	"MemoService_SetMemoAttachments":          "Replace the memo's complete attachment set. Existing attachments omitted from body.attachments are permanently deleted, not merely unlinked.",
+	"ReminderService_CreateReminder":          "Create a reminder. Use body.remindTime for an exact notification timestamp or body.dueDate for a date-only reminder; there is no details field.",
+	"FinanceService_CreateFinanceWallet":      "Create a private wallet. Set its opening balance with body.initialBalanceMinor; the current balance is output-only.",
+	"FinanceService_CreateFinanceTransaction": "Record an income, expense, or transfer. body.occurTime is required and must be an RFC 3339 timestamp.",
+	"FinanceService_UpdateFinanceTransaction": "Correct a ledger transaction and rebuild affected running-balance snapshots in chronological order.",
+	"UserService_GetUserSetting":              "Read the current user's GENERAL, TAGS, or PERSONA setting. The setting key must be uppercase.",
+	"UserService_UpdateUserSetting":           "Update the current user's GENERAL, TAGS, or PERSONA setting. The setting key must be uppercase and updateMask uses proto snake_case field names.",
 }
 
 var wordBoundary = regexp.MustCompile(`([a-z0-9])([A-Z])`)
@@ -103,6 +230,8 @@ func validateOperationOverrides(registry map[string]*openAPIOperation) error {
 		ids  []string
 	}{
 		{"requestBodySchemaOverrides", mapKeys(requestBodySchemaOverrides)},
+		{"argumentSchemaOverrides", mapKeys(argumentSchemaOverrides)},
+		{"operationDescriptionOverrides", mapKeys(operationDescriptionOverrides)},
 		{"idempotentOperationIDs", mapKeys(idempotentOperationIDs)},
 		{"destructiveOperationIDs", mapKeys(destructiveOperationIDs)},
 	}
@@ -152,6 +281,10 @@ func buildToolFromOperation(operation *openAPIOperation) (*sdkmcp.Tool, *registe
 	name := toolNameFromOperationID(operation.OperationID)
 	title := titleFromToolName(name)
 	inputSchema := inputSchemaForOperation(operation)
+	description := operation.Description
+	if override := operationDescriptionOverrides[operation.OperationID]; override != "" {
+		description = override
+	}
 	tool := &sdkmcp.Tool{
 		Meta: sdkmcp.Meta{
 			"operationId": operation.OperationID,
@@ -160,7 +293,7 @@ func buildToolFromOperation(operation *openAPIOperation) (*sdkmcp.Tool, *registe
 		},
 		Name:         name,
 		Title:        title,
-		Description:  operation.Description,
+		Description:  description,
 		InputSchema:  inputSchema,
 		OutputSchema: outputSchemaForOperation(operation),
 		Annotations:  annotationsForOperation(operation, title),
@@ -225,6 +358,29 @@ func inputSchemaForOperation(operation *openAPIOperation) jsonSchema {
 			required = append(required, "body")
 		}
 	}
+	if override, ok := requestBodySchemaOverrides[operation.OperationID]; ok {
+		for _, name := range override.requiredArguments {
+			if _, exists := properties[name]; exists && !slices.Contains(required, name) {
+				required = append(required, name)
+			}
+		}
+	}
+	if overrides := argumentSchemaOverrides[operation.OperationID]; overrides != nil {
+		for name, override := range overrides {
+			property, ok := asSchemaMap(properties[name])
+			if !ok {
+				continue
+			}
+			property = maps.Clone(property)
+			if override.description != "" {
+				property["description"] = override.description
+			}
+			if len(override.enum) > 0 {
+				property["enum"] = override.enum
+			}
+			properties[name] = jsonSchema(property)
+		}
+	}
 
 	schema := jsonSchema{
 		"type":                 "object",
@@ -244,7 +400,7 @@ func requestBodySchema(operation *openAPIOperation) jsonSchema {
 	if operation.RequestBodySchema == nil {
 		return jsonSchema{"type": "object"}
 	}
-	schema := cloneSchema(operation.RequestBodySchema)
+	schema := normalizeInputSchema(operation.RequestBodySchema)
 	override, ok := requestBodySchemaOverrides[operation.OperationID]
 	if !ok {
 		return schema
@@ -262,12 +418,91 @@ func requestBodySchema(operation *openAPIOperation) jsonSchema {
 			delete(properties, name)
 		}
 		schema["properties"] = properties
+		required := []string{}
+		for _, name := range requiredNames(schema["required"]) {
+			if _, ok := properties[name]; ok {
+				required = append(required, name)
+			}
+		}
+		if len(required) == 0 {
+			delete(schema, "required")
+		} else {
+			schema["required"] = required
+		}
 	}
 
 	if override.minProperties > 0 {
 		schema["minProperties"] = override.minProperties
 	}
 	return schema
+}
+
+func normalizeInputSchema(schema jsonSchema) jsonSchema {
+	normalized, ok := normalizeInputSchemaValue(schema).(jsonSchema)
+	if !ok {
+		return cloneSchema(schema)
+	}
+	return normalized
+}
+
+func normalizeInputSchemaValue(value any) any {
+	switch typed := value.(type) {
+	case jsonSchema:
+		return normalizeInputSchemaMap(map[string]any(typed))
+	case map[string]any:
+		return normalizeInputSchemaMap(typed)
+	case []any:
+		items := make([]any, len(typed))
+		for i, item := range typed {
+			items[i] = normalizeInputSchemaValue(item)
+		}
+		return items
+	case []string:
+		return slices.Clone(typed)
+	default:
+		return typed
+	}
+}
+
+func normalizeInputSchemaMap(schema map[string]any) jsonSchema {
+	normalized := jsonSchema{}
+	for key, value := range schema {
+		if key == "properties" || key == "required" {
+			continue
+		}
+		normalized[key] = normalizeInputSchemaValue(value)
+	}
+
+	properties, hasProperties := schema["properties"]
+	if !hasProperties {
+		if required, ok := schema["required"]; ok {
+			normalized["required"] = normalizeInputSchemaValue(required)
+		}
+		return normalized
+	}
+
+	normalizedProperties := map[string]any{}
+	for name, propertyValue := range schemaProperties(properties) {
+		if property, ok := asSchemaMap(propertyValue); ok && property["readOnly"] == true {
+			continue
+		}
+		normalizedProperties[name] = normalizeInputSchemaValue(propertyValue)
+	}
+	normalized["properties"] = normalizedProperties
+	if _, ok := normalized["additionalProperties"]; !ok {
+		normalized["additionalProperties"] = false
+	}
+
+	required := []string{}
+	for _, name := range requiredNames(schema["required"]) {
+		if _, ok := normalizedProperties[name]; ok {
+			required = append(required, name)
+		}
+	}
+	if len(required) > 0 {
+		normalized["required"] = required
+	}
+	return normalized
 }
 
 func outputSchemaForOperation(operation *openAPIOperation) jsonSchema {
@@ -286,8 +521,8 @@ func cloneSchema(schema jsonSchema) jsonSchema {
 }
 
 func extractSchemaDefs(schema jsonSchema) map[string]any {
-	defs, ok := schema["$defs"].(map[string]any)
-	if !ok {
+	defs := schemaProperties(schema["$defs"])
+	if len(defs) == 0 {
 		return nil
 	}
 	delete(schema, "$defs")
@@ -307,9 +542,17 @@ var idempotentOperationIDs = map[string]bool{
 // destructiveOperationIDs lists mutating operations that can overwrite or
 // remove existing user data despite not using DELETE.
 var destructiveOperationIDs = map[string]bool{
-	"MemoService_UpdateMemo":         true,
-	"MemoService_SetMemoAttachments": true,
-	"MemoService_SetMemoRelations":   true,
+	"MemoService_UpdateMemo":                    true,
+	"MemoService_SetMemoAttachments":            true,
+	"MemoService_SetMemoRelations":              true,
+	"ReminderService_UpdateReminderList":        true,
+	"ReminderService_ClearCompletedReminders":   true,
+	"ReminderService_UpdateReminder":            true,
+	"FinanceService_UpdateFinanceWallet":        true,
+	"FinanceService_UpdateFinanceCategory":      true,
+	"FinanceService_UpdateFinanceTransaction":   true,
+	"FinanceService_AdjustFinanceWalletBalance": true,
+	"UserService_UpdateUserSetting":             true,
 }
 
 // annotationsForOperation derives the method-based annotations and then applies

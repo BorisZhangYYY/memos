@@ -5,7 +5,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"slices"
 	"strings"
 	"time"
 
@@ -257,22 +256,11 @@ func (a Adapter) CreateTransaction(ctx context.Context, create *store.FinanceTra
 		return nil, err
 	}
 	defer tx.Rollback()
-	if err := a.validateReferences(ctx, tx, create); err != nil {
-		return nil, err
-	}
-	wallets, err := a.loadWallets(ctx, tx, create.CreatorID, walletIDs(create))
+	wallets, err := a.loadCreatorWallets(ctx, tx, create.CreatorID)
 	if err != nil {
 		return nil, err
 	}
-	primaryWallet := wallets[create.WalletID]
-	create.BalanceBeforeMinor = primaryWallet.BalanceMinor
-	if create.Type == store.FinanceTransactionAdjustment {
-		create.AdjustmentDeltaMinor = create.BalanceAfterMinor - primaryWallet.BalanceMinor
-		create.AmountMinor = abs64(create.AdjustmentDeltaMinor)
-	} else {
-		create.BalanceAfterMinor = primaryWallet.BalanceMinor + store.FinanceTransactionEffects(create)[create.WalletID]
-	}
-	if err := a.applyEffects(ctx, tx, wallets, store.FinanceTransactionEffects(create)); err != nil {
+	if err := a.validateReferences(ctx, tx, create, wallets); err != nil {
 		return nil, err
 	}
 	nowSec := time.Now().Unix()
@@ -285,6 +273,9 @@ func (a Adapter) CreateTransaction(ctx context.Context, create *store.FinanceTra
 		create.DestinationWalletID, create.CategoryID, create.Note, create.AdjustmentDeltaMinor,
 		create.BalanceBeforeMinor, create.BalanceAfterMinor)
 	if err != nil {
+		return nil, err
+	}
+	if err := a.rebuildLedger(ctx, tx, create.CreatorID, wallets); err != nil {
 		return nil, err
 	}
 	if err := tx.Commit(); err != nil {
@@ -352,6 +343,10 @@ func (a Adapter) UpdateTransaction(ctx context.Context, update *store.UpdateFina
 		return nil, err
 	}
 	defer tx.Rollback()
+	wallets, err := a.loadCreatorWallets(ctx, tx, update.CreatorID)
+	if err != nil {
+		return nil, err
+	}
 	existing, err := a.getTransaction(ctx, tx, update.ID, update.CreatorID, true)
 	if err != nil {
 		return nil, err
@@ -367,39 +362,20 @@ func (a Adapter) UpdateTransaction(ctx context.Context, update *store.UpdateFina
 	if err := validateTransactionAmounts(replacement); err != nil {
 		return nil, err
 	}
-	if err := a.validateReferences(ctx, tx, replacement); err != nil {
-		return nil, err
-	}
-	idSet := map[int32]struct{}{}
-	for _, id := range append(walletIDs(existing), walletIDs(replacement)...) {
-		idSet[id] = struct{}{}
-	}
-	ids := make([]int32, 0, len(idSet))
-	for id := range idSet {
-		ids = append(ids, id)
-	}
-	wallets, err := a.loadWallets(ctx, tx, update.CreatorID, ids)
-	if err != nil {
-		return nil, err
-	}
-	effects := store.FinanceTransactionEffects(replacement)
-	for walletID, delta := range store.FinanceTransactionEffects(existing) {
-		effects[walletID] -= delta
-	}
-	replacement.BalanceBeforeMinor = wallets[replacement.WalletID].BalanceMinor
-	replacement.BalanceAfterMinor = replacement.BalanceBeforeMinor + effects[replacement.WalletID]
-	if err := a.applyEffects(ctx, tx, wallets, effects); err != nil {
+	if err := a.validateReferences(ctx, tx, replacement, wallets); err != nil {
 		return nil, err
 	}
 	_, err = tx.ExecContext(ctx, a.bind(`
 		UPDATE finance_transaction
 		SET updated_ts = ?, occurred_ts = ?, type = ?, amount_minor = ?, wallet_id = ?,
-		    destination_wallet_id = ?, category_id = ?, note = ?, balance_before_minor = ?, balance_after_minor = ?
+		    destination_wallet_id = ?, category_id = ?, note = ?
 		WHERE id = ? AND creator_id = ?`),
 		update.UpdatedTs, update.OccurredTs, update.Type, update.AmountMinor, update.WalletID,
-		update.DestinationWalletID, update.CategoryID, update.Note, replacement.BalanceBeforeMinor, replacement.BalanceAfterMinor,
-		update.ID, update.CreatorID)
+		update.DestinationWalletID, update.CategoryID, update.Note, update.ID, update.CreatorID)
 	if err != nil {
+		return nil, err
+	}
+	if err := a.rebuildLedger(ctx, tx, update.CreatorID, wallets); err != nil {
 		return nil, err
 	}
 	if err := tx.Commit(); err != nil {
@@ -414,22 +390,17 @@ func (a Adapter) DeleteTransaction(ctx context.Context, delete *store.DeleteFina
 		return err
 	}
 	defer tx.Rollback()
-	existing, err := a.getTransaction(ctx, tx, delete.ID, delete.CreatorID, true)
+	wallets, err := a.loadCreatorWallets(ctx, tx, delete.CreatorID)
 	if err != nil {
 		return err
 	}
-	wallets, err := a.loadWallets(ctx, tx, delete.CreatorID, walletIDs(existing))
-	if err != nil {
-		return err
-	}
-	effects := store.FinanceTransactionEffects(existing)
-	for walletID, delta := range effects {
-		effects[walletID] = -delta
-	}
-	if err := a.applyEffects(ctx, tx, wallets, effects); err != nil {
+	if _, err := a.getTransaction(ctx, tx, delete.ID, delete.CreatorID, true); err != nil {
 		return err
 	}
 	if _, err := tx.ExecContext(ctx, a.bind("DELETE FROM finance_transaction WHERE id = ? AND creator_id = ?"), delete.ID, delete.CreatorID); err != nil {
+		return err
+	}
+	if err := a.rebuildLedger(ctx, tx, delete.CreatorID, wallets); err != nil {
 		return err
 	}
 	return tx.Commit()
@@ -510,44 +481,49 @@ func (a Adapter) getTransaction(ctx context.Context, runner sqlRunner, id, creat
 	return transaction, err
 }
 
-func walletIDs(transaction *store.FinanceTransaction) []int32 {
-	ids := []int32{transaction.WalletID}
-	if transaction.DestinationWalletID != nil && *transaction.DestinationWalletID != transaction.WalletID {
-		ids = append(ids, *transaction.DestinationWalletID)
+func (a Adapter) loadCreatorWallets(ctx context.Context, tx *sql.Tx, creatorID int32) (map[int32]*store.FinanceWallet, error) {
+	query := `SELECT id, uid, creator_id, created_ts, updated_ts, row_status, name,
+	                 initial_balance_minor, balance_minor, allow_negative_balance
+	          FROM finance_wallet WHERE creator_id = ? ORDER BY id ASC` + a.lockSuffix()
+	rows, err := tx.QueryContext(ctx, a.bind(query), creatorID)
+	if err != nil {
+		return nil, err
 	}
-	slices.Sort(ids)
-	return ids
-}
-
-func (a Adapter) loadWallets(ctx context.Context, tx *sql.Tx, creatorID int32, ids []int32) (map[int32]*store.FinanceWallet, error) {
-	slices.Sort(ids)
-	wallets := make(map[int32]*store.FinanceWallet, len(ids))
-	for _, id := range ids {
-		if _, exists := wallets[id]; exists {
-			continue
-		}
-		wallet, err := a.getWallet(ctx, tx, id, creatorID, true)
-		if err != nil {
+	defer rows.Close()
+	wallets := map[int32]*store.FinanceWallet{}
+	for rows.Next() {
+		wallet := &store.FinanceWallet{}
+		if err := scanWallet(rows, wallet); err != nil {
 			return nil, err
 		}
-		wallets[id] = wallet
+		wallets[wallet.ID] = wallet
 	}
-	return wallets, nil
+	return wallets, rows.Err()
 }
 
-func (a Adapter) validateReferences(ctx context.Context, tx *sql.Tx, transaction *store.FinanceTransaction) error {
-	wallets, err := a.loadWallets(ctx, tx, transaction.CreatorID, walletIDs(transaction))
-	if err != nil {
-		return err
+func (a Adapter) validateReferences(
+	ctx context.Context,
+	tx *sql.Tx,
+	transaction *store.FinanceTransaction,
+	wallets map[int32]*store.FinanceWallet,
+) error {
+	primaryWallet, ok := wallets[transaction.WalletID]
+	if !ok {
+		return store.ErrFinanceWalletNotFound
 	}
-	for _, wallet := range wallets {
-		if wallet.RowStatus != store.Normal {
-			return store.ErrFinanceArchivedResource
-		}
+	if primaryWallet.RowStatus != store.Normal {
+		return store.ErrFinanceArchivedResource
 	}
 	if transaction.Type == store.FinanceTransactionTransfer {
 		if transaction.DestinationWalletID == nil || *transaction.DestinationWalletID == transaction.WalletID {
 			return store.ErrFinanceInvalidTransaction
+		}
+		destinationWallet, ok := wallets[*transaction.DestinationWalletID]
+		if !ok {
+			return store.ErrFinanceWalletNotFound
+		}
+		if destinationWallet.RowStatus != store.Normal {
+			return store.ErrFinanceArchivedResource
 		}
 		if transaction.CategoryID != nil {
 			return store.ErrFinanceInvalidTransaction
@@ -577,7 +553,100 @@ func (a Adapter) validateReferences(ctx context.Context, tx *sql.Tx, transaction
 	return nil
 }
 
-func (a Adapter) applyEffects(ctx context.Context, tx *sql.Tx, wallets map[int32]*store.FinanceWallet, effects map[int32]int64) error {
+// rebuildLedger recalculates every running balance in chronological order.
+// Adjustment rows keep their observed balance target while their delta changes
+// when an earlier transaction is inserted, updated, or deleted.
+func (a Adapter) rebuildLedger(
+	ctx context.Context,
+	tx *sql.Tx,
+	creatorID int32,
+	wallets map[int32]*store.FinanceWallet,
+) error {
+	previousBalances := make(map[int32]int64, len(wallets))
+	for walletID, wallet := range wallets {
+		previousBalances[walletID] = wallet.BalanceMinor
+		wallet.BalanceMinor = wallet.InitialBalanceMinor
+	}
+
+	query := `SELECT id, uid, creator_id, created_ts, updated_ts, occurred_ts, type, amount_minor,
+	                 wallet_id, destination_wallet_id, category_id, note, adjustment_delta_minor,
+	                 balance_before_minor, balance_after_minor
+	          FROM finance_transaction WHERE creator_id = ?
+	          ORDER BY occurred_ts ASC, id ASC` + a.lockSuffix()
+	rows, err := tx.QueryContext(ctx, a.bind(query), creatorID)
+	if err != nil {
+		return err
+	}
+	transactions := []*store.FinanceTransaction{}
+	for rows.Next() {
+		transaction := &store.FinanceTransaction{}
+		if err := scanTransaction(rows, transaction); err != nil {
+			rows.Close()
+			return err
+		}
+		transactions = append(transactions, transaction)
+	}
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		return err
+	}
+	if err := rows.Close(); err != nil {
+		return err
+	}
+
+	for _, transaction := range transactions {
+		primaryWallet, ok := wallets[transaction.WalletID]
+		if !ok {
+			return store.ErrFinanceWalletNotFound
+		}
+		transaction.BalanceBeforeMinor = primaryWallet.BalanceMinor
+		if transaction.Type == store.FinanceTransactionAdjustment {
+			targetBalance := transaction.BalanceAfterMinor
+			if targetBalance < -store.MaxFinanceAmountMinor || targetBalance > store.MaxFinanceAmountMinor {
+				return store.ErrFinanceAmountOutOfRange
+			}
+			if targetBalance < 0 && !primaryWallet.AllowNegativeBalance {
+				return store.ErrFinanceInsufficientBalance
+			}
+			transaction.AdjustmentDeltaMinor = targetBalance - transaction.BalanceBeforeMinor
+			transaction.AmountMinor = abs64(transaction.AdjustmentDeltaMinor)
+			primaryWallet.BalanceMinor = targetBalance
+		} else {
+			transaction.AdjustmentDeltaMinor = 0
+			if err := validateTransactionAmounts(transaction); err != nil {
+				return err
+			}
+			if err := applyEffectsToWallets(wallets, store.FinanceTransactionEffects(transaction)); err != nil {
+				return err
+			}
+			transaction.BalanceAfterMinor = primaryWallet.BalanceMinor
+		}
+		if _, err := tx.ExecContext(ctx, a.bind(`
+			UPDATE finance_transaction
+			SET amount_minor = ?, adjustment_delta_minor = ?, balance_before_minor = ?, balance_after_minor = ?
+			WHERE id = ? AND creator_id = ?`),
+			transaction.AmountMinor, transaction.AdjustmentDeltaMinor,
+			transaction.BalanceBeforeMinor, transaction.BalanceAfterMinor,
+			transaction.ID, creatorID); err != nil {
+			return err
+		}
+	}
+
+	nowSec := time.Now().Unix()
+	for walletID, wallet := range wallets {
+		if previousBalances[walletID] == wallet.BalanceMinor {
+			continue
+		}
+		if _, err := tx.ExecContext(ctx, a.bind(
+			"UPDATE finance_wallet SET balance_minor = ?, updated_ts = ? WHERE id = ? AND creator_id = ?",
+		), wallet.BalanceMinor, nowSec, walletID, creatorID); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func applyEffectsToWallets(wallets map[int32]*store.FinanceWallet, effects map[int32]int64) error {
 	for walletID, delta := range effects {
 		wallet, ok := wallets[walletID]
 		if !ok {
@@ -591,15 +660,6 @@ func (a Adapter) applyEffects(ctx context.Context, tx *sql.Tx, wallets map[int32
 			return store.ErrFinanceInsufficientBalance
 		}
 		wallet.BalanceMinor = next
-	}
-	nowSec := time.Now().Unix()
-	for walletID, wallet := range wallets {
-		if _, changed := effects[walletID]; !changed {
-			continue
-		}
-		if _, err := tx.ExecContext(ctx, a.bind("UPDATE finance_wallet SET balance_minor = ?, updated_ts = ? WHERE id = ?"), wallet.BalanceMinor, nowSec, walletID); err != nil {
-			return err
-		}
 	}
 	return nil
 }

@@ -209,7 +209,7 @@ func (s *Store) UpdateFinanceCategory(ctx context.Context, update *UpdateFinance
 	return s.driver.UpdateFinanceCategory(ctx, update)
 }
 
-// CreateFinanceTransaction atomically inserts a ledger row and applies its wallet effects.
+// CreateFinanceTransaction atomically inserts a ledger row and rebuilds the creator's chronological ledger.
 func (s *Store) CreateFinanceTransaction(ctx context.Context, create *FinanceTransaction) (*FinanceTransaction, error) {
 	return s.driver.CreateFinanceTransaction(ctx, create)
 }
@@ -219,12 +219,12 @@ func (s *Store) ListFinanceTransactions(ctx context.Context, find *FindFinanceTr
 	return s.driver.ListFinanceTransactions(ctx, find)
 }
 
-// UpdateFinanceTransaction atomically reverses the old effects and applies the replacement.
+// UpdateFinanceTransaction atomically replaces a transaction and rebuilds the creator's chronological ledger.
 func (s *Store) UpdateFinanceTransaction(ctx context.Context, update *UpdateFinanceTransaction) (*FinanceTransaction, error) {
 	return s.driver.UpdateFinanceTransaction(ctx, update)
 }
 
-// DeleteFinanceTransaction atomically reverses and deletes a transaction.
+// DeleteFinanceTransaction atomically deletes a transaction and rebuilds the creator's chronological ledger.
 func (s *Store) DeleteFinanceTransaction(ctx context.Context, delete *DeleteFinanceTransaction) error {
 	return s.driver.DeleteFinanceTransaction(ctx, delete)
 }

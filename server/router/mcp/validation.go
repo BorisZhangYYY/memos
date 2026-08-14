@@ -211,8 +211,8 @@ func localSchemaDef(root jsonSchema, ref string) (any, bool) {
 	if !strings.HasPrefix(ref, prefix) {
 		return nil, false
 	}
-	defs, ok := root["$defs"].(map[string]any)
-	if !ok {
+	defs := schemaProperties(root["$defs"])
+	if len(defs) == 0 {
 		return nil, false
 	}
 	return defs[strings.TrimPrefix(ref, prefix)], true

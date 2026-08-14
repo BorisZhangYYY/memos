@@ -364,7 +364,7 @@ func TestCompileExistsOnePerDialect(t *testing.T) {
 	}{
 		{DialectSQLite, []string{"COUNT(", "json_each(", ") = 1"}},
 		{DialectPostgres, []string{"COUNT(", "jsonb_array_elements_text(", ") = 1"}},
-		{DialectMySQL, []string{"COUNT(", "JSON_TABLE(", ") = 1"}},
+		{DialectMySQL, []string{"JSON_SEARCH(", "JSON_LENGTH(", "= 1"}},
 	}
 	for _, tc := range cases {
 		stmt, err := engine.CompileToStatement(context.Background(), `tags.exists_one(t, t == "urgent")`, RenderOptions{Dialect: tc.dialect})

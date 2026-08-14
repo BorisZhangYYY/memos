@@ -2,6 +2,7 @@ package test
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -203,4 +204,84 @@ func TestUserTagSettingsPermissionDeniedForOtherUser(t *testing.T) {
 	})
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "permission denied")
+}
+
+func TestUserPersonaSettings(t *testing.T) {
+	ctx := context.Background()
+	ts := NewTestService(t)
+	defer ts.Cleanup()
+
+	user, err := ts.CreateRegularUser(ctx, "persona-user")
+	require.NoError(t, err)
+	userCtx := ts.CreateUserContext(ctx, user.ID)
+
+	updated, err := ts.Service.UpdateUserSetting(userCtx, &apiv1.UpdateUserSettingRequest{
+		Setting: &apiv1.UserSetting{
+			Name: "users/persona-user/settings/PERSONA",
+			Value: &apiv1.UserSetting_PersonaSetting_{
+				PersonaSetting: &apiv1.UserSetting_PersonaSetting{
+					Headline:           "Builder and lifelong learner",
+					PreferredAddress:   "Boris",
+					CommunicationStyle: "Direct, warm, and concise",
+					InterestTags:       []string{"AI; reading", "云原生、大模型", "AI"},
+					RoutinePreferences: "Deep work in the morning",
+					LifeStage:          "Building a personal life platform",
+					Goals:              []string{"Ship useful software", "Learn steadily"},
+				},
+			},
+		},
+		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{
+			"headline", "preferred_address", "communication_style", "interest_tags", "routine_preferences", "life_stage", "goals",
+		}},
+	})
+	require.NoError(t, err)
+	require.Equal(t, "users/persona-user/settings/PERSONA", updated.Name)
+	require.Equal(t, []string{"AI", "reading", "云原生", "大模型"}, updated.GetPersonaSetting().InterestTags)
+
+	got, err := ts.Service.GetUserSetting(userCtx, &apiv1.GetUserSettingRequest{Name: updated.Name})
+	require.NoError(t, err)
+	require.Equal(t, "Boris", got.GetPersonaSetting().PreferredAddress)
+	require.Equal(t, []string{"Ship useful software", "Learn steadily"}, got.GetPersonaSetting().Goals)
+
+	settings, err := ts.Service.ListUserSettings(userCtx, &apiv1.ListUserSettingsRequest{Parent: apiv1server.BuildUserName(user.Username)})
+	require.NoError(t, err)
+	require.Contains(t, settings.Settings, got)
+}
+
+func TestUserPersonaSettingsArePrivateAndValidated(t *testing.T) {
+	ctx := context.Background()
+	ts := NewTestService(t)
+	defer ts.Cleanup()
+
+	owner, err := ts.CreateRegularUser(ctx, "persona-owner")
+	require.NoError(t, err)
+	other, err := ts.CreateRegularUser(ctx, "persona-other")
+	require.NoError(t, err)
+	otherCtx := ts.CreateUserContext(ctx, other.ID)
+
+	_, err = ts.Service.GetUserSetting(otherCtx, &apiv1.GetUserSettingRequest{Name: "users/persona-owner/settings/PERSONA"})
+	require.ErrorContains(t, err, "permission denied")
+
+	ownerCtx := ts.CreateUserContext(ctx, owner.ID)
+	_, err = ts.Service.UpdateUserSetting(ownerCtx, &apiv1.UpdateUserSettingRequest{
+		Setting: &apiv1.UserSetting{
+			Name: "users/persona-owner/settings/PERSONA",
+			Value: &apiv1.UserSetting_PersonaSetting_{
+				PersonaSetting: &apiv1.UserSetting_PersonaSetting{Headline: strings.Repeat("a", 281)},
+			},
+		},
+		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"headline"}},
+	})
+	require.ErrorContains(t, err, "exceeds 280 characters")
+
+	_, err = ts.Service.UpdateUserSetting(ownerCtx, &apiv1.UpdateUserSettingRequest{
+		Setting: &apiv1.UserSetting{
+			Name: "users/persona-owner/settings/PERSONA",
+			Value: &apiv1.UserSetting_PersonaSetting_{
+				PersonaSetting: &apiv1.UserSetting_PersonaSetting{},
+			},
+		},
+		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"unknown"}},
+	})
+	require.ErrorContains(t, err, "unsupported update mask path")
 }

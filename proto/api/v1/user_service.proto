@@ -444,6 +444,7 @@ message UserSetting {
     GeneralSetting general_setting = 2;
     WebhooksSetting webhooks_setting = 5;
     TagsSetting tags_setting = 6;
+    PersonaSetting persona_setting = 7;
   }
 
   // Enumeration of user setting keys.
@@ -455,6 +456,8 @@ message UserSetting {
     WEBHOOKS = 4;
     // TAGS is the key for per-user tag metadata.
     TAGS = 5;
+    // PERSONA is the key for the user's optional personal profile.
+    PERSONA = 6;
   }
 
   // General user settings configuration.
@@ -483,6 +486,25 @@ message UserSetting {
     // Map of tag name pattern to tag metadata.
     // Each key is treated as an anchored regular expression (^pattern$).
     map<string, TagMetadata> tags = 1 [(google.api.field_behavior) = OPTIONAL];
+  }
+
+  // Optional personal context owned by the user. The setting is private to
+  // the account and can be read or updated through the regular settings API.
+  message PersonaSetting {
+    // A one-sentence self portrait.
+    string headline = 1 [(google.api.field_behavior) = OPTIONAL];
+    // How the user prefers to be addressed.
+    string preferred_address = 2 [(google.api.field_behavior) = OPTIONAL];
+    // The user's preferred tone and communication style.
+    string communication_style = 3 [(google.api.field_behavior) = OPTIONAL];
+    // Free-form interests represented as short tags.
+    repeated string interest_tags = 4 [(google.api.field_behavior) = OPTIONAL];
+    // Sleep, schedule, and habit preferences.
+    string routine_preferences = 5 [(google.api.field_behavior) = OPTIONAL];
+    // The user's current life stage.
+    string life_stage = 6 [(google.api.field_behavior) = OPTIONAL];
+    // Current career, education, finance, or other directions.
+    repeated string goals = 7 [(google.api.field_behavior) = OPTIONAL];
   }
 
   // User webhooks configuration.

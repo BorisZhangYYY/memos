@@ -198,6 +198,21 @@
       "link-memo": "链接备忘录",
       "upload-file": "上传文件"
     },
+    "location-picker": {
+      "choose": "点击地图选点，或使用当前位置",
+      "current-location": "使用当前位置",
+      "description": "可点击地图选点、使用当前位置，或手动输入经纬度。",
+      "latitude": "纬度",
+      "locating": "正在获取当前位置…",
+      "location-error": "无法获取定位，请点击地图或输入经纬度",
+      "longitude": "经度",
+      "open-map": "在 OpenStreetMap 中打开",
+      "pinned": "已记录的位置",
+      "place-placeholder": "请先选择位置",
+      "selected": "已选择位置",
+      "zoom-in": "放大",
+      "zoom-out": "缩小"
+    },
     "audio-recorder": {
       "attachment-label": "录音",
       "attachment-label-with-time": "录音 {{time}}",
@@ -361,6 +376,53 @@
       "range": "范围",
       "recorded-days": "有记录天数",
       "title": "心情统计"
+    }
+  },
+  "profile": {
+    "map": {
+      "empty-description": "新建或编辑 Memo 时，点击加号，再选择“添加位置”；保存后就会自动出现在这里。",
+      "empty-title": "还没有带位置的 Memo",
+      "error-description": "请稍后重试或刷新页面。",
+      "error-title": "地图数据加载失败",
+      "loading": "正在读取地点…",
+      "places": "已标记 {{count}} 个地点",
+      "title": "Memo 地图"
+    },
+    "persona": {
+      "communication-style": "说话风格",
+      "communication-style-placeholder": "例如：直接、温暖、简洁，必要时主动挑战假设",
+      "context-section": "相处与协作",
+      "context-section-description": "这些长文本支持 Markdown；可以使用列表、加粗、链接和标题来组织内容。",
+      "create": "创建档案",
+      "edit-description": "所有字段均可选。这些私有信息会帮助 Memos 与代理以更贴合你的方式协作。",
+      "edit-tab": "编辑",
+      "edit-title": "编辑我的档案",
+      "empty-description": "写下你愿意让 Memos 和代理了解的背景；任何字段都可以留空，也可以随时修改。",
+      "empty-title": "让 Memos 更像你的空间",
+      "export": "导出 JSON",
+      "goals": "当前方向",
+      "goals-help": "每行一个方向；职业、深造、理财和生活目标都可以写在这里。",
+      "goals-placeholder": "做有长期价值的产品\n保持稳定学习",
+      "headline": "一句话自画像",
+      "headline-placeholder": "一个持续创造、学习和保持审慎乐观的人",
+      "identity-section": "基本印象",
+      "identity-section-description": "先写下简短的自我介绍和喜欢的称呼。",
+      "interest-tags": "兴趣标签",
+      "interest-tags-help": "输入后按回车或分号生成词条，也支持逗号、顿号和粘贴多项。",
+      "interest-tags-placeholder": "输入兴趣后按回车",
+      "life-stage": "当前人生阶段",
+      "life-stage-placeholder": "你现在正处于怎样的人生阶段？",
+      "live-preview": "实时预览",
+      "preferred-address": "称呼偏好",
+      "preferred-address-placeholder": "希望 Memos 和代理如何称呼你？",
+      "private-note": "仅自己可见",
+      "remove-interest-tag": "移除兴趣标签 {{tag}}",
+      "preview-tab": "预览",
+      "routine-preferences": "作息与习惯",
+      "routine-preferences-placeholder": "什么时候最专注？有哪些值得尊重的习惯？",
+      "save-failed": "保存个性档案失败",
+      "saving": "保存中…",
+      "title": "我的档案"
     }
   },
   "reminder": {

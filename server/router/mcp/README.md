@@ -91,7 +91,9 @@ use `$ref`. `openapi.go` resolves these into local definitions:
   partial-update bodies and remove fields already supplied by a path binding
   from `body: "*"` schemas. Memo updates may omit `updateMask` so the REST
   gateway can infer it from the fields present in the request body.
-- The schema sets `"additionalProperties": false`.
+- Input-only schemas recursively remove `readOnly` fields and set
+  `"additionalProperties": false` on message objects. Unknown fields therefore
+  fail before dispatch instead of being silently ignored by protobuf JSON.
 
 The output schema is the operation's 200 `application/json` schema. When a 200
 response has no JSON body, the fallback is:
@@ -137,34 +139,65 @@ a personal access token as a bearer credential. Example client config:
 
 ## Tool surface
 
-The server exposes a curated allowlist (`curatedOperationIDs` in `catalog.go`),
-centered on memos and attachments, plus two read-only orientation tools:
-`shortcut_list_shortcuts` (surfaces a user's saved CEL filters for reuse with
-`memo_list_memos`) and `auth_get_current_user` (a "whoami" so an agent can
-resolve its own user — the single allowed auth/identity operation):
+The server exposes a curated allowlist (`curatedOperationIDs` in `catalog.go`).
+Every entry is intentionally scoped to a signed-in user's notes, reminders,
+private finance ledger, personal settings, or read-only statistics. The only
+auth operation is the read-only `AuthService_GetCurrentUser` ("whoami").
 
-| OpenAPI operation | MCP tool |
-| --- | --- |
-| `MemoService_ListMemos` | `memo_list_memos` |
-| `MemoService_CreateMemo` | `memo_create_memo` |
-| `MemoService_GetMemo` | `memo_get_memo` |
-| `MemoService_UpdateMemo` | `memo_update_memo` |
-| `MemoService_DeleteMemo` | `memo_delete_memo` |
-| `MemoService_ListMemoComments` | `memo_list_memo_comments` |
-| `MemoService_CreateMemoComment` | `memo_create_memo_comment` |
-| `MemoService_ListMemoAttachments` | `memo_list_memo_attachments` |
-| `MemoService_SetMemoAttachments` | `memo_set_memo_attachments` |
-| `MemoService_ListMemoReactions` | `memo_list_memo_reactions` |
-| `MemoService_UpsertMemoReaction` | `memo_upsert_memo_reaction` |
-| `MemoService_DeleteMemoReaction` | `memo_delete_memo_reaction` |
-| `MemoService_ListMemoRelations` | `memo_list_memo_relations` |
-| `MemoService_SetMemoRelations` | `memo_set_memo_relations` |
-| `AttachmentService_ListAttachments` | `attachment_list_attachments` |
-| `AttachmentService_CreateAttachment` | `attachment_create_attachment` |
-| `AttachmentService_GetAttachment` | `attachment_get_attachment` |
-| `AttachmentService_DeleteAttachment` | `attachment_delete_attachment` |
-| `ShortcutService_ListShortcuts` | `shortcut_list_shortcuts` |
-| `AuthService_GetCurrentUser` | `auth_get_current_user` |
+| OpenAPI operation | MCP tool | Purpose |
+| --- | --- | --- |
+| `MemoService_ListMemos` | `memo_list_memos` | Search and aggregate memos. |
+| `MemoService_CreateMemo` | `memo_create_memo` | Create a memo. |
+| `MemoService_GetMemo` | `memo_get_memo` | Read one memo. |
+| `MemoService_UpdateMemo` | `memo_update_memo` | Update memo fields. |
+| `MemoService_DeleteMemo` | `memo_delete_memo` | Delete a memo. |
+| `MemoService_ListMemoComments` | `memo_list_memo_comments` | Read memo comments. |
+| `MemoService_CreateMemoComment` | `memo_create_memo_comment` | Add a memo comment. |
+| `MemoService_ListMemoAttachments` | `memo_list_memo_attachments` | Read a memo's attachment links. |
+| `MemoService_SetMemoAttachments` | `memo_set_memo_attachments` | Replace a memo's attachments; omitted existing attachments are permanently deleted. |
+| `MemoService_ListMemoReactions` | `memo_list_memo_reactions` | Read memo reactions. |
+| `MemoService_UpsertMemoReaction` | `memo_upsert_memo_reaction` | Add or update a reaction. |
+| `MemoService_DeleteMemoReaction` | `memo_delete_memo_reaction` | Remove a reaction. |
+| `MemoService_ListMemoRelations` | `memo_list_memo_relations` | Read memo relations. |
+| `MemoService_SetMemoRelations` | `memo_set_memo_relations` | Replace memo relations. |
+| `AttachmentService_ListAttachments` | `attachment_list_attachments` | List the user's attachments. |
+| `AttachmentService_CreateAttachment` | `attachment_create_attachment` | Upload an attachment. |
+| `AttachmentService_GetAttachment` | `attachment_get_attachment` | Read attachment metadata/content. |
+| `AttachmentService_DeleteAttachment` | `attachment_delete_attachment` | Delete an attachment. |
+| `ShortcutService_ListShortcuts` | `shortcut_list_shortcuts` | Reuse saved CEL filters for memo queries. |
+| `ReminderService_ListReminderLists` | `reminder_list_reminder_lists` | List the user's reminder lists. |
+| `ReminderService_CreateReminderList` | `reminder_create_reminder_list` | Create a reminder list. |
+| `ReminderService_UpdateReminderList` | `reminder_update_reminder_list` | Rename, reorder, or archive a reminder list. |
+| `ReminderService_DeleteReminderList` | `reminder_delete_reminder_list` | Delete a reminder list. |
+| `ReminderService_ListReminders` | `reminder_list_reminders` | Query reminders and completed items. |
+| `ReminderService_CreateReminder` | `reminder_create_reminder` | Create a reminder using `remindTime` or date-only `dueDate` (there is no details field). |
+| `ReminderService_UpdateReminder` | `reminder_update_reminder` | Update reminder details. |
+| `ReminderService_DeleteReminder` | `reminder_delete_reminder` | Delete a reminder. |
+| `ReminderService_CompleteReminder` | `reminder_complete_reminder` | Complete a reminder. |
+| `ReminderService_ClearCompletedReminders` | `reminder_clear_completed_reminders` | Archive completed reminders in bulk. |
+| `FinanceService_ListFinanceWallets` | `finance_list_finance_wallets` | List private wallets and balances. |
+| `FinanceService_CreateFinanceWallet` | `finance_create_finance_wallet` | Create a private wallet; opening balance uses `initialBalanceMinor`. |
+| `FinanceService_UpdateFinanceWallet` | `finance_update_finance_wallet` | Update wallet metadata or state. |
+| `FinanceService_ListFinanceCategories` | `finance_list_finance_categories` | List income/expense categories. |
+| `FinanceService_CreateFinanceCategory` | `finance_create_finance_category` | Create an income/expense category. |
+| `FinanceService_UpdateFinanceCategory` | `finance_update_finance_category` | Update category metadata or state. |
+| `FinanceService_ListFinanceTransactions` | `finance_list_finance_transactions` | Query ledger transactions. |
+| `FinanceService_CreateFinanceTransaction` | `finance_create_finance_transaction` | Record income, expense, or a transfer; `occurTime` is required. |
+| `FinanceService_UpdateFinanceTransaction` | `finance_update_finance_transaction` | Correct a ledger transaction and rebuild chronological balance snapshots. |
+| `FinanceService_DeleteFinanceTransaction` | `finance_delete_finance_transaction` | Delete a ledger transaction and rebuild chronological balance snapshots. |
+| `FinanceService_AdjustFinanceWalletBalance` | `finance_adjust_finance_wallet_balance` | Reconcile a wallet to an observed balance. |
+| `FinanceService_GetFinanceSummary` | `finance_get_finance_summary` | Read balance, income, expense, net, and daily summaries. |
+| `InstanceService_GetInstanceStats` | `instance_get_instance_stats` | Read admin-only instance resource statistics. |
+| `UserService_GetUserStats` | `user_get_user_stats` | Read structured user memo, tag, and mood statistics. |
+| `UserService_GetUserSetting` | `user_get_user_setting` | Read the caller's `GENERAL`, `TAGS`, or `PERSONA` setting (uppercase key). |
+| `UserService_UpdateUserSetting` | `user_update_user_setting` | Update `GENERAL`, `TAGS`, or `PERSONA`; field masks use proto snake_case names. |
+| `AuthService_GetCurrentUser` | `auth_get_current_user` | Resolve the authenticated user. |
+
+The allowlist deliberately excludes sign-in/out and token refresh, user
+administration, webhooks (including the generic user-setting path), personal access tokens, linked identities and SSO,
+instance-setting mutation and email tests, public memo shares, and AI
+transcription. Tests assert both the required workflow entries and these
+negative security boundaries.
 
 **Naming rule** (`toolNameFromOperationID`): drop the `Service` suffix from the
 subject and convert both subject and method from camelCase to snake_case, joined

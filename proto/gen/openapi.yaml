@@ -5160,6 +5160,8 @@ components:
                     $ref: '#/components/schemas/UserSetting_WebhooksSetting'
                 tagsSetting:
                     $ref: '#/components/schemas/UserSetting_TagsSetting'
+                personaSetting:
+                    $ref: '#/components/schemas/UserSetting_PersonaSetting'
             description: User settings message
         UserSetting_GeneralSetting:
             type: object
@@ -5177,6 +5179,37 @@ components:
                          This references a CSS file in the web/public/themes/ directory.
                          If not set, the default theme will be used.
             description: General user settings configuration.
+        UserSetting_PersonaSetting:
+            type: object
+            properties:
+                headline:
+                    type: string
+                    description: A one-sentence self portrait.
+                preferredAddress:
+                    type: string
+                    description: How the user prefers to be addressed.
+                communicationStyle:
+                    type: string
+                    description: The user's preferred tone and communication style.
+                interestTags:
+                    type: array
+                    items:
+                        type: string
+                    description: Free-form interests represented as short tags.
+                routinePreferences:
+                    type: string
+                    description: Sleep, schedule, and habit preferences.
+                lifeStage:
+                    type: string
+                    description: The user's current life stage.
+                goals:
+                    type: array
+                    items:
+                        type: string
+                    description: Current career, education, finance, or other directions.
+            description: |-
+                Optional personal context owned by the user. The setting is private to
+                 the account and can be read or updated through the regular settings API.
         UserSetting_TagMetadata:
             type: object
             properties:
