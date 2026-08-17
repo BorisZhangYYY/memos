@@ -3,6 +3,7 @@ package mcp
 import (
 	"context"
 	"encoding/json"
+	"maps"
 	"net/http"
 
 	"github.com/labstack/echo/v5"
@@ -104,6 +105,14 @@ func newMCPToolHandler(adapter *apiAdapter, operation *registeredOperation) sdkm
 		authorization := ""
 		if request.Extra != nil {
 			authorization = request.Extra.Header.Get("Authorization")
+		}
+		if operation.ImplicitCurrentUser {
+			currentUserName, err := adapter.resolveCurrentUserName(ctx, authorization)
+			if err != nil {
+				return newToolErrorResult(errors.Wrap(err, "failed to resolve current user").Error()), nil
+			}
+			arguments = maps.Clone(arguments)
+			arguments["user"] = currentUserName
 		}
 		return adapter.execute(ctx, operation.Operation, arguments, authorization)
 	}

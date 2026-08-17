@@ -201,7 +201,7 @@ const MoodDashboard = ({ points, embedded = false, onMemoSelect }: Props) => {
             {t("mood.dashboard.empty-today")}
           </div>
         ) : (
-          <div className="mt-3 max-h-48 divide-y overflow-y-auto rounded-lg border bg-background/60">
+          <div className="mt-3 min-h-0 flex-1 divide-y overflow-y-auto rounded-lg border bg-background/60">
             {[...todayPoints].reverse().map((point, index) => (
               <div
                 key={`${point.createTime.toISOString()}-${index}`}

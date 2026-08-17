@@ -56,11 +56,15 @@ fast on any inconsistency:
 5. `validateToolArguments` (`validation.go`) checks them against the tool's
    input schema.
 6. The caller's `Authorization` header is read from the request (`request.Extra.Header` on the SDK's `*sdkmcp.CallToolRequest`).
-7. `apiAdapter.execute` (`adapter.go`) builds the API request
+7. For REST operations scoped by `/users/{user}`, the adapter calls
+   `/api/v1/auth/me` with the same Authorization header and injects the
+   authenticated user's resource name. MCP callers never pass a top-level
+   `user` argument.
+8. `apiAdapter.execute` (`adapter.go`) builds the API request
    (`buildAPIRequest`: path-parameter substitution, query encoding, JSON body),
    forwards the bearer token, and runs it against the Echo server through an
    `httptest.ResponseRecorder`.
-8. The recorder body is decoded; a non-2xx status becomes a tool error
+9. The recorder body is decoded; a non-2xx status becomes a tool error
    (`newToolErrorResult`), otherwise the value is wrapped by
    `newStructuredToolResult`.
 
@@ -84,7 +88,8 @@ use `$ref`. `openapi.go` resolves these into local definitions:
 `inputSchemaForOperation`:
 
 - Path and query parameters become top-level properties; any required
-  parameter stays in `required`.
+  parameter stays in `required`. The transport-only `/users/{user}` path
+  parameter is omitted because it is resolved from authentication at runtime.
 - A request body becomes a single `body` property; a required body adds `body`
   to `required`. Body `$defs` are lifted to the schema's top-level `$defs`.
 - Per-operation overrides relax resource-level requirements for create and
@@ -111,7 +116,8 @@ response has no JSON body, the fallback is:
 - **Auth:** the caller's `Authorization: Bearer <token>` header is forwarded to
   the in-process API request. Mutating tools therefore require a valid token
   (personal access token or access token); public reads may work without one,
-  exactly as the REST API allows.
+  exactly as the REST API allows. User-scoped tools derive their user path from
+  that authenticated identity and reject a caller-supplied top-level `user`.
 - **Origin safety:** `isAllowedMCPOrigin` allows a request when the `Origin`
   header is absent (desktop clients commonly omit it), when its host matches
   the request `Host` header (host comparison only — scheme is not checked), or

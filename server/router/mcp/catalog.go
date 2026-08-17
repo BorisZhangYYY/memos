@@ -73,6 +73,10 @@ type registeredOperation struct {
 	Path        string
 	Operation   *openAPIOperation
 	InputSchema jsonSchema
+	// ImplicitCurrentUser marks operations whose REST path is scoped by
+	// /users/{user}. MCP tools intentionally hide that transport-level path
+	// parameter and resolve it from the caller's Authorization header instead.
+	ImplicitCurrentUser bool
 }
 
 type requestBodySchemaOverride struct {
@@ -300,12 +304,13 @@ func buildToolFromOperation(operation *openAPIOperation) (*sdkmcp.Tool, *registe
 	}
 
 	return tool, &registeredOperation{
-		ToolName:    name,
-		OperationID: operation.OperationID,
-		Method:      operation.Method,
-		Path:        operation.Path,
-		Operation:   operation,
-		InputSchema: inputSchema,
+		ToolName:            name,
+		OperationID:         operation.OperationID,
+		Method:              operation.Method,
+		Path:                operation.Path,
+		Operation:           operation,
+		InputSchema:         inputSchema,
+		ImplicitCurrentUser: usesImplicitCurrentUser(operation),
 	}
 }
 
@@ -338,6 +343,9 @@ func inputSchemaForOperation(operation *openAPIOperation) jsonSchema {
 	required := []string{}
 	defs := map[string]any{}
 	for _, parameter := range operation.Parameters {
+		if parameter.Name == "user" && parameter.In == "path" && usesImplicitCurrentUser(operation) {
+			continue
+		}
 		schema := cloneSchema(parameter.Schema)
 		if parameter.Description != "" {
 			schema["description"] = parameter.Description
@@ -394,6 +402,22 @@ func inputSchemaForOperation(operation *openAPIOperation) jsonSchema {
 		schema["$defs"] = defs
 	}
 	return schema
+}
+
+// usesImplicitCurrentUser reports whether an operation is scoped by the
+// authenticated user. The REST API keeps an explicit /users/{user} path for
+// resource-oriented clients, while MCP presents a single-user tool contract
+// and fills that path segment from auth context at execution time.
+func usesImplicitCurrentUser(operation *openAPIOperation) bool {
+	if !strings.Contains(operation.Path, "/users/{user}") {
+		return false
+	}
+	for _, parameter := range operation.Parameters {
+		if parameter.Name == "user" && parameter.In == "path" {
+			return true
+		}
+	}
+	return false
 }
 
 func requestBodySchema(operation *openAPIOperation) jsonSchema {

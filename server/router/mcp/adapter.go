@@ -24,6 +24,41 @@ func newAPIAdapter(echoServer *echo.Echo) *apiAdapter {
 	return &apiAdapter{echoServer: echoServer}
 }
 
+// resolveCurrentUserName resolves the authenticated user's canonical resource
+// name through the same in-process API used by regular MCP tools. Keeping this
+// lookup behind /api/v1/auth/me means access tokens and PATs follow the API's
+// existing authentication rules without duplicating token parsing in MCP.
+func (a *apiAdapter) resolveCurrentUserName(ctx context.Context, authorization string) (string, error) {
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/me", nil).WithContext(ctx)
+	if authorization != "" {
+		req.Header.Set("Authorization", authorization)
+	}
+
+	recorder := httptest.NewRecorder()
+	a.echoServer.ServeHTTP(recorder, req)
+
+	value, err := decodeJSONValue(recorder.Body.Bytes())
+	if err != nil {
+		return "", err
+	}
+	if recorder.Code < http.StatusOK || recorder.Code >= http.StatusMultipleChoices {
+		return "", errors.New(apiErrorMessage(recorder.Code, value))
+	}
+	response, ok := value.(map[string]any)
+	if !ok {
+		return "", errors.New("current user response is not an object")
+	}
+	user, ok := response["user"].(map[string]any)
+	if !ok {
+		return "", errors.New("current user response has no user object")
+	}
+	name, ok := user["name"].(string)
+	if !ok || strings.TrimSpace(name) == "" {
+		return "", errors.New("current user response has no user name")
+	}
+	return name, nil
+}
+
 func (a *apiAdapter) execute(ctx context.Context, operation *openAPIOperation, arguments map[string]any, authorization string) (*sdkmcp.CallToolResult, error) {
 	req, err := buildAPIRequest(ctx, operation, arguments, authorization)
 	if err != nil {

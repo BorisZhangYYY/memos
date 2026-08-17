@@ -75,6 +75,25 @@ func TestCuratedOperationIDsIncludeRequiredPersonalWorkflows(t *testing.T) {
 	}
 }
 
+func TestUserScopedToolsOmitTransportUserArgument(t *testing.T) {
+	spec, err := loadOpenAPISpec("../../../proto/gen/openapi.yaml")
+	require.NoError(t, err)
+	registry, err := buildOperationRegistry(spec)
+	require.NoError(t, err)
+
+	for _, operationID := range curatedOperationIDs {
+		apiOperation := registry[operationID]
+		tool, operation := buildToolFromOperation(apiOperation)
+		properties := schemaProperties(tool.InputSchema.(jsonSchema)["properties"])
+		if usesImplicitCurrentUser(apiOperation) {
+			require.True(t, operation.ImplicitCurrentUser, operationID)
+			require.NotContains(t, properties, "user", operationID)
+		} else {
+			require.False(t, operation.ImplicitCurrentUser, operationID)
+		}
+	}
+}
+
 func TestCuratedOperationIDsKeepDangerousSurfaceClosed(t *testing.T) {
 	curated := make(map[string]bool, len(curatedOperationIDs))
 	for _, operationID := range curatedOperationIDs {
@@ -263,14 +282,12 @@ func TestNewWorkflowToolsExposeUsableInputSchemas(t *testing.T) {
 		{
 			operationID: "FinanceService_CreateFinanceCategory",
 			arguments: map[string]any{
-				"user": "users/boris",
 				"body": map[string]any{"displayName": "Food", "type": "EXPENSE"},
 			},
 		},
 		{
 			operationID: "FinanceService_AdjustFinanceWalletBalance",
 			arguments: map[string]any{
-				"user":   "users/boris",
 				"wallet": "users/boris/wallets/cash",
 				"body": map[string]any{
 					"actualBalanceMinor": "12345",
@@ -281,7 +298,6 @@ func TestNewWorkflowToolsExposeUsableInputSchemas(t *testing.T) {
 		{
 			operationID: "ReminderService_UpdateReminder",
 			arguments: map[string]any{
-				"user":       "users/boris",
 				"reminder":   "users/boris/reminders/task",
 				"updateMask": "title",
 				"body":       map[string]any{"title": "Updated"},
@@ -290,7 +306,6 @@ func TestNewWorkflowToolsExposeUsableInputSchemas(t *testing.T) {
 		{
 			operationID: "UserService_UpdateUserSetting",
 			arguments: map[string]any{
-				"user":       "users/boris",
 				"setting":    "PERSONA",
 				"updateMask": "headline,interest_tags",
 				"body": map[string]any{
@@ -323,7 +338,6 @@ func TestAgentFacingSchemasRejectUnknownAndReadOnlyFields(t *testing.T) {
 	walletInput := walletTool.InputSchema.(jsonSchema)
 	require.Contains(t, walletTool.Description, "initialBalanceMinor")
 	require.NoError(t, validateToolArguments(walletInput, map[string]any{
-		"user": "boris",
 		"body": map[string]any{
 			"displayName":          "Cash",
 			"initialBalanceMinor":  "10000",
@@ -331,7 +345,6 @@ func TestAgentFacingSchemasRejectUnknownAndReadOnlyFields(t *testing.T) {
 		},
 	}))
 	require.ErrorContains(t, validateToolArguments(walletInput, map[string]any{
-		"user": "boris",
 		"body": map[string]any{"displayName": "Cash", "balanceMinor": "10000"},
 	}), "unknown argument")
 
@@ -339,7 +352,6 @@ func TestAgentFacingSchemasRejectUnknownAndReadOnlyFields(t *testing.T) {
 	transactionInput := transactionTool.InputSchema.(jsonSchema)
 	require.Contains(t, transactionTool.Description, "body.occurTime is required")
 	require.ErrorContains(t, validateToolArguments(transactionInput, map[string]any{
-		"user": "boris",
 		"body": map[string]any{
 			"type":        "INCOME",
 			"amountMinor": "100",
@@ -351,7 +363,6 @@ func TestAgentFacingSchemasRejectUnknownAndReadOnlyFields(t *testing.T) {
 	reminderInput := reminderTool.InputSchema.(jsonSchema)
 	require.Contains(t, reminderTool.Description, "remindTime")
 	require.NoError(t, validateToolArguments(reminderInput, map[string]any{
-		"user": "boris",
 		"body": map[string]any{
 			"title":        "Review",
 			"reminderList": "users/boris/reminderLists/default",
@@ -359,7 +370,6 @@ func TestAgentFacingSchemasRejectUnknownAndReadOnlyFields(t *testing.T) {
 		},
 	}))
 	require.ErrorContains(t, validateToolArguments(reminderInput, map[string]any{
-		"user": "boris",
 		"body": map[string]any{
 			"title":        "Review",
 			"reminderList": "users/boris/reminderLists/default",
@@ -382,9 +392,9 @@ func TestUserSettingToolsExposeSafeDiscoverableKeys(t *testing.T) {
 	require.True(t, ok)
 	require.Equal(t, []string{"GENERAL", "TAGS", "PERSONA"}, settingSchema["enum"])
 	require.Contains(t, settingSchema["description"], "Uppercase")
-	require.NoError(t, validateToolArguments(getInput, map[string]any{"user": "boris", "setting": "PERSONA"}))
-	require.Error(t, validateToolArguments(getInput, map[string]any{"user": "boris", "setting": "persona"}))
-	require.Error(t, validateToolArguments(getInput, map[string]any{"user": "boris", "setting": "WEBHOOKS"}))
+	require.NoError(t, validateToolArguments(getInput, map[string]any{"setting": "PERSONA"}))
+	require.Error(t, validateToolArguments(getInput, map[string]any{"setting": "persona"}))
+	require.Error(t, validateToolArguments(getInput, map[string]any{"setting": "WEBHOOKS"}))
 
 	updateTool, _ := buildToolFromOperation(registry["UserService_UpdateUserSetting"])
 	updateInput := updateTool.InputSchema.(jsonSchema)
@@ -395,7 +405,6 @@ func TestUserSettingToolsExposeSafeDiscoverableKeys(t *testing.T) {
 	body := schemaProperties(updateProperties["body"])
 	require.NotContains(t, schemaProperties(body["properties"]), "webhooksSetting")
 	require.NoError(t, validateToolArguments(updateInput, map[string]any{
-		"user":       "boris",
 		"setting":    "PERSONA",
 		"updateMask": "headline,interest_tags",
 		"body": map[string]any{
@@ -403,7 +412,6 @@ func TestUserSettingToolsExposeSafeDiscoverableKeys(t *testing.T) {
 		},
 	}))
 	require.ErrorContains(t, validateToolArguments(updateInput, map[string]any{
-		"user":       "boris",
 		"setting":    "PERSONA",
 		"updateMask": "headline",
 		"body": map[string]any{
@@ -434,12 +442,11 @@ func TestNewWorkflowToolsRejectIncompleteMutations(t *testing.T) {
 	}{
 		{
 			operationID: "FinanceService_GetFinanceSummary",
-			arguments:   map[string]any{"user": "users/boris"},
+			arguments:   map[string]any{},
 		},
 		{
 			operationID: "ReminderService_UpdateReminder",
 			arguments: map[string]any{
-				"user":     "users/boris",
 				"reminder": "users/boris/reminders/task",
 				"body":     map[string]any{"title": "Updated"},
 			},
@@ -447,7 +454,6 @@ func TestNewWorkflowToolsRejectIncompleteMutations(t *testing.T) {
 		{
 			operationID: "UserService_UpdateUserSetting",
 			arguments: map[string]any{
-				"user":    "users/boris",
 				"setting": "users/boris/settings/PERSONA",
 				"body":    map[string]any{},
 			},
@@ -557,7 +563,7 @@ func TestBuildToolFromOperationExposesCurrentUser(t *testing.T) {
 	require.True(t, tool.Annotations.ReadOnlyHint)
 }
 
-func TestBuildToolFromOperationExposesListShortcuts(t *testing.T) {
+func TestBuildToolFromOperationInfersCurrentUserForListShortcuts(t *testing.T) {
 	spec, err := loadOpenAPISpec("../../../proto/gen/openapi.yaml")
 	require.NoError(t, err)
 	registry, err := buildOperationRegistry(spec)
@@ -572,7 +578,9 @@ func TestBuildToolFromOperationExposesListShortcuts(t *testing.T) {
 	require.True(t, ok)
 	properties, ok := input["properties"].(map[string]any)
 	require.True(t, ok)
-	require.Contains(t, properties, "user")
+	require.NotContains(t, properties, "user")
+	require.True(t, operation.ImplicitCurrentUser)
+	require.ErrorContains(t, validateToolArguments(input, map[string]any{"user": "users/boris"}), `unknown argument "user"`)
 }
 
 func TestBuildToolFromOperationMarksSetOperationsIdempotent(t *testing.T) {

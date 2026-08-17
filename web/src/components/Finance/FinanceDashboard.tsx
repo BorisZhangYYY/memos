@@ -260,7 +260,7 @@ const FinanceDashboard = ({ parent, onAdd, embedded = false }: Props) => {
                 {t("finance.dashboard.empty-today")}
               </div>
             ) : (
-              <div className="mt-3 max-h-48 space-y-2 overflow-y-auto pr-1">
+              <div className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
                 {todayTransactions.map((transaction) => {
                   const presentation = transactionPresentation(transaction);
                   const categoryName = categoryNames.get(transaction.category);

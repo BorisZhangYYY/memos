@@ -110,6 +110,54 @@ func TestMCPToolHandlerForwardsArgumentsAndAuthorization(t *testing.T) {
 	}, result.StructuredContent)
 }
 
+func TestMCPToolHandlerInjectsCurrentUserFromAuthorization(t *testing.T) {
+	echoServer := echo.New()
+	authHits := 0
+	echoServer.GET("/api/v1/auth/me", func(c *echo.Context) error {
+		authHits++
+		require.Equal(t, "Bearer token", c.Request().Header.Get("Authorization"))
+		return c.JSON(http.StatusOK, map[string]any{
+			"user": map[string]any{"name": "users/boris"},
+		})
+	})
+	echoServer.GET("/api/v1/users/:user/wallets", func(c *echo.Context) error {
+		require.Equal(t, "boris", c.Param("user"))
+		require.Equal(t, "Bearer token", c.Request().Header.Get("Authorization"))
+		return c.JSON(http.StatusOK, map[string]any{
+			"financeWallets": []any{map[string]any{"name": "users/boris/wallets/cash"}},
+		})
+	})
+
+	apiOperation := &openAPIOperation{
+		Method: "GET",
+		Path:   "/api/v1/users/{user}/wallets",
+		Parameters: []openAPIParameter{
+			{Name: "user", In: "path", Required: true, Schema: jsonSchema{"type": "string"}},
+		},
+	}
+	handler := newMCPToolHandler(newAPIAdapter(echoServer), &registeredOperation{
+		Operation:           apiOperation,
+		InputSchema:         jsonSchema{"type": "object", "properties": map[string]any{}, "additionalProperties": false},
+		ImplicitCurrentUser: true,
+	})
+
+	result, err := handler(context.Background(), &sdkmcp.CallToolRequest{
+		Params: &sdkmcp.CallToolParamsRaw{
+			Name:      "finance_list_finance_wallets",
+			Arguments: json.RawMessage(`{}`),
+		},
+		Extra: &sdkmcp.RequestExtra{
+			Header: http.Header{"Authorization": []string{"Bearer token"}},
+		},
+	})
+	require.NoError(t, err)
+	require.False(t, result.IsError)
+	require.Equal(t, 1, authHits)
+	require.Equal(t, map[string]any{
+		"financeWallets": []any{map[string]any{"name": "users/boris/wallets/cash"}},
+	}, result.StructuredContent)
+}
+
 func TestMCPProtocolListsCuratedToolsOnly(t *testing.T) {
 	echoServer := echo.New()
 

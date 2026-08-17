@@ -2,6 +2,8 @@ import { AlertTriangleIcon, KeyRoundIcon, PenLineIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import EditPersonaDialog from "@/components/EditPersonaDialog";
+import PersonaCard from "@/components/PersonaCard";
 import { Button } from "@/components/ui/button";
 import { userServiceClient } from "@/connect";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,11 +23,36 @@ import SettingSection from "./SettingSection";
 const MyAccountSection = () => {
   const t = useTranslate();
   const user = useCurrentUser();
-  const { logout } = useAuth();
+  const { logout, userPersonaSetting } = useAuth();
   const navigateTo = useNavigateTo();
   const accountDialog = useDialog();
   const passwordDialog = useDialog();
+  const personaDialog = useDialog();
   const [deleteOpen, setDeleteOpen] = useState(false);
+
+  const handleExportPersona = () => {
+    if (!user || !userPersonaSetting) return;
+    const payload = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      user: user.name,
+      persona: {
+        headline: userPersonaSetting.headline,
+        preferredAddress: userPersonaSetting.preferredAddress,
+        communicationStyle: userPersonaSetting.communicationStyle,
+        interestTags: userPersonaSetting.interestTags,
+        routinePreferences: userPersonaSetting.routinePreferences,
+        lifeStage: userPersonaSetting.lifeStage,
+        goals: userPersonaSetting.goals,
+      },
+    };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }));
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `${user.username}-persona.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
 
   const handleDeleteAccount = async () => {
     if (!user?.name) {
@@ -52,7 +79,7 @@ const MyAccountSection = () => {
               <span className="text-lg font-semibold">{user?.displayName}</span>
               <span className="ml-2 text-sm text-muted-foreground">@{user?.username}</span>
             </div>
-            {user?.description && <p className="w-full text-sm text-muted-foreground truncate">{user?.description}</p>}
+            {user?.description && <p className="w-full whitespace-pre-wrap text-sm text-muted-foreground">{user.description}</p>}
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <Button variant="outline" size="sm" onClick={accountDialog.open}>
@@ -65,6 +92,10 @@ const MyAccountSection = () => {
             </Button>
           </div>
         </div>
+      </SettingGroup>
+
+      <SettingGroup showSeparator>
+        <PersonaCard persona={userPersonaSetting} onEdit={personaDialog.open} onExport={handleExportPersona} />
       </SettingGroup>
 
       <LinkedIdentitySection />
@@ -90,6 +121,8 @@ const MyAccountSection = () => {
 
       {/* Update Account Dialog */}
       <UpdateAccountDialog open={accountDialog.isOpen} onOpenChange={accountDialog.setOpen} />
+
+      <EditPersonaDialog open={personaDialog.isOpen} onOpenChange={personaDialog.setOpen} persona={userPersonaSetting} />
 
       {/* Change Password Dialog */}
       <ChangeMemberPasswordDialog open={passwordDialog.isOpen} onOpenChange={passwordDialog.setOpen} user={user} />

@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.33.2](https://github.com/BorisZhangYYY/memos/compare/v0.33.1...v0.33.2) (2026-08-17)
+
+### Summary
+
+This patch release makes user-scoped MCP tools safer and easier to call,
+restores persona management in My Account, and lets personal dashboards expand
+to show longer mood and finance lists without squeezing the content area.
+
+### Bug Fixes
+
+* **Authenticated MCP user scope:** derives `/users/{user}` paths from the
+  caller's authenticated identity instead of exposing a caller-supplied `user`
+  argument, preventing accidental cross-user tool requests while keeping access
+  tokens and personal access tokens on the existing API authorization path.
+* **Persona account controls:** restores the private persona card, editor, and
+  JSON export in My Account, and displays multi-line account descriptions
+  without truncation.
+
+### Interface Changes
+
+* **Expandable personal dashboards:** adds a remembered expand/collapse control
+  to the Mood, Finance, and Reminder widget and lets Mood and Finance lists use
+  the available expanded height with independent vertical scrolling.
+
 ## [0.33.1](https://github.com/BorisZhangYYY/memos/compare/v0.33.0...v0.33.1) (2026-08-14)
 
 ### Summary
