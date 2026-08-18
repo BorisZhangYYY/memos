@@ -211,6 +211,19 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
   const returnLocation = `${location.pathname}${location.search}${location.hash}`;
 
   const { data: lists = [] } = useReminderLists(parent);
+  const autoSelectedDefaultListRef = useRef(false);
+  // 点开提醒面板后默认选中默认的提醒事项列表（即“Reminders”默认列表），
+  // 这样无需用户手动先点一下列表即可直接新建提醒。
+  const primaryListName = useMemo(
+    () => lists.find((list) => list.name.endsWith("/reminderLists/default"))?.name ?? lists[0]?.name ?? "",
+    [lists],
+  );
+  useEffect(() => {
+    if (autoSelectedDefaultListRef.current) return;
+    if (!primaryListName || activeList) return;
+    autoSelectedDefaultListRef.current = true;
+    setActiveList(primaryListName);
+  }, [primaryListName, activeList]);
   const { data: allReminders = [] } = useReminders(parent, { view: ListRemindersRequest_View.ALL, timeZone });
   const selectedView = activeList ? ListRemindersRequest_View.ALL : VIEW_BY_ID[activeView];
   const selectedState = activeView === "archived" ? State.ARCHIVED : State.NORMAL;
@@ -244,6 +257,9 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
   }, [draftVisible]);
 
   const selectView = (view: SmartView) => {
+    // 用户手动选择智能视图时，标记已主动操作，避免列表加载完成后
+    // 自动选中默认列表的逻辑覆盖用户此刻的选择。
+    autoSelectedDefaultListRef.current = true;
     setActiveView(view);
     setActiveList("");
     setDraftVisible(false);
@@ -270,7 +286,9 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
     const dueDate = draftDueDate || (activeView === "today" || activeView === "scheduled" ? today : "");
     const flagged = draftFlagged || activeView === "flagged";
     resetDraft();
-    if (!title || !parent || !reminderList) {
+    // 只校验标题和用户；即使默认列表尚未加载完成，也交由后端兜底
+    // 自动使用默认提醒列表（后端 resolveReminderListID 在空列表名下会 ensure 默认列表）。
+    if (!title || !parent) {
       return;
     }
     draftCommitInProgressRef.current = true;
