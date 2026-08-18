@@ -15,6 +15,7 @@ var curatedOperationIDs = []string{
 	"MemoService_CreateMemo",
 	"MemoService_GetMemo",
 	"MemoService_UpdateMemo",
+	"MemoService_SetMemoMood",
 	"MemoService_DeleteMemo",
 	"MemoService_ListMemoComments",
 	"MemoService_CreateMemoComment",
@@ -54,10 +55,11 @@ var curatedOperationIDs = []string{
 	"FinanceService_DeleteFinanceTransaction",
 	"FinanceService_AdjustFinanceWalletBalance",
 	"FinanceService_GetFinanceSummary",
-	// Read-only structured statistics and private user-setting access. API
-	// authorization still keeps settings owner-only and applies memo visibility
-	// rules to user statistics.
+	// Structured statistics, narrowly scoped memo mood presentation, and private
+	// user-setting access. The mood update is admin-only at the API layer.
 	"InstanceService_GetInstanceStats",
+	"InstanceService_GetMemoMoodDisplay",
+	"InstanceService_UpdateMemoMoodDisplay",
 	"UserService_GetUserStats",
 	"UserService_GetUserSetting",
 	"UserService_UpdateUserSetting",
@@ -111,6 +113,10 @@ var requestBodySchemaOverrides = map[string]requestBodySchemaOverride{
 		clearRequired:     true,
 		omittedProperties: []string{"name"},
 		minProperties:     1,
+	},
+	"MemoService_SetMemoMood": {
+		required:          []string{"moodLevel"},
+		omittedProperties: []string{"name"},
 	},
 	"MemoService_CreateMemoComment": {
 		required: []string{"content"},
@@ -186,6 +192,9 @@ var requestBodySchemaOverrides = map[string]requestBodySchemaOverride{
 	"FinanceService_GetFinanceSummary": {
 		requiredArguments: []string{"startTime", "endTime", "timeZone"},
 	},
+	"InstanceService_UpdateMemoMoodDisplay": {
+		required: []string{"updates"},
+	},
 	"UserService_UpdateUserSetting": {
 		clearRequired:     true,
 		omittedProperties: []string{"name", "webhooksSetting"},
@@ -195,6 +204,31 @@ var requestBodySchemaOverrides = map[string]requestBodySchemaOverride{
 }
 
 var argumentSchemaOverrides = map[string]map[string]argumentSchemaOverride{
+	"FinanceService_UpdateFinanceWallet": {
+		"updateMask": {
+			description: "Comma-separated proto field names in snake_case. Allowed fields are display_name, allow_negative_balance, and state.",
+		},
+	},
+	"FinanceService_UpdateFinanceCategory": {
+		"updateMask": {
+			description: "Comma-separated proto field names in snake_case. Allowed fields are display_name, emoji, and state; use emoji to change the category icon. The category type is immutable.",
+		},
+	},
+	"FinanceService_UpdateFinanceTransaction": {
+		"updateMask": {
+			description: "Comma-separated proto field names in snake_case identifying the transaction fields to correct. Updating a transaction rebuilds affected wallet balance snapshots.",
+		},
+	},
+	"ReminderService_UpdateReminderList": {
+		"updateMask": {
+			description: "Comma-separated proto field names in snake_case. Allowed fields include display_name, color, icon, sort_order, and state.",
+		},
+	},
+	"ReminderService_UpdateReminder": {
+		"updateMask": {
+			description: "Comma-separated proto field names in snake_case identifying reminder fields to update, such as title, due_date, remind_time, priority, tags, location, or state.",
+		},
+	},
 	"UserService_GetUserSetting": {
 		"setting": {
 			description: "Uppercase setting key. Allowed values are GENERAL, TAGS, and PERSONA; webhook settings are intentionally unavailable to agents.",
@@ -213,13 +247,26 @@ var argumentSchemaOverrides = map[string]map[string]argumentSchemaOverride{
 }
 
 var operationDescriptionOverrides = map[string]string{
+	"MemoService_CreateMemo":                  "Create a memo. Set body.content, optional body.visibility, and optional body.moodLevel from 1 through 7; moodLevel records this memo's mood and does not configure the level's display emoji or color.",
+	"MemoService_UpdateMemo":                  "Update general fields on one existing memo, such as body.content, body.visibility, or body.pinned. For a mood-only change, prefer memo_set_memo_mood; use instance_update_memo_mood_display only for the instance-wide display emoji or color.",
+	"MemoService_SetMemoMood":                 "Set the mood recorded on one existing memo. Use body.moodLevel from 1 through 7, or 0 to clear the memo's mood. This changes only that memo; it does not change the instance-wide display emoji or color.",
 	"MemoService_SetMemoAttachments":          "Replace the memo's complete attachment set. Existing attachments omitted from body.attachments are permanently deleted, not merely unlinked.",
 	"ReminderService_CreateReminder":          "Create a reminder. Use body.remindTime for an exact notification timestamp or body.dueDate for a date-only reminder; there is no details field.",
 	"FinanceService_CreateFinanceWallet":      "Create a private wallet. Set its opening balance with body.initialBalanceMinor; the current balance is output-only.",
 	"FinanceService_CreateFinanceTransaction": "Record an income, expense, or transfer. body.occurTime is required and must be an RFC 3339 timestamp.",
+	"FinanceService_UpdateFinanceCategory":    "Update an income or expense category's display name, emoji, or archive state. Use body.emoji with updateMask=\"emoji\" to change the icon shown for the category; its type is immutable.",
 	"FinanceService_UpdateFinanceTransaction": "Correct a ledger transaction and rebuild affected running-balance snapshots in chronological order.",
+	"InstanceService_GetMemoMoodDisplay":      "Read the effective instance-wide emoji and #RRGGBB color for all seven memo mood levels. This is display configuration; it does not read or change the moodLevel recorded on any individual memo.",
+	"InstanceService_UpdateMemoMoodDisplay":   "Administrator-only display configuration. Partially update instance-wide emoji and/or color for selected memo mood levels with body.updates; omitted levels and fields stay unchanged, and an empty emoji or color restores that level's default. Never use this to set the mood recorded on one memo; use memo_set_memo_mood for that.",
 	"UserService_GetUserSetting":              "Read the current user's GENERAL, TAGS, or PERSONA setting. The setting key must be uppercase.",
 	"UserService_UpdateUserSetting":           "Update the current user's GENERAL, TAGS, or PERSONA setting. The setting key must be uppercase and updateMask uses proto snake_case field names.",
+}
+
+type requestBodySchemaRefinement func(jsonSchema)
+
+var requestBodySchemaRefinements = map[string]requestBodySchemaRefinement{
+	"MemoService_SetMemoMood":               refineSetMemoMoodInputSchema,
+	"InstanceService_UpdateMemoMoodDisplay": refineMemoMoodDisplayInputSchema,
 }
 
 var wordBoundary = regexp.MustCompile(`([a-z0-9])([A-Z])`)
@@ -236,6 +283,7 @@ func validateOperationOverrides(registry map[string]*openAPIOperation) error {
 		{"requestBodySchemaOverrides", mapKeys(requestBodySchemaOverrides)},
 		{"argumentSchemaOverrides", mapKeys(argumentSchemaOverrides)},
 		{"operationDescriptionOverrides", mapKeys(operationDescriptionOverrides)},
+		{"requestBodySchemaRefinements", mapKeys(requestBodySchemaRefinements)},
 		{"idempotentOperationIDs", mapKeys(idempotentOperationIDs)},
 		{"destructiveOperationIDs", mapKeys(destructiveOperationIDs)},
 	}
@@ -425,40 +473,103 @@ func requestBodySchema(operation *openAPIOperation) jsonSchema {
 		return jsonSchema{"type": "object"}
 	}
 	schema := normalizeInputSchema(operation.RequestBodySchema)
-	override, ok := requestBodySchemaOverrides[operation.OperationID]
-	if !ok {
-		return schema
-	}
-
-	if override.clearRequired {
-		delete(schema, "required")
-	} else if len(override.required) > 0 {
-		schema["required"] = override.required
-	}
-
-	if len(override.omittedProperties) > 0 {
-		properties := maps.Clone(schemaProperties(schema["properties"]))
-		for _, name := range override.omittedProperties {
-			delete(properties, name)
+	if override, ok := requestBodySchemaOverrides[operation.OperationID]; ok {
+		if override.clearRequired {
+			delete(schema, "required")
+		} else if len(override.required) > 0 {
+			schema["required"] = override.required
 		}
-		schema["properties"] = properties
-		required := []string{}
-		for _, name := range requiredNames(schema["required"]) {
-			if _, ok := properties[name]; ok {
-				required = append(required, name)
+
+		if len(override.omittedProperties) > 0 {
+			properties := maps.Clone(schemaProperties(schema["properties"]))
+			for _, name := range override.omittedProperties {
+				delete(properties, name)
+			}
+			schema["properties"] = properties
+			required := []string{}
+			for _, name := range requiredNames(schema["required"]) {
+				if _, ok := properties[name]; ok {
+					required = append(required, name)
+				}
+			}
+			if len(required) == 0 {
+				delete(schema, "required")
+			} else {
+				schema["required"] = required
 			}
 		}
-		if len(required) == 0 {
-			delete(schema, "required")
-		} else {
-			schema["required"] = required
+
+		if override.minProperties > 0 {
+			schema["minProperties"] = override.minProperties
 		}
 	}
 
-	if override.minProperties > 0 {
-		schema["minProperties"] = override.minProperties
+	if refine := requestBodySchemaRefinements[operation.OperationID]; refine != nil {
+		refine(schema)
 	}
 	return schema
+}
+
+func refineMemoMoodDisplayInputSchema(schema jsonSchema) {
+	properties := maps.Clone(schemaProperties(schema["properties"]))
+	updates, ok := asSchemaMap(properties["updates"])
+	if !ok {
+		return
+	}
+	updates = maps.Clone(updates)
+	updates["minItems"] = 1
+	updates["maxItems"] = 7
+	properties["updates"] = jsonSchema(updates)
+	schema["properties"] = properties
+
+	items, ok := asSchemaMap(updates["items"])
+	if !ok {
+		return
+	}
+	ref, ok := items["$ref"].(string)
+	if !ok {
+		return
+	}
+	definitionName := strings.TrimPrefix(ref, "#/$defs/")
+	defs := maps.Clone(schemaProperties(schema["$defs"]))
+	levelUpdate, ok := asSchemaMap(defs[definitionName])
+	if !ok {
+		return
+	}
+	levelUpdate = maps.Clone(levelUpdate)
+	levelProperties := maps.Clone(schemaProperties(levelUpdate["properties"]))
+	if level, ok := asSchemaMap(levelProperties["level"]); ok {
+		level = maps.Clone(level)
+		level["minimum"] = 1
+		level["maximum"] = 7
+		levelProperties["level"] = jsonSchema(level)
+	}
+	if emoji, ok := asSchemaMap(levelProperties["emoji"]); ok {
+		emoji = maps.Clone(emoji)
+		emoji["maxLength"] = 16
+		levelProperties["emoji"] = jsonSchema(emoji)
+	}
+	if color, ok := asSchemaMap(levelProperties["color"]); ok {
+		color = maps.Clone(color)
+		color["pattern"] = `^#[0-9A-Fa-f]{6}$|^$`
+		levelProperties["color"] = jsonSchema(color)
+	}
+	levelUpdate["properties"] = levelProperties
+	defs[definitionName] = jsonSchema(levelUpdate)
+	schema["$defs"] = defs
+}
+
+func refineSetMemoMoodInputSchema(schema jsonSchema) {
+	properties := maps.Clone(schemaProperties(schema["properties"]))
+	moodLevel, ok := asSchemaMap(properties["moodLevel"])
+	if !ok {
+		return
+	}
+	moodLevel = maps.Clone(moodLevel)
+	moodLevel["minimum"] = 0
+	moodLevel["maximum"] = 7
+	properties["moodLevel"] = jsonSchema(moodLevel)
+	schema["properties"] = properties
 }
 
 func normalizeInputSchema(schema jsonSchema) jsonSchema {
@@ -507,8 +618,11 @@ func normalizeInputSchemaMap(schema map[string]any) jsonSchema {
 
 	normalizedProperties := map[string]any{}
 	for name, propertyValue := range schemaProperties(properties) {
-		if property, ok := asSchemaMap(propertyValue); ok && property["readOnly"] == true {
-			continue
+		if property, ok := asSchemaMap(propertyValue); ok {
+			readOnly, isBool := property["readOnly"].(bool)
+			if isBool && readOnly {
+				continue
+			}
 		}
 		normalizedProperties[name] = normalizeInputSchemaValue(propertyValue)
 	}
@@ -559,14 +673,17 @@ func extractSchemaDefs(schema jsonSchema) map[string]any {
 // idempotent — even though they are served over PATCH (which the heuristic
 // treats as non-idempotent).
 var idempotentOperationIDs = map[string]bool{
-	"MemoService_SetMemoAttachments": true,
-	"MemoService_SetMemoRelations":   true,
+	"MemoService_SetMemoAttachments":        true,
+	"MemoService_SetMemoRelations":          true,
+	"MemoService_SetMemoMood":               true,
+	"InstanceService_UpdateMemoMoodDisplay": true,
 }
 
 // destructiveOperationIDs lists mutating operations that can overwrite or
 // remove existing user data despite not using DELETE.
 var destructiveOperationIDs = map[string]bool{
 	"MemoService_UpdateMemo":                    true,
+	"MemoService_SetMemoMood":                   true,
 	"MemoService_SetMemoAttachments":            true,
 	"MemoService_SetMemoRelations":              true,
 	"ReminderService_UpdateReminderList":        true,
@@ -576,6 +693,7 @@ var destructiveOperationIDs = map[string]bool{
 	"FinanceService_UpdateFinanceCategory":      true,
 	"FinanceService_UpdateFinanceTransaction":   true,
 	"FinanceService_AdjustFinanceWalletBalance": true,
+	"InstanceService_UpdateMemoMoodDisplay":     true,
 	"UserService_UpdateUserSetting":             true,
 }
 

@@ -180,8 +180,8 @@ func (a Adapter) UpdateWallet(ctx context.Context, update *store.UpdateFinanceWa
 func (a Adapter) CreateCategory(ctx context.Context, create *store.FinanceCategory) (*store.FinanceCategory, error) {
 	nowSec := time.Now().Unix()
 	id, err := a.insertID(ctx, a.DB, `
-		INSERT INTO finance_category (uid, creator_id, created_ts, updated_ts, row_status, name, type)
-		VALUES (?, ?, ?, ?, ?, ?, ?)`, create.UID, create.CreatorID, nowSec, nowSec, store.Normal, create.Name, create.Type)
+		INSERT INTO finance_category (uid, creator_id, created_ts, updated_ts, row_status, name, type, emoji)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, create.UID, create.CreatorID, nowSec, nowSec, store.Normal, create.Name, create.Type, create.Emoji)
 	if err != nil {
 		return nil, err
 	}
@@ -206,7 +206,7 @@ func (a Adapter) ListCategories(ctx context.Context, find *store.FindFinanceCate
 		where, args = append(where, "type = ?"), append(args, *find.Type)
 	}
 	rows, err := a.DB.QueryContext(ctx, a.bind(`
-		SELECT id, uid, creator_id, created_ts, updated_ts, row_status, name, type
+		SELECT id, uid, creator_id, created_ts, updated_ts, row_status, name, type, emoji
 		FROM finance_category WHERE `+strings.Join(where, " AND ")+`
 		ORDER BY row_status ASC, type ASC, id ASC`), args...)
 	if err != nil {
@@ -237,6 +237,9 @@ func (a Adapter) UpdateCategory(ctx context.Context, update *store.UpdateFinance
 	}
 	if update.RowStatus != nil {
 		set, args = append(set, "row_status = ?"), append(args, *update.RowStatus)
+	}
+	if update.Emoji != nil {
+		set, args = append(set, "emoji = ?"), append(args, *update.Emoji)
 	}
 	if len(set) > 0 {
 		args = append(args, update.ID, update.CreatorID)
@@ -417,7 +420,7 @@ func scanWallet(row scanner, wallet *store.FinanceWallet) error {
 
 func scanCategory(row scanner, category *store.FinanceCategory) error {
 	return row.Scan(&category.ID, &category.UID, &category.CreatorID, &category.CreatedTs, &category.UpdatedTs,
-		&category.RowStatus, &category.Name, &category.Type)
+		&category.RowStatus, &category.Name, &category.Type, &category.Emoji)
 }
 
 func scanTransaction(row scanner, transaction *store.FinanceTransaction) error {
@@ -457,7 +460,7 @@ func (a Adapter) getWallet(ctx context.Context, runner sqlRunner, id, creatorID 
 func (a Adapter) getCategory(ctx context.Context, runner sqlRunner, id, creatorID int32) (*store.FinanceCategory, error) {
 	category := &store.FinanceCategory{}
 	err := scanCategory(runner.QueryRowContext(ctx, a.bind(`
-		SELECT id, uid, creator_id, created_ts, updated_ts, row_status, name, type
+		SELECT id, uid, creator_id, created_ts, updated_ts, row_status, name, type, emoji
 		FROM finance_category WHERE id = ? AND creator_id = ?`), id, creatorID), category)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, store.ErrFinanceCategoryNotFound
@@ -577,17 +580,16 @@ func (a Adapter) rebuildLedger(
 	if err != nil {
 		return err
 	}
+	defer rows.Close()
 	transactions := []*store.FinanceTransaction{}
 	for rows.Next() {
 		transaction := &store.FinanceTransaction{}
 		if err := scanTransaction(rows, transaction); err != nil {
-			rows.Close()
 			return err
 		}
 		transactions = append(transactions, transaction)
 	}
 	if err := rows.Err(); err != nil {
-		rows.Close()
 		return err
 	}
 	if err := rows.Close(); err != nil {

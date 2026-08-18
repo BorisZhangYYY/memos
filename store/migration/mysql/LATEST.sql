@@ -151,6 +151,7 @@ CREATE TABLE `finance_category` (
   `row_status` VARCHAR(256) NOT NULL DEFAULT 'NORMAL',
   `name` VARCHAR(256) NOT NULL,
   `type` VARCHAR(32) NOT NULL,
+  `emoji` VARCHAR(64) CHARACTER SET utf8mb4 NOT NULL DEFAULT '',
   UNIQUE (`creator_id`, `type`, `name`)
 );
 

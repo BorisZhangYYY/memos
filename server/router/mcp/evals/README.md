@@ -11,6 +11,13 @@ leaves the unit tests green but makes question 3/5/9 unanswerable.
 mcp-builder skill. Each question is independent, read-only, requires multiple
 tool calls, and has a single string-comparable answer.
 
+`tool_selection_eval.xml` is a smaller definition-level suite. It asks the
+model to return the exact tool name(s), without calling anything, for similar
+configuration and content-editing requests. It specifically guards the
+difference between a memo's `moodLevel`, the seven-level Emoji/color display
+configuration, memo reactions, and finance category Emoji. Its answers do not
+depend on seeded data.
+
 ## Why a fresh seeded instance (not the public demo)
 
 Answers are pinned to the deterministic seed in
@@ -45,6 +52,13 @@ content, all of which are stable across re-seeds.
 
 3. Point an MCP client / eval harness at that endpoint and have the model answer
    each `<question>`, then string-compare against each `<answer>`.
+
+   For `tool_selection_eval.xml`, expose the same MCP tool definitions but
+   instruct the model not to execute tools. Exact-match the comma-separated
+   tool names in the answer. Some clients namespace names at presentation time;
+   for example Claude Code returns `mcp__memos__memo_set_memo_mood`. Strip the
+   client-added `mcp__<server>__` prefix before comparing with the server's
+   declared tool name.
 
    Quick manual check of a single tool call:
 

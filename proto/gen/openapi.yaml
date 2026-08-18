@@ -459,6 +459,56 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/v1/instance/memo-mood-display:
+        get:
+            tags:
+                - InstanceService
+            description: |-
+                Gets the effective instance-wide display configuration for memo mood levels
+                 1-7, including each level's emoji and hexadecimal color. This only controls
+                 presentation; the mood_level recorded on individual memos is unchanged.
+            operationId: InstanceService_GetMemoMoodDisplay
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/MemoMoodDisplay'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        patch:
+            tags:
+                - InstanceService
+            description: |-
+                Updates the display emoji and/or color for selected memo mood levels.
+                 Omitted levels and omitted fields remain unchanged. This only controls
+                 presentation; use MemoService_UpdateMemo to change a memo's mood_level.
+                 Administrator permission is required.
+            operationId: InstanceService_UpdateMemoMoodDisplay
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/UpdateMemoMoodDisplayRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/MemoMoodDisplay'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/v1/instance/profile:
         get:
             tags:
@@ -696,7 +746,8 @@ paths:
                 - MemoService
             description: |-
                 CreateMemo creates a memo. The request body is a Memo; set its content
-                 (Markdown) and visibility (PRIVATE | PROTECTED | PUBLIC, default PRIVATE).
+                 (Markdown), visibility (PRIVATE | PROTECTED | PUBLIC, default PRIVATE),
+                 and optional mood_level from 1 through 7.
                  The memo is owned by the authenticated user; requires authentication.
             operationId: MemoService_CreateMemo
             parameters:
@@ -833,7 +884,11 @@ paths:
         patch:
             tags:
                 - MemoService
-            description: UpdateMemo updates a memo.
+            description: |-
+                UpdateMemo changes fields on one existing memo, including content,
+                 visibility, pinned, and mood_level. Use mood_level from 1 through 7 to
+                 change the mood recorded on this memo; this does not change the emoji or
+                 color used to display that level instance-wide.
             operationId: MemoService_UpdateMemo
             parameters:
                 - name: memo
@@ -999,6 +1054,41 @@ paths:
                     application/json:
                         schema:
                             $ref: '#/components/schemas/Memo'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Memo'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/memos/{memo}/mood:
+        patch:
+            tags:
+                - MemoService
+            description: |-
+                SetMemoMood sets the mood recorded on one existing memo. Use mood_level
+                 1-7 to select a mood or 0 to clear it. This does not change the
+                 instance-wide emoji or color used to display that level.
+            operationId: MemoService_SetMemoMood
+            parameters:
+                - name: memo
+                  in: path
+                  description: The memo id.
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/SetMemoMoodRequest'
                 required: true
             responses:
                 "200":
@@ -1499,6 +1589,7 @@ paths:
         get:
             tags:
                 - FinanceService
+            description: Lists the authenticated user's income and expense categories, including their display emojis.
             operationId: FinanceService_ListFinanceCategories
             parameters:
                 - name: user
@@ -1541,6 +1632,7 @@ paths:
         post:
             tags:
                 - FinanceService
+            description: Creates an income or expense category with an optional display emoji.
             operationId: FinanceService_CreateFinanceCategory
             parameters:
                 - name: user
@@ -1576,6 +1668,7 @@ paths:
         get:
             tags:
                 - FinanceService
+            description: Returns balance, income, expense, net, and daily summaries for a required time range and time zone.
             operationId: FinanceService_GetFinanceSummary
             parameters:
                 - name: user
@@ -1616,6 +1709,7 @@ paths:
         get:
             tags:
                 - FinanceService
+            description: Lists private ledger transactions, optionally filtered by wallet and time range.
             operationId: FinanceService_ListFinanceTransactions
             parameters:
                 - name: user
@@ -1674,6 +1768,7 @@ paths:
         post:
             tags:
                 - FinanceService
+            description: Records income, expense, or a wallet transfer. occur_time is required.
             operationId: FinanceService_CreateFinanceTransaction
             parameters:
                 - name: user
@@ -1709,6 +1804,7 @@ paths:
         patch:
             tags:
                 - FinanceService
+            description: Updates a finance category's display name, emoji, or archive state. The category type is immutable.
             operationId: FinanceService_UpdateFinanceCategory
             parameters:
                 - name: user
@@ -1751,6 +1847,7 @@ paths:
         delete:
             tags:
                 - FinanceService
+            description: Deletes a ledger transaction and rebuilds affected chronological balance snapshots.
             operationId: FinanceService_DeleteFinanceTransaction
             parameters:
                 - name: user
@@ -1778,6 +1875,7 @@ paths:
         patch:
             tags:
                 - FinanceService
+            description: Corrects a ledger transaction and rebuilds affected chronological balance snapshots.
             operationId: FinanceService_UpdateFinanceTransaction
             parameters:
                 - name: user
@@ -2148,6 +2246,7 @@ paths:
         get:
             tags:
                 - ReminderService
+            description: Lists the authenticated user's private reminder lists and their pending counts.
             operationId: ReminderService_ListReminderLists
             parameters:
                 - name: user
@@ -2181,6 +2280,7 @@ paths:
         post:
             tags:
                 - ReminderService
+            description: Creates a private reminder list used to organize reminder items.
             operationId: ReminderService_CreateReminderList
             parameters:
                 - name: user
@@ -2216,6 +2316,7 @@ paths:
         delete:
             tags:
                 - ReminderService
+            description: Deletes a reminder list.
             operationId: ReminderService_DeleteReminderList
             parameters:
                 - name: user
@@ -2243,6 +2344,7 @@ paths:
         patch:
             tags:
                 - ReminderService
+            description: Updates a reminder list's name, color, icon, order, or archive state.
             operationId: ReminderService_UpdateReminderList
             parameters:
                 - name: user
@@ -2285,6 +2387,7 @@ paths:
         get:
             tags:
                 - ReminderService
+            description: Lists reminders using views such as TODAY, SCHEDULED, FLAGGED, or COMPLETED.
             operationId: ReminderService_ListReminders
             parameters:
                 - name: user
@@ -2342,6 +2445,7 @@ paths:
         post:
             tags:
                 - ReminderService
+            description: Creates a reminder with an exact remind_time or a date-only due_date; there is no details field.
             operationId: ReminderService_CreateReminder
             parameters:
                 - name: user
@@ -2377,6 +2481,7 @@ paths:
         delete:
             tags:
                 - ReminderService
+            description: Deletes a reminder.
             operationId: ReminderService_DeleteReminder
             parameters:
                 - name: user
@@ -2404,6 +2509,7 @@ paths:
         patch:
             tags:
                 - ReminderService
+            description: Updates a reminder's scheduling, list, priority, tags, location, or archive state.
             operationId: ReminderService_UpdateReminder
             parameters:
                 - name: user
@@ -2446,6 +2552,7 @@ paths:
         post:
             tags:
                 - ReminderService
+            description: Marks a pending reminder complete and advances recurring reminders when applicable.
             operationId: ReminderService_CompleteReminder
             parameters:
                 - name: user
@@ -2483,6 +2590,7 @@ paths:
         post:
             tags:
                 - ReminderService
+            description: Archives all completed reminders and returns the number cleared.
             operationId: ReminderService_ClearCompletedReminders
             parameters:
                 - name: user
@@ -2800,6 +2908,7 @@ paths:
         get:
             tags:
                 - FinanceService
+            description: Lists the authenticated user's private finance wallets and current balances.
             operationId: FinanceService_ListFinanceWallets
             parameters:
                 - name: user
@@ -2833,6 +2942,7 @@ paths:
         post:
             tags:
                 - FinanceService
+            description: Creates a private finance wallet. Set the opening balance with initial_balance_minor.
             operationId: FinanceService_CreateFinanceWallet
             parameters:
                 - name: user
@@ -2868,6 +2978,7 @@ paths:
         patch:
             tags:
                 - FinanceService
+            description: Updates a finance wallet's display name, negative-balance policy, or archive state.
             operationId: FinanceService_UpdateFinanceWallet
             parameters:
                 - name: user
@@ -2910,6 +3021,7 @@ paths:
         post:
             tags:
                 - FinanceService
+            description: Reconciles a wallet to an observed balance by creating an adjustment transaction.
             operationId: FinanceService_AdjustFinanceWalletBalance
             parameters:
                 - name: user
@@ -3595,6 +3707,9 @@ components:
                     readOnly: true
                     type: string
                     format: date-time
+                emoji:
+                    type: string
+                    description: Optional emoji displayed for this income or expense category.
         FinanceDailySummary:
             type: object
             properties:
@@ -4389,6 +4504,30 @@ components:
                     type: integer
                     description: Optional. The mood level of the memo, 1-7. 0 means unset.
                     format: int32
+        MemoMoodDisplay:
+            type: object
+            properties:
+                levels:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/MemoMoodDisplay_MoodLevel'
+                    description: All seven effective mood-level display entries, ordered by level.
+            description: |-
+                MemoMoodDisplay is the effective presentation assigned to the seven memo
+                 mood levels. It does not contain or modify the mood of any individual memo.
+        MemoMoodDisplay_MoodLevel:
+            type: object
+            properties:
+                level:
+                    type: integer
+                    description: The fixed memo mood level, from 1 (lowest) through 7 (highest).
+                    format: int32
+                emoji:
+                    type: string
+                    description: The emoji displayed for this mood level.
+                color:
+                    type: string
+                    description: 'The hexadecimal color displayed for this mood level, in #RRGGBB form.'
         MemoRelation:
             required:
                 - memo
@@ -4783,6 +4922,21 @@ components:
                     items:
                         $ref: '#/components/schemas/Attachment'
                     description: Required. The attachments to set for the memo.
+        SetMemoMoodRequest:
+            required:
+                - name
+                - moodLevel
+            type: object
+            properties:
+                name:
+                    type: string
+                    description: |-
+                        Required. The resource name of the memo whose recorded mood should change.
+                         Format: memos/{memo}
+                moodLevel:
+                    type: integer
+                    description: 'Required. The recorded mood level: 1-7 sets a mood and 0 clears it.'
+                    format: int32
         SetMemoRelationsRequest:
             required:
                 - name
@@ -4967,6 +5121,35 @@ components:
                 contentType:
                     type: string
                     description: Optional. The MIME type of the input audio.
+        UpdateMemoMoodDisplayRequest:
+            required:
+                - updates
+            type: object
+            properties:
+                updates:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/UpdateMemoMoodDisplayRequest_MoodLevelUpdate'
+                    description: Partial mood display changes. Only listed levels and fields are updated.
+        UpdateMemoMoodDisplayRequest_MoodLevelUpdate:
+            required:
+                - level
+            type: object
+            properties:
+                level:
+                    type: integer
+                    description: The memo mood level whose display should change, from 1 through 7.
+                    format: int32
+                emoji:
+                    type: string
+                    description: |-
+                        The new display emoji. Omit to preserve the current emoji; an empty value
+                         restores the default emoji for this level.
+                color:
+                    type: string
+                    description: |-
+                        The new #RRGGBB display color. Omit to preserve the current color; an
+                         empty value restores the default color for this level.
         UpsertMemoReactionRequest:
             required:
                 - name

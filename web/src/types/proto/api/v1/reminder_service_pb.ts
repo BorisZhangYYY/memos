@@ -727,6 +727,8 @@ export const ClearCompletedRemindersResponseSchema: GenMessage<ClearCompletedRem
  */
 export const ReminderService: GenService<{
   /**
+   * Lists the authenticated user's private reminder lists and their pending counts.
+   *
    * @generated from rpc memos.api.v1.ReminderService.ListReminderLists
    */
   listReminderLists: {
@@ -735,6 +737,8 @@ export const ReminderService: GenService<{
     output: typeof ListReminderListsResponseSchema;
   },
   /**
+   * Creates a private reminder list used to organize reminder items.
+   *
    * @generated from rpc memos.api.v1.ReminderService.CreateReminderList
    */
   createReminderList: {
@@ -743,6 +747,8 @@ export const ReminderService: GenService<{
     output: typeof ReminderListSchema;
   },
   /**
+   * Updates a reminder list's name, color, icon, order, or archive state.
+   *
    * @generated from rpc memos.api.v1.ReminderService.UpdateReminderList
    */
   updateReminderList: {
@@ -751,6 +757,8 @@ export const ReminderService: GenService<{
     output: typeof ReminderListSchema;
   },
   /**
+   * Deletes a reminder list.
+   *
    * @generated from rpc memos.api.v1.ReminderService.DeleteReminderList
    */
   deleteReminderList: {
@@ -759,6 +767,8 @@ export const ReminderService: GenService<{
     output: typeof EmptySchema;
   },
   /**
+   * Lists reminders using views such as TODAY, SCHEDULED, FLAGGED, or COMPLETED.
+   *
    * @generated from rpc memos.api.v1.ReminderService.ListReminders
    */
   listReminders: {
@@ -767,6 +777,8 @@ export const ReminderService: GenService<{
     output: typeof ListRemindersResponseSchema;
   },
   /**
+   * Creates a reminder with an exact remind_time or a date-only due_date; there is no details field.
+   *
    * @generated from rpc memos.api.v1.ReminderService.CreateReminder
    */
   createReminder: {
@@ -775,6 +787,8 @@ export const ReminderService: GenService<{
     output: typeof ReminderSchema;
   },
   /**
+   * Updates a reminder's scheduling, list, priority, tags, location, or archive state.
+   *
    * @generated from rpc memos.api.v1.ReminderService.UpdateReminder
    */
   updateReminder: {
@@ -783,6 +797,8 @@ export const ReminderService: GenService<{
     output: typeof ReminderSchema;
   },
   /**
+   * Deletes a reminder.
+   *
    * @generated from rpc memos.api.v1.ReminderService.DeleteReminder
    */
   deleteReminder: {
@@ -791,6 +807,8 @@ export const ReminderService: GenService<{
     output: typeof EmptySchema;
   },
   /**
+   * Marks a pending reminder complete and advances recurring reminders when applicable.
+   *
    * @generated from rpc memos.api.v1.ReminderService.CompleteReminder
    */
   completeReminder: {
@@ -799,6 +817,8 @@ export const ReminderService: GenService<{
     output: typeof ReminderSchema;
   },
   /**
+   * Archives all completed reminders and returns the number cleared.
+   *
    * @generated from rpc memos.api.v1.ReminderService.ClearCompletedReminders
    */
   clearCompletedReminders: {

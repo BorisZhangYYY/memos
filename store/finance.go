@@ -86,6 +86,7 @@ type FinanceCategory struct {
 	RowStatus RowStatus
 	Name      string
 	Type      FinanceCategoryType
+	Emoji     string
 }
 
 // FindFinanceCategory filters categories.
@@ -104,6 +105,7 @@ type UpdateFinanceCategory struct {
 	UpdatedTs *int64
 	Name      *string
 	RowStatus *RowStatus
+	Emoji     *string
 }
 
 // FinanceTransaction is an immutable ledger effect except when explicitly updated.

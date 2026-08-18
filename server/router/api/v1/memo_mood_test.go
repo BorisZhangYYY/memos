@@ -88,6 +88,31 @@ func TestUpdateMemo_MoodLevel(t *testing.T) {
 	assert.Equal(t, int32(0), cleared.MoodLevel)
 }
 
+func TestSetMemoMood(t *testing.T) {
+	ctx := context.Background()
+	svc := newIntegrationService(t)
+	author, err := svc.Store.CreateUser(ctx, &store.User{Username: "author", Role: store.RoleAdmin})
+	require.NoError(t, err)
+	viewer, err := svc.Store.CreateUser(ctx, &store.User{Username: "viewer", Role: store.RoleUser})
+	require.NoError(t, err)
+
+	memo, err := svc.CreateMemo(userCtx(ctx, author.ID), &v1pb.CreateMemoRequest{Memo: &v1pb.Memo{Content: "mood target"}})
+	require.NoError(t, err)
+
+	updated, err := svc.SetMemoMood(userCtx(ctx, author.ID), &v1pb.SetMemoMoodRequest{Name: memo.Name, MoodLevel: 5})
+	require.NoError(t, err)
+	assert.Equal(t, int32(5), updated.MoodLevel)
+
+	cleared, err := svc.SetMemoMood(userCtx(ctx, author.ID), &v1pb.SetMemoMoodRequest{Name: memo.Name, MoodLevel: 0})
+	require.NoError(t, err)
+	assert.Zero(t, cleared.MoodLevel)
+
+	_, err = svc.SetMemoMood(userCtx(ctx, author.ID), &v1pb.SetMemoMoodRequest{Name: memo.Name, MoodLevel: 8})
+	assert.Equal(t, codes.InvalidArgument, status.Code(err))
+	_, err = svc.SetMemoMood(userCtx(ctx, viewer.ID), &v1pb.SetMemoMoodRequest{Name: memo.Name, MoodLevel: 4})
+	assert.Equal(t, codes.PermissionDenied, status.Code(err))
+}
+
 func TestMemoMoodLevelVisibleOnlyToCreator(t *testing.T) {
 	ctx := context.Background()
 	svc := newIntegrationService(t)

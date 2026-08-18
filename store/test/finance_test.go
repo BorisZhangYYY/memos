@@ -28,9 +28,10 @@ func TestFinanceLedgerMaintainsWalletBalances(t *testing.T) {
 	})
 	require.NoError(t, err)
 	expenseCategory, err := ts.CreateFinanceCategory(ctx, &store.FinanceCategory{
-		UID: "finance-drinks", CreatorID: user.ID, Name: "Drinks", Type: store.FinanceCategoryExpense,
+		UID: "finance-drinks", CreatorID: user.ID, Name: "Drinks", Type: store.FinanceCategoryExpense, Emoji: "🥤",
 	})
 	require.NoError(t, err)
+	require.Equal(t, "🥤", expenseCategory.Emoji)
 	incomeCategory, err := ts.CreateFinanceCategory(ctx, &store.FinanceCategory{
 		UID: "finance-salary", CreatorID: user.ID, Name: "Salary", Type: store.FinanceCategoryIncome,
 	})

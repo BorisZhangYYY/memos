@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
 	"github.com/usememos/memos/internal/httpgetter"
 	v1pb "github.com/usememos/memos/proto/gen/api/v1"
@@ -607,6 +608,9 @@ func (s *APIV1Service) UpdateMemo(ctx context.Context, request *v1pb.UpdateMemoR
 			payload.Location = convertLocationToStore(request.Memo.Location)
 			update.Payload = payload
 		} else if path == "mood_level" {
+			if request.Memo.MoodLevel < 0 || request.Memo.MoodLevel > memoMoodLevelCount {
+				return nil, status.Errorf(codes.InvalidArgument, "mood level must be between 0 and %d", memoMoodLevelCount)
+			}
 			payload := memo.Payload
 			payload.MoodLevel = request.Memo.MoodLevel
 			update.Payload = payload
@@ -641,6 +645,21 @@ func (s *APIV1Service) UpdateMemo(ctx context.Context, request *v1pb.UpdateMemoR
 	s.dispatchMemoUpdatedSideEffects(ctx, memo, parentMemo, memoMessage)
 
 	return memoMessage, nil
+}
+
+// SetMemoMood sets or clears the mood recorded on one memo through the same
+// authorization, persistence, and side-effect path as UpdateMemo.
+func (s *APIV1Service) SetMemoMood(ctx context.Context, request *v1pb.SetMemoMoodRequest) (*v1pb.Memo, error) {
+	if request == nil {
+		return nil, status.Error(codes.InvalidArgument, "request is required")
+	}
+	if request.MoodLevel < 0 || request.MoodLevel > memoMoodLevelCount {
+		return nil, status.Errorf(codes.InvalidArgument, "mood level must be between 0 and %d", memoMoodLevelCount)
+	}
+	return s.UpdateMemo(ctx, &v1pb.UpdateMemoRequest{
+		Memo:       &v1pb.Memo{Name: request.Name, MoodLevel: request.MoodLevel},
+		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"mood_level"}},
+	})
 }
 
 func (s *APIV1Service) DeleteMemo(ctx context.Context, request *v1pb.DeleteMemoRequest) (*emptypb.Empty, error) {

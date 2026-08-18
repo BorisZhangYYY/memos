@@ -1,5 +1,36 @@
 # Changelog
 
+## [0.33.3](https://github.com/BorisZhangYYY/memos/compare/v0.33.2...v0.33.3) (2026-08-18)
+
+### Summary
+
+This patch release adds customizable Emoji to finance categories and makes the
+expanded MCP surface substantially easier for agents to discover and call,
+including narrow tools for memo mood values and instance-wide mood display
+configuration.
+
+### Features
+
+* **Finance category Emoji:** stores an optional Emoji on income and expense
+  categories across SQLite, MySQL, and PostgreSQL; displays it in settings,
+  transaction entry, the daily dashboard, and finance history; and exposes it
+  through the Finance API and MCP update workflow.
+* **Mood configuration tools:** adds narrowly scoped MCP tools to read and
+  partially update the seven instance-wide mood Emoji/color entries while
+  preserving unrelated instance settings and administrator authorization.
+* **Memo mood tool:** adds `memo_set_memo_mood` for setting one memo's recorded
+  mood to levels 1-7 or clearing it with 0, avoiding confusion with global mood
+  presentation settings.
+
+### Improvements
+
+* **Agent tool discovery:** gives every curated MCP tool a non-empty,
+  action-oriented description; documents update masks and exact JSON argument
+  names; tightens mood and finance input schemas; and adds tool-selection
+  regression evaluations for similar Emoji, reaction, and mood requests.
+* **Finance settings consistency:** aligns finance category input heights and
+  keeps Emoji entry as a direct native input without a custom preview popover.
+
 ## [0.33.2](https://github.com/BorisZhangYYY/memos/compare/v0.33.1...v0.33.2) (2026-08-17)
 
 ### Summary

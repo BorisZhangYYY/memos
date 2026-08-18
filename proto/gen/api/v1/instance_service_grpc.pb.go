@@ -26,6 +26,8 @@ const (
 	InstanceService_UpdateInstanceSetting_FullMethodName    = "/memos.api.v1.InstanceService/UpdateInstanceSetting"
 	InstanceService_TestInstanceEmailSetting_FullMethodName = "/memos.api.v1.InstanceService/TestInstanceEmailSetting"
 	InstanceService_GetInstanceStats_FullMethodName         = "/memos.api.v1.InstanceService/GetInstanceStats"
+	InstanceService_GetMemoMoodDisplay_FullMethodName       = "/memos.api.v1.InstanceService/GetMemoMoodDisplay"
+	InstanceService_UpdateMemoMoodDisplay_FullMethodName    = "/memos.api.v1.InstanceService/UpdateMemoMoodDisplay"
 )
 
 // InstanceServiceClient is the client API for InstanceService service.
@@ -44,6 +46,15 @@ type InstanceServiceClient interface {
 	TestInstanceEmailSetting(ctx context.Context, in *TestInstanceEmailSettingRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// GetInstanceStats returns resource usage statistics for the instance. Admin only.
 	GetInstanceStats(ctx context.Context, in *GetInstanceStatsRequest, opts ...grpc.CallOption) (*InstanceStats, error)
+	// Gets the effective instance-wide display configuration for memo mood levels
+	// 1-7, including each level's emoji and hexadecimal color. This only controls
+	// presentation; the mood_level recorded on individual memos is unchanged.
+	GetMemoMoodDisplay(ctx context.Context, in *GetMemoMoodDisplayRequest, opts ...grpc.CallOption) (*MemoMoodDisplay, error)
+	// Updates the display emoji and/or color for selected memo mood levels.
+	// Omitted levels and omitted fields remain unchanged. This only controls
+	// presentation; use MemoService_UpdateMemo to change a memo's mood_level.
+	// Administrator permission is required.
+	UpdateMemoMoodDisplay(ctx context.Context, in *UpdateMemoMoodDisplayRequest, opts ...grpc.CallOption) (*MemoMoodDisplay, error)
 }
 
 type instanceServiceClient struct {
@@ -114,6 +125,26 @@ func (c *instanceServiceClient) GetInstanceStats(ctx context.Context, in *GetIns
 	return out, nil
 }
 
+func (c *instanceServiceClient) GetMemoMoodDisplay(ctx context.Context, in *GetMemoMoodDisplayRequest, opts ...grpc.CallOption) (*MemoMoodDisplay, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MemoMoodDisplay)
+	err := c.cc.Invoke(ctx, InstanceService_GetMemoMoodDisplay_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *instanceServiceClient) UpdateMemoMoodDisplay(ctx context.Context, in *UpdateMemoMoodDisplayRequest, opts ...grpc.CallOption) (*MemoMoodDisplay, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MemoMoodDisplay)
+	err := c.cc.Invoke(ctx, InstanceService_UpdateMemoMoodDisplay_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // InstanceServiceServer is the server API for InstanceService service.
 // All implementations must embed UnimplementedInstanceServiceServer
 // for forward compatibility.
@@ -130,6 +161,15 @@ type InstanceServiceServer interface {
 	TestInstanceEmailSetting(context.Context, *TestInstanceEmailSettingRequest) (*emptypb.Empty, error)
 	// GetInstanceStats returns resource usage statistics for the instance. Admin only.
 	GetInstanceStats(context.Context, *GetInstanceStatsRequest) (*InstanceStats, error)
+	// Gets the effective instance-wide display configuration for memo mood levels
+	// 1-7, including each level's emoji and hexadecimal color. This only controls
+	// presentation; the mood_level recorded on individual memos is unchanged.
+	GetMemoMoodDisplay(context.Context, *GetMemoMoodDisplayRequest) (*MemoMoodDisplay, error)
+	// Updates the display emoji and/or color for selected memo mood levels.
+	// Omitted levels and omitted fields remain unchanged. This only controls
+	// presentation; use MemoService_UpdateMemo to change a memo's mood_level.
+	// Administrator permission is required.
+	UpdateMemoMoodDisplay(context.Context, *UpdateMemoMoodDisplayRequest) (*MemoMoodDisplay, error)
 	mustEmbedUnimplementedInstanceServiceServer()
 }
 
@@ -157,6 +197,12 @@ func (UnimplementedInstanceServiceServer) TestInstanceEmailSetting(context.Conte
 }
 func (UnimplementedInstanceServiceServer) GetInstanceStats(context.Context, *GetInstanceStatsRequest) (*InstanceStats, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetInstanceStats not implemented")
+}
+func (UnimplementedInstanceServiceServer) GetMemoMoodDisplay(context.Context, *GetMemoMoodDisplayRequest) (*MemoMoodDisplay, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetMemoMoodDisplay not implemented")
+}
+func (UnimplementedInstanceServiceServer) UpdateMemoMoodDisplay(context.Context, *UpdateMemoMoodDisplayRequest) (*MemoMoodDisplay, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateMemoMoodDisplay not implemented")
 }
 func (UnimplementedInstanceServiceServer) mustEmbedUnimplementedInstanceServiceServer() {}
 func (UnimplementedInstanceServiceServer) testEmbeddedByValue()                         {}
@@ -287,6 +333,42 @@ func _InstanceService_GetInstanceStats_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _InstanceService_GetMemoMoodDisplay_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetMemoMoodDisplayRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InstanceServiceServer).GetMemoMoodDisplay(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: InstanceService_GetMemoMoodDisplay_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InstanceServiceServer).GetMemoMoodDisplay(ctx, req.(*GetMemoMoodDisplayRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _InstanceService_UpdateMemoMoodDisplay_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateMemoMoodDisplayRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InstanceServiceServer).UpdateMemoMoodDisplay(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: InstanceService_UpdateMemoMoodDisplay_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InstanceServiceServer).UpdateMemoMoodDisplay(ctx, req.(*UpdateMemoMoodDisplayRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // InstanceService_ServiceDesc is the grpc.ServiceDesc for InstanceService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -317,6 +399,14 @@ var InstanceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetInstanceStats",
 			Handler:    _InstanceService_GetInstanceStats_Handler,
+		},
+		{
+			MethodName: "GetMemoMoodDisplay",
+			Handler:    _InstanceService_GetMemoMoodDisplay_Handler,
+		},
+		{
+			MethodName: "UpdateMemoMoodDisplay",
+			Handler:    _InstanceService_UpdateMemoMoodDisplay_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -288,6 +288,8 @@
     "category": {
       "create-error": "Failed to add category",
       "created": "Category added",
+      "emoji": "Emoji",
+      "emoji-update-error": "Failed to update emoji",
       "empty": "No categories yet",
       "label": "Category",
       "management": "Income and expense categories",

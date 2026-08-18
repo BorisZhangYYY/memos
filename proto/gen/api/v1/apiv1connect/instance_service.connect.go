@@ -52,6 +52,12 @@ const (
 	// InstanceServiceGetInstanceStatsProcedure is the fully-qualified name of the InstanceService's
 	// GetInstanceStats RPC.
 	InstanceServiceGetInstanceStatsProcedure = "/memos.api.v1.InstanceService/GetInstanceStats"
+	// InstanceServiceGetMemoMoodDisplayProcedure is the fully-qualified name of the InstanceService's
+	// GetMemoMoodDisplay RPC.
+	InstanceServiceGetMemoMoodDisplayProcedure = "/memos.api.v1.InstanceService/GetMemoMoodDisplay"
+	// InstanceServiceUpdateMemoMoodDisplayProcedure is the fully-qualified name of the
+	// InstanceService's UpdateMemoMoodDisplay RPC.
+	InstanceServiceUpdateMemoMoodDisplayProcedure = "/memos.api.v1.InstanceService/UpdateMemoMoodDisplay"
 )
 
 // InstanceServiceClient is a client for the memos.api.v1.InstanceService service.
@@ -68,6 +74,15 @@ type InstanceServiceClient interface {
 	TestInstanceEmailSetting(context.Context, *connect.Request[v1.TestInstanceEmailSettingRequest]) (*connect.Response[emptypb.Empty], error)
 	// GetInstanceStats returns resource usage statistics for the instance. Admin only.
 	GetInstanceStats(context.Context, *connect.Request[v1.GetInstanceStatsRequest]) (*connect.Response[v1.InstanceStats], error)
+	// Gets the effective instance-wide display configuration for memo mood levels
+	// 1-7, including each level's emoji and hexadecimal color. This only controls
+	// presentation; the mood_level recorded on individual memos is unchanged.
+	GetMemoMoodDisplay(context.Context, *connect.Request[v1.GetMemoMoodDisplayRequest]) (*connect.Response[v1.MemoMoodDisplay], error)
+	// Updates the display emoji and/or color for selected memo mood levels.
+	// Omitted levels and omitted fields remain unchanged. This only controls
+	// presentation; use MemoService_UpdateMemo to change a memo's mood_level.
+	// Administrator permission is required.
+	UpdateMemoMoodDisplay(context.Context, *connect.Request[v1.UpdateMemoMoodDisplayRequest]) (*connect.Response[v1.MemoMoodDisplay], error)
 }
 
 // NewInstanceServiceClient constructs a client for the memos.api.v1.InstanceService service. By
@@ -117,6 +132,18 @@ func NewInstanceServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(instanceServiceMethods.ByName("GetInstanceStats")),
 			connect.WithClientOptions(opts...),
 		),
+		getMemoMoodDisplay: connect.NewClient[v1.GetMemoMoodDisplayRequest, v1.MemoMoodDisplay](
+			httpClient,
+			baseURL+InstanceServiceGetMemoMoodDisplayProcedure,
+			connect.WithSchema(instanceServiceMethods.ByName("GetMemoMoodDisplay")),
+			connect.WithClientOptions(opts...),
+		),
+		updateMemoMoodDisplay: connect.NewClient[v1.UpdateMemoMoodDisplayRequest, v1.MemoMoodDisplay](
+			httpClient,
+			baseURL+InstanceServiceUpdateMemoMoodDisplayProcedure,
+			connect.WithSchema(instanceServiceMethods.ByName("UpdateMemoMoodDisplay")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -128,6 +155,8 @@ type instanceServiceClient struct {
 	updateInstanceSetting    *connect.Client[v1.UpdateInstanceSettingRequest, v1.InstanceSetting]
 	testInstanceEmailSetting *connect.Client[v1.TestInstanceEmailSettingRequest, emptypb.Empty]
 	getInstanceStats         *connect.Client[v1.GetInstanceStatsRequest, v1.InstanceStats]
+	getMemoMoodDisplay       *connect.Client[v1.GetMemoMoodDisplayRequest, v1.MemoMoodDisplay]
+	updateMemoMoodDisplay    *connect.Client[v1.UpdateMemoMoodDisplayRequest, v1.MemoMoodDisplay]
 }
 
 // GetInstanceProfile calls memos.api.v1.InstanceService.GetInstanceProfile.
@@ -160,6 +189,16 @@ func (c *instanceServiceClient) GetInstanceStats(ctx context.Context, req *conne
 	return c.getInstanceStats.CallUnary(ctx, req)
 }
 
+// GetMemoMoodDisplay calls memos.api.v1.InstanceService.GetMemoMoodDisplay.
+func (c *instanceServiceClient) GetMemoMoodDisplay(ctx context.Context, req *connect.Request[v1.GetMemoMoodDisplayRequest]) (*connect.Response[v1.MemoMoodDisplay], error) {
+	return c.getMemoMoodDisplay.CallUnary(ctx, req)
+}
+
+// UpdateMemoMoodDisplay calls memos.api.v1.InstanceService.UpdateMemoMoodDisplay.
+func (c *instanceServiceClient) UpdateMemoMoodDisplay(ctx context.Context, req *connect.Request[v1.UpdateMemoMoodDisplayRequest]) (*connect.Response[v1.MemoMoodDisplay], error) {
+	return c.updateMemoMoodDisplay.CallUnary(ctx, req)
+}
+
 // InstanceServiceHandler is an implementation of the memos.api.v1.InstanceService service.
 type InstanceServiceHandler interface {
 	// Gets the instance profile.
@@ -174,6 +213,15 @@ type InstanceServiceHandler interface {
 	TestInstanceEmailSetting(context.Context, *connect.Request[v1.TestInstanceEmailSettingRequest]) (*connect.Response[emptypb.Empty], error)
 	// GetInstanceStats returns resource usage statistics for the instance. Admin only.
 	GetInstanceStats(context.Context, *connect.Request[v1.GetInstanceStatsRequest]) (*connect.Response[v1.InstanceStats], error)
+	// Gets the effective instance-wide display configuration for memo mood levels
+	// 1-7, including each level's emoji and hexadecimal color. This only controls
+	// presentation; the mood_level recorded on individual memos is unchanged.
+	GetMemoMoodDisplay(context.Context, *connect.Request[v1.GetMemoMoodDisplayRequest]) (*connect.Response[v1.MemoMoodDisplay], error)
+	// Updates the display emoji and/or color for selected memo mood levels.
+	// Omitted levels and omitted fields remain unchanged. This only controls
+	// presentation; use MemoService_UpdateMemo to change a memo's mood_level.
+	// Administrator permission is required.
+	UpdateMemoMoodDisplay(context.Context, *connect.Request[v1.UpdateMemoMoodDisplayRequest]) (*connect.Response[v1.MemoMoodDisplay], error)
 }
 
 // NewInstanceServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -219,6 +267,18 @@ func NewInstanceServiceHandler(svc InstanceServiceHandler, opts ...connect.Handl
 		connect.WithSchema(instanceServiceMethods.ByName("GetInstanceStats")),
 		connect.WithHandlerOptions(opts...),
 	)
+	instanceServiceGetMemoMoodDisplayHandler := connect.NewUnaryHandler(
+		InstanceServiceGetMemoMoodDisplayProcedure,
+		svc.GetMemoMoodDisplay,
+		connect.WithSchema(instanceServiceMethods.ByName("GetMemoMoodDisplay")),
+		connect.WithHandlerOptions(opts...),
+	)
+	instanceServiceUpdateMemoMoodDisplayHandler := connect.NewUnaryHandler(
+		InstanceServiceUpdateMemoMoodDisplayProcedure,
+		svc.UpdateMemoMoodDisplay,
+		connect.WithSchema(instanceServiceMethods.ByName("UpdateMemoMoodDisplay")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/memos.api.v1.InstanceService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case InstanceServiceGetInstanceProfileProcedure:
@@ -233,6 +293,10 @@ func NewInstanceServiceHandler(svc InstanceServiceHandler, opts ...connect.Handl
 			instanceServiceTestInstanceEmailSettingHandler.ServeHTTP(w, r)
 		case InstanceServiceGetInstanceStatsProcedure:
 			instanceServiceGetInstanceStatsHandler.ServeHTTP(w, r)
+		case InstanceServiceGetMemoMoodDisplayProcedure:
+			instanceServiceGetMemoMoodDisplayHandler.ServeHTTP(w, r)
+		case InstanceServiceUpdateMemoMoodDisplayProcedure:
+			instanceServiceUpdateMemoMoodDisplayHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -264,4 +328,12 @@ func (UnimplementedInstanceServiceHandler) TestInstanceEmailSetting(context.Cont
 
 func (UnimplementedInstanceServiceHandler) GetInstanceStats(context.Context, *connect.Request[v1.GetInstanceStatsRequest]) (*connect.Response[v1.InstanceStats], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.InstanceService.GetInstanceStats is not implemented"))
+}
+
+func (UnimplementedInstanceServiceHandler) GetMemoMoodDisplay(context.Context, *connect.Request[v1.GetMemoMoodDisplayRequest]) (*connect.Response[v1.MemoMoodDisplay], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.InstanceService.GetMemoMoodDisplay is not implemented"))
+}
+
+func (UnimplementedInstanceServiceHandler) UpdateMemoMoodDisplay(context.Context, *connect.Request[v1.UpdateMemoMoodDisplayRequest]) (*connect.Response[v1.MemoMoodDisplay], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.InstanceService.UpdateMemoMoodDisplay is not implemented"))
 }

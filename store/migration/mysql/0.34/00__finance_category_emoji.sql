@@ -1,0 +1,2 @@
+ALTER TABLE `finance_category`
+  ADD COLUMN `emoji` VARCHAR(64) CHARACTER SET utf8mb4 NOT NULL DEFAULT '';

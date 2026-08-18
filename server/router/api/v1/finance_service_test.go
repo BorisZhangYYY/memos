@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	v1pb "github.com/usememos/memos/proto/gen/api/v1"
@@ -30,14 +31,24 @@ func TestFinanceServicePrivateLedgerAndSummary(t *testing.T) {
 	require.NoError(t, err)
 	expenseCategory, err := service.CreateFinanceCategory(aliceCtx, &v1pb.CreateFinanceCategoryRequest{
 		Parent:   "users/finance-alice",
-		Category: &v1pb.FinanceCategory{DisplayName: "Drinks", Type: v1pb.FinanceCategory_EXPENSE},
+		Category: &v1pb.FinanceCategory{DisplayName: "Drinks", Type: v1pb.FinanceCategory_EXPENSE, Emoji: "🥤"},
 	})
 	require.NoError(t, err)
+	require.Equal(t, "🥤", expenseCategory.Emoji)
 	incomeCategory, err := service.CreateFinanceCategory(aliceCtx, &v1pb.CreateFinanceCategoryRequest{
 		Parent:   "users/finance-alice",
 		Category: &v1pb.FinanceCategory{DisplayName: "Salary", Type: v1pb.FinanceCategory_INCOME},
 	})
 	require.NoError(t, err)
+	expenseCategory, err = service.UpdateFinanceCategory(aliceCtx, &v1pb.UpdateFinanceCategoryRequest{
+		Category:   &v1pb.FinanceCategory{Name: expenseCategory.Name, Emoji: "🍹"},
+		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"emoji"}},
+	})
+	require.NoError(t, err)
+	require.Equal(t, "🍹", expenseCategory.Emoji)
+	categories, err := service.ListFinanceCategories(aliceCtx, &v1pb.ListFinanceCategoriesRequest{Parent: "users/finance-alice"})
+	require.NoError(t, err)
+	require.Contains(t, categories.Categories, expenseCategory)
 
 	occurred := time.Date(2026, time.August, 9, 12, 0, 0, 0, time.FixedZone("UTC+8", 8*60*60))
 	_, err = service.CreateFinanceTransaction(aliceCtx, &v1pb.CreateFinanceTransactionRequest{

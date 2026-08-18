@@ -231,13 +231,15 @@ func (x *FinanceWallet) GetUpdateTime() *timestamppb.Timestamp {
 }
 
 type FinanceCategory struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	DisplayName   string                 `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
-	Type          FinanceCategory_Type   `protobuf:"varint,3,opt,name=type,proto3,enum=memos.api.v1.FinanceCategory_Type" json:"type,omitempty"`
-	State         State                  `protobuf:"varint,4,opt,name=state,proto3,enum=memos.api.v1.State" json:"state,omitempty"`
-	CreateTime    *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
-	UpdateTime    *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	Name        string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	DisplayName string                 `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	Type        FinanceCategory_Type   `protobuf:"varint,3,opt,name=type,proto3,enum=memos.api.v1.FinanceCategory_Type" json:"type,omitempty"`
+	State       State                  `protobuf:"varint,4,opt,name=state,proto3,enum=memos.api.v1.State" json:"state,omitempty"`
+	CreateTime  *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	UpdateTime  *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
+	// Optional emoji displayed for this income or expense category.
+	Emoji         string `protobuf:"bytes,7,opt,name=emoji,proto3" json:"emoji,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -312,6 +314,13 @@ func (x *FinanceCategory) GetUpdateTime() *timestamppb.Timestamp {
 		return x.UpdateTime
 	}
 	return nil
+}
+
+func (x *FinanceCategory) GetEmoji() string {
+	if x != nil {
+		return x.Emoji
+	}
+	return ""
 }
 
 type FinanceTransaction struct {
@@ -1477,7 +1486,7 @@ const file_api_v1_finance_service_proto_rawDesc = "" +
 	"createTime\x12@\n" +
 	"\vupdate_time\x18\b \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\n" +
 	"updateTime:]\xeaAZ\n" +
-	"\x1amemos.api.v1/FinanceWallet\x12\x1dusers/{user}/wallets/{wallet}*\x0efinanceWallets2\rfinanceWallet\"\xf4\x03\n" +
+	"\x1amemos.api.v1/FinanceWallet\x12\x1dusers/{user}/wallets/{wallet}*\x0efinanceWallets2\rfinanceWallet\"\x8f\x04\n" +
 	"\x0fFinanceCategory\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12&\n" +
 	"\fdisplay_name\x18\x02 \x01(\tB\x03\xe0A\x02R\vdisplayName\x12;\n" +
@@ -1486,7 +1495,8 @@ const file_api_v1_finance_service_proto_rawDesc = "" +
 	"\vcreate_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\n" +
 	"createTime\x12@\n" +
 	"\vupdate_time\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\n" +
-	"updateTime\"5\n" +
+	"updateTime\x12\x19\n" +
+	"\x05emoji\x18\a \x01(\tB\x03\xe0A\x01R\x05emoji\"5\n" +
 	"\x04Type\x12\x14\n" +
 	"\x10TYPE_UNSPECIFIED\x10\x00\x12\n" +
 	"\n" +

@@ -9,15 +9,24 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func requireJSONSchema(t *testing.T, value any) jsonSchema {
+	t.Helper()
+	schema, ok := value.(jsonSchema)
+	require.True(t, ok)
+	return schema
+}
+
 func TestCuratedOperationIDsStayPersonalDataFocused(t *testing.T) {
-	require.Len(t, curatedOperationIDs, 46)
+	require.Len(t, curatedOperationIDs, 49)
 	allowedUserOperations := map[string]bool{
 		"UserService_GetUserStats":      true,
 		"UserService_GetUserSetting":    true,
 		"UserService_UpdateUserSetting": true,
 	}
 	allowedInstanceOperations := map[string]bool{
-		"InstanceService_GetInstanceStats": true,
+		"InstanceService_GetInstanceStats":      true,
+		"InstanceService_GetMemoMoodDisplay":    true,
+		"InstanceService_UpdateMemoMoodDisplay": true,
 	}
 
 	for _, operationID := range curatedOperationIDs {
@@ -50,6 +59,7 @@ func TestCuratedOperationIDsIncludeRequiredPersonalWorkflows(t *testing.T) {
 		curated[operationID] = true
 	}
 	for _, operationID := range []string{
+		"MemoService_SetMemoMood",
 		"ReminderService_UpdateReminderList",
 		"ReminderService_DeleteReminderList",
 		"ReminderService_DeleteReminder",
@@ -67,6 +77,8 @@ func TestCuratedOperationIDsIncludeRequiredPersonalWorkflows(t *testing.T) {
 		"FinanceService_AdjustFinanceWalletBalance",
 		"FinanceService_GetFinanceSummary",
 		"InstanceService_GetInstanceStats",
+		"InstanceService_GetMemoMoodDisplay",
+		"InstanceService_UpdateMemoMoodDisplay",
 		"UserService_GetUserStats",
 		"UserService_GetUserSetting",
 		"UserService_UpdateUserSetting",
@@ -84,7 +96,7 @@ func TestUserScopedToolsOmitTransportUserArgument(t *testing.T) {
 	for _, operationID := range curatedOperationIDs {
 		apiOperation := registry[operationID]
 		tool, operation := buildToolFromOperation(apiOperation)
-		properties := schemaProperties(tool.InputSchema.(jsonSchema)["properties"])
+		properties := schemaProperties(requireJSONSchema(t, tool.InputSchema)["properties"])
 		if usesImplicitCurrentUser(apiOperation) {
 			require.True(t, operation.ImplicitCurrentUser, operationID)
 			require.NotContains(t, properties, "user", operationID)
@@ -335,7 +347,7 @@ func TestAgentFacingSchemasRejectUnknownAndReadOnlyFields(t *testing.T) {
 	require.NoError(t, err)
 
 	walletTool, _ := buildToolFromOperation(registry["FinanceService_CreateFinanceWallet"])
-	walletInput := walletTool.InputSchema.(jsonSchema)
+	walletInput := requireJSONSchema(t, walletTool.InputSchema)
 	require.Contains(t, walletTool.Description, "initialBalanceMinor")
 	require.NoError(t, validateToolArguments(walletInput, map[string]any{
 		"body": map[string]any{
@@ -349,7 +361,7 @@ func TestAgentFacingSchemasRejectUnknownAndReadOnlyFields(t *testing.T) {
 	}), "unknown argument")
 
 	transactionTool, _ := buildToolFromOperation(registry["FinanceService_CreateFinanceTransaction"])
-	transactionInput := transactionTool.InputSchema.(jsonSchema)
+	transactionInput := requireJSONSchema(t, transactionTool.InputSchema)
 	require.Contains(t, transactionTool.Description, "body.occurTime is required")
 	require.ErrorContains(t, validateToolArguments(transactionInput, map[string]any{
 		"body": map[string]any{
@@ -360,7 +372,7 @@ func TestAgentFacingSchemasRejectUnknownAndReadOnlyFields(t *testing.T) {
 	}), `missing required argument "body.occurTime"`)
 
 	reminderTool, _ := buildToolFromOperation(registry["ReminderService_CreateReminder"])
-	reminderInput := reminderTool.InputSchema.(jsonSchema)
+	reminderInput := requireJSONSchema(t, reminderTool.InputSchema)
 	require.Contains(t, reminderTool.Description, "remindTime")
 	require.NoError(t, validateToolArguments(reminderInput, map[string]any{
 		"body": map[string]any{
@@ -386,7 +398,7 @@ func TestUserSettingToolsExposeSafeDiscoverableKeys(t *testing.T) {
 	require.NoError(t, err)
 
 	getTool, _ := buildToolFromOperation(registry["UserService_GetUserSetting"])
-	getInput := getTool.InputSchema.(jsonSchema)
+	getInput := requireJSONSchema(t, getTool.InputSchema)
 	getProperties := schemaProperties(getInput["properties"])
 	settingSchema, ok := asSchemaMap(getProperties["setting"])
 	require.True(t, ok)
@@ -397,7 +409,7 @@ func TestUserSettingToolsExposeSafeDiscoverableKeys(t *testing.T) {
 	require.Error(t, validateToolArguments(getInput, map[string]any{"setting": "WEBHOOKS"}))
 
 	updateTool, _ := buildToolFromOperation(registry["UserService_UpdateUserSetting"])
-	updateInput := updateTool.InputSchema.(jsonSchema)
+	updateInput := requireJSONSchema(t, updateTool.InputSchema)
 	updateProperties := schemaProperties(updateInput["properties"])
 	updateMask, ok := asSchemaMap(updateProperties["updateMask"])
 	require.True(t, ok)
@@ -639,6 +651,87 @@ func TestBuildCuratedToolsHasUniqueNames(t *testing.T) {
 		require.NoError(t, err)
 		require.NotContains(t, string(outputBytes), "#/components/schemas")
 	}
+}
+
+func TestCuratedToolsHaveDiscoveryDescriptions(t *testing.T) {
+	spec, err := loadOpenAPISpec("../../../proto/gen/openapi.yaml")
+	require.NoError(t, err)
+	registry, err := buildOperationRegistry(spec)
+	require.NoError(t, err)
+
+	tools, _, err := buildCuratedTools(registry)
+	require.NoError(t, err)
+	for _, tool := range tools {
+		require.NotEmpty(t, strings.TrimSpace(tool.Description), "%s must tell agents when to use it", tool.Name)
+	}
+}
+
+func TestMemoMoodDisplayToolsAreDiscoverableAndConstrained(t *testing.T) {
+	spec, err := loadOpenAPISpec("../../../proto/gen/openapi.yaml")
+	require.NoError(t, err)
+	registry, err := buildOperationRegistry(spec)
+	require.NoError(t, err)
+
+	getTool, _ := buildToolFromOperation(registry["InstanceService_GetMemoMoodDisplay"])
+	require.Equal(t, "instance_get_memo_mood_display", getTool.Name)
+	require.Contains(t, getTool.Description, "emoji")
+	require.Contains(t, getTool.Description, "color")
+	require.Contains(t, getTool.Description, "moodLevel")
+	require.True(t, getTool.Annotations.ReadOnlyHint)
+
+	updateTool, _ := buildToolFromOperation(registry["InstanceService_UpdateMemoMoodDisplay"])
+	require.Equal(t, "instance_update_memo_mood_display", updateTool.Name)
+	require.Contains(t, updateTool.Description, "memo_set_memo_mood")
+	require.Contains(t, updateTool.Description, "Never use this")
+	require.Contains(t, updateTool.Description, "Administrator-only")
+	require.False(t, updateTool.Annotations.ReadOnlyHint)
+	require.True(t, updateTool.Annotations.IdempotentHint)
+	require.True(t, *updateTool.Annotations.DestructiveHint)
+
+	input := requireJSONSchema(t, updateTool.InputSchema)
+	body := requireJSONSchema(t, schemaProperties(input["properties"])["body"])
+	require.Equal(t, []string{"updates"}, requiredNames(body["required"]))
+	updates := requireJSONSchema(t, schemaProperties(body["properties"])["updates"])
+	require.EqualValues(t, 1, updates["minItems"])
+	require.EqualValues(t, 7, updates["maxItems"])
+
+	defs := schemaProperties(input["$defs"])
+	levelUpdate := requireJSONSchema(t, defs["UpdateMemoMoodDisplayRequest_MoodLevelUpdate"])
+	levelProperties := schemaProperties(levelUpdate["properties"])
+	level := requireJSONSchema(t, levelProperties["level"])
+	require.EqualValues(t, 1, level["minimum"])
+	require.EqualValues(t, 7, level["maximum"])
+	require.Equal(t, `^#[0-9A-Fa-f]{6}$|^$`, requireJSONSchema(t, levelProperties["color"])["pattern"])
+	require.EqualValues(t, 16, requireJSONSchema(t, levelProperties["emoji"])["maxLength"])
+
+	memoUpdateTool, _ := buildToolFromOperation(registry["MemoService_UpdateMemo"])
+	require.Contains(t, memoUpdateTool.Description, "one existing memo")
+	require.Contains(t, memoUpdateTool.Description, "memo_set_memo_mood")
+	require.Contains(t, memoUpdateTool.Description, "instance_update_memo_mood_display")
+
+	setTool, _ := buildToolFromOperation(registry["MemoService_SetMemoMood"])
+	require.Equal(t, "memo_set_memo_mood", setTool.Name)
+	require.Contains(t, setTool.Description, "one existing memo")
+	require.Contains(t, setTool.Description, "body.moodLevel")
+	require.Contains(t, setTool.Description, "0 to clear")
+	require.True(t, setTool.Annotations.IdempotentHint)
+	require.True(t, *setTool.Annotations.DestructiveHint)
+	setInput := requireJSONSchema(t, setTool.InputSchema)
+	setProperties := schemaProperties(setInput["properties"])
+	setBody := requireJSONSchema(t, setProperties["body"])
+	require.Equal(t, []string{"moodLevel"}, requiredNames(setBody["required"]))
+	require.NotContains(t, schemaProperties(setBody["properties"]), "name")
+	moodLevel := requireJSONSchema(t, schemaProperties(setBody["properties"])["moodLevel"])
+	require.EqualValues(t, 0, moodLevel["minimum"])
+	require.EqualValues(t, 7, moodLevel["maximum"])
+	require.NoError(t, validateToolArguments(setInput, map[string]any{
+		"memo": "memos/abc123",
+		"body": map[string]any{"moodLevel": 4},
+	}))
+	require.Error(t, validateToolArguments(setInput, map[string]any{
+		"memo": "memos/abc123",
+		"body": map[string]any{"moodLevel": 8},
+	}))
 }
 
 func TestBuildCuratedToolsRejectsMissingOperation(t *testing.T) {

@@ -190,8 +190,99 @@ func TestMCPProtocolListsCuratedToolsOnly(t *testing.T) {
 	}
 	require.Contains(t, names, "memo_list_memos")
 	require.Contains(t, names, "memo_create_memo")
+	require.Contains(t, names, "memo_set_memo_mood")
+	require.Contains(t, names, "instance_get_memo_mood_display")
+	require.Contains(t, names, "instance_update_memo_mood_display")
 	require.NotContains(t, names, "auth_sign_in")
 	require.NotContains(t, names, "user_create_user")
+}
+
+func TestMCPToolCallSetsOneMemoMood(t *testing.T) {
+	echoServer := echo.New()
+	routeHits := 0
+	echoServer.PATCH("/api/v1/memos/:name/mood", func(c *echo.Context) error {
+		routeHits++
+		require.Equal(t, "abc123", c.Param("name"))
+		body := map[string]any{}
+		require.NoError(t, json.NewDecoder(c.Request().Body).Decode(&body))
+		require.Equal(t, map[string]any{"moodLevel": float64(4)}, body)
+		return c.JSON(http.StatusOK, map[string]any{"name": "memos/abc123", "moodLevel": 4})
+	})
+
+	service, err := NewMCPService(&profile.Profile{Version: "test-version"}, echoServer)
+	require.NoError(t, err)
+	service.RegisterRoutes(echoServer)
+
+	initializeMCP(t, echoServer)
+	response := postMCP(t, echoServer, map[string]any{
+		"jsonrpc": "2.0",
+		"id":      2,
+		"method":  "tools/call",
+		"params": map[string]any{
+			"name": "memo_set_memo_mood",
+			"arguments": map[string]any{
+				"memo": "memos/abc123",
+				"body": map[string]any{"moodLevel": 4},
+			},
+		},
+	})
+
+	result, ok := response["result"].(map[string]any)
+	require.True(t, ok)
+	require.NotEqual(t, true, result["isError"], result)
+	require.Equal(t, map[string]any{"name": "memos/abc123", "moodLevel": float64(4)}, result["structuredContent"])
+	require.Equal(t, 1, routeHits)
+}
+
+func TestMCPToolCallUpdatesMemoMoodDisplay(t *testing.T) {
+	echoServer := echo.New()
+	routeHits := 0
+	echoServer.PATCH("/api/v1/instance/memo-mood-display", func(c *echo.Context) error {
+		routeHits++
+		body := map[string]any{}
+		require.NoError(t, json.NewDecoder(c.Request().Body).Decode(&body))
+		require.Equal(t, map[string]any{
+			"updates": []any{
+				map[string]any{"level": float64(4), "emoji": "🙂", "color": "#A8A29E"},
+			},
+		}, body)
+		return c.JSON(http.StatusOK, map[string]any{
+			"levels": []any{
+				map[string]any{"level": float64(4), "emoji": "🙂", "color": "#a8a29e"},
+			},
+		})
+	})
+
+	service, err := NewMCPService(&profile.Profile{Version: "test-version"}, echoServer)
+	require.NoError(t, err)
+	service.RegisterRoutes(echoServer)
+
+	initializeMCP(t, echoServer)
+	response := postMCP(t, echoServer, map[string]any{
+		"jsonrpc": "2.0",
+		"id":      2,
+		"method":  "tools/call",
+		"params": map[string]any{
+			"name": "instance_update_memo_mood_display",
+			"arguments": map[string]any{
+				"body": map[string]any{
+					"updates": []any{
+						map[string]any{"level": 4, "emoji": "🙂", "color": "#A8A29E"},
+					},
+				},
+			},
+		},
+	})
+
+	result, ok := response["result"].(map[string]any)
+	require.True(t, ok)
+	require.NotEqual(t, true, result["isError"], result)
+	require.Equal(t, map[string]any{
+		"levels": []any{
+			map[string]any{"level": float64(4), "emoji": "🙂", "color": "#a8a29e"},
+		},
+	}, result["structuredContent"])
+	require.Equal(t, 1, routeHits)
 }
 
 func TestMCPToolCallReturnsObjectStructuredContent(t *testing.T) {

@@ -2,7 +2,7 @@
 
 This package serves an [OpenAPI](https://www.openapis.org/)-driven
 [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) endpoint at
-`/mcp`. It exposes a curated, memo-focused toolset over the **Streamable HTTP**
+`/mcp`. It exposes a curated personal-workflow toolset over the **Streamable HTTP**
 transport using the official `github.com/modelcontextprotocol/go-sdk`.
 
 The core design principle: **tool calls execute in-process against the existing
@@ -146,8 +146,8 @@ a personal access token as a bearer credential. Example client config:
 ## Tool surface
 
 The server exposes a curated allowlist (`curatedOperationIDs` in `catalog.go`).
-Every entry is intentionally scoped to a signed-in user's notes, reminders,
-private finance ledger, personal settings, or read-only statistics. The only
+Entries are intentionally scoped to notes, reminders, a private finance ledger,
+personal settings, narrow mood-display configuration, or statistics. The only
 auth operation is the read-only `AuthService_GetCurrentUser` ("whoami").
 
 | OpenAPI operation | MCP tool | Purpose |
@@ -156,6 +156,7 @@ auth operation is the read-only `AuthService_GetCurrentUser` ("whoami").
 | `MemoService_CreateMemo` | `memo_create_memo` | Create a memo. |
 | `MemoService_GetMemo` | `memo_get_memo` | Read one memo. |
 | `MemoService_UpdateMemo` | `memo_update_memo` | Update memo fields. |
+| `MemoService_SetMemoMood` | `memo_set_memo_mood` | Set one memo's recorded mood level to 1-7, or clear it with 0. |
 | `MemoService_DeleteMemo` | `memo_delete_memo` | Delete a memo. |
 | `MemoService_ListMemoComments` | `memo_list_memo_comments` | Read memo comments. |
 | `MemoService_CreateMemoComment` | `memo_create_memo_comment` | Add a memo comment. |
@@ -194,6 +195,8 @@ auth operation is the read-only `AuthService_GetCurrentUser` ("whoami").
 | `FinanceService_AdjustFinanceWalletBalance` | `finance_adjust_finance_wallet_balance` | Reconcile a wallet to an observed balance. |
 | `FinanceService_GetFinanceSummary` | `finance_get_finance_summary` | Read balance, income, expense, net, and daily summaries. |
 | `InstanceService_GetInstanceStats` | `instance_get_instance_stats` | Read admin-only instance resource statistics. |
+| `InstanceService_GetMemoMoodDisplay` | `instance_get_memo_mood_display` | Read all seven effective memo mood display Emoji/color entries. |
+| `InstanceService_UpdateMemoMoodDisplay` | `instance_update_memo_mood_display` | Partially update the Emoji/color displayed for selected mood levels; admin-only. |
 | `UserService_GetUserStats` | `user_get_user_stats` | Read structured user memo, tag, and mood statistics. |
 | `UserService_GetUserSetting` | `user_get_user_setting` | Read the caller's `GENERAL`, `TAGS`, or `PERSONA` setting (uppercase key). |
 | `UserService_UpdateUserSetting` | `user_update_user_setting` | Update `GENERAL`, `TAGS`, or `PERSONA`; field masks use proto snake_case names. |
@@ -201,9 +204,36 @@ auth operation is the read-only `AuthService_GetCurrentUser` ("whoami").
 
 The allowlist deliberately excludes sign-in/out and token refresh, user
 administration, webhooks (including the generic user-setting path), personal access tokens, linked identities and SSO,
-instance-setting mutation and email tests, public memo shares, and AI
-transcription. Tests assert both the required workflow entries and these
-negative security boundaries.
+the broad instance-setting mutation surface and email tests, public memo shares,
+and AI transcription. The narrowly scoped mood-display update is the only
+instance presentation mutation exposed. Tests assert both the required workflow
+entries and these negative security boundaries.
+
+### Agent discovery contract
+
+Tool names, descriptions, parameter descriptions, and input constraints are part
+of the product contract, not incidental documentation. Every curated tool must
+have a non-empty action-oriented description, and mutation inputs should expose
+the narrowest valid schema so a model can choose and call the tool without a
+failed probe.
+
+Closely related intents are named and described explicitly:
+
+- `memo_set_memo_mood` is the preferred narrow tool for setting or clearing the
+  `moodLevel` recorded on one existing memo.
+- `memo_update_memo` changes general data on one memo. It still supports
+  `moodLevel` for API compatibility, but models should prefer the narrow tool
+  for mood-only requests.
+- `instance_update_memo_mood_display` changes the instance-wide Emoji/color
+  presentation for one or more of the seven fixed levels; it does not edit any
+  memo and requires an administrator.
+- `finance_update_finance_category` changes a category icon with `body.emoji`
+  plus `updateMask="emoji"`.
+
+`catalog_test.go` rejects missing descriptions and checks the important
+distinctions and constraints. `evals/tool_selection_eval.xml` asks a model to
+select exact tool names for intentionally similar requests; it is the semantic
+regression check that complements the schema unit tests.
 
 **Naming rule** (`toolNameFromOperationID`): drop the `Service` suffix from the
 subject and convert both subject and method from camelCase to snake_case, joined
@@ -218,10 +248,14 @@ by `_`. So `MemoService_ListMemos → memo_list_memos`.
 | other (POST, PATCH, …) | false | false | false |
 
 Per-operation overrides then correct cases the method heuristic gets wrong.
-`MemoService_SetMemoAttachments` and `MemoService_SetMemoRelations` are PATCH
-but declaratively replace the full set on a memo, so they report both
-`IdempotentHint: true` and `DestructiveHint: true`. `MemoService_UpdateMemo`
+`MemoService_SetMemoMood`, `MemoService_SetMemoAttachments`, and
+`MemoService_SetMemoRelations` are PATCH operations that converge when repeated
+with identical input, so they report `IdempotentHint: true`. They also report
+`DestructiveHint: true` because they replace an existing mood value or complete
+attachment/relation set. `MemoService_UpdateMemo`
 also reports `DestructiveHint: true` because it can overwrite existing fields.
+`InstanceService_UpdateMemoMoodDisplay` is idempotent for an identical partial
+configuration but destructive because it overwrites existing display choices.
 
 `OpenWorldHint` is `false` for all tools. Annotations are client hints; they do
 not replace API authorization.
@@ -285,7 +319,8 @@ validate an error payload against the tool's success-only output schema:
    ```
 
 3. Extend the tests in `catalog_test.go` / `service_test.go` to cover the new
-   tool.
+   tool. Add a selection case to `evals/tool_selection_eval.xml` when it could
+   be confused with an existing tool.
 
 Never hand-edit `proto/gen/openapi.yaml` or other generated output — change the
 proto definitions and regenerate.
@@ -303,6 +338,8 @@ go test ./server/router/mcp/...
 - `service_test.go` — the origin-header check, plus the end-to-end MCP protocol
   (`initialize`, `tools/list`, `tools/call`) confirming object-shaped
   `structuredContent`.
+- `evals/tool_selection_eval.xml` — definition-level tool-choice cases for
+  semantically adjacent intents; no application data is mutated.
 
 ## Design notes
 

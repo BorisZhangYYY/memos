@@ -55,6 +55,24 @@ service InstanceService {
   rpc GetInstanceStats(GetInstanceStatsRequest) returns (InstanceStats) {
     option (google.api.http) = {get: "/api/v1/instance/stats"};
   }
+
+  // Gets the effective instance-wide display configuration for memo mood levels
+  // 1-7, including each level's emoji and hexadecimal color. This only controls
+  // presentation; the mood_level recorded on individual memos is unchanged.
+  rpc GetMemoMoodDisplay(GetMemoMoodDisplayRequest) returns (MemoMoodDisplay) {
+    option (google.api.http) = {get: "/api/v1/instance/memo-mood-display"};
+  }
+
+  // Updates the display emoji and/or color for selected memo mood levels.
+  // Omitted levels and omitted fields remain unchanged. This only controls
+  // presentation; use MemoService_UpdateMemo to change a memo's mood_level.
+  // Administrator permission is required.
+  rpc UpdateMemoMoodDisplay(UpdateMemoMoodDisplayRequest) returns (MemoMoodDisplay) {
+    option (google.api.http) = {
+      patch: "/api/v1/instance/memo-mood-display"
+      body: "*"
+    };
+  }
 }
 
 // Instance profile message containing basic instance information.
@@ -350,6 +368,40 @@ message TestInstanceEmailSettingRequest {
 
 // Request message for GetInstanceStats.
 message GetInstanceStatsRequest {}
+
+// MemoMoodDisplay is the effective presentation assigned to the seven memo
+// mood levels. It does not contain or modify the mood of any individual memo.
+message MemoMoodDisplay {
+  message MoodLevel {
+    // The fixed memo mood level, from 1 (lowest) through 7 (highest).
+    int32 level = 1;
+    // The emoji displayed for this mood level.
+    string emoji = 2;
+    // The hexadecimal color displayed for this mood level, in #RRGGBB form.
+    string color = 3;
+  }
+
+  // All seven effective mood-level display entries, ordered by level.
+  repeated MoodLevel levels = 1;
+}
+
+message GetMemoMoodDisplayRequest {}
+
+message UpdateMemoMoodDisplayRequest {
+  message MoodLevelUpdate {
+    // The memo mood level whose display should change, from 1 through 7.
+    int32 level = 1 [(google.api.field_behavior) = REQUIRED];
+    // The new display emoji. Omit to preserve the current emoji; an empty value
+    // restores the default emoji for this level.
+    optional string emoji = 2 [(google.api.field_behavior) = OPTIONAL];
+    // The new #RRGGBB display color. Omit to preserve the current color; an
+    // empty value restores the default color for this level.
+    optional string color = 3 [(google.api.field_behavior) = OPTIONAL];
+  }
+
+  // Partial mood display changes. Only listed levels and fields are updated.
+  repeated MoodLevelUpdate updates = 1 [(google.api.field_behavior) = REQUIRED];
+}
 
 // Resource usage statistics for the instance.
 message InstanceStats {

@@ -16,6 +16,7 @@ func TestPublicMethodsArePublic(t *testing.T) {
 		"/memos.api.v1.InstanceService/GetInstanceProfile",
 		"/memos.api.v1.InstanceService/GetInstanceSetting",
 		"/memos.api.v1.InstanceService/BatchGetInstanceSettings",
+		"/memos.api.v1.InstanceService/GetMemoMoodDisplay",
 		// User Service
 		"/memos.api.v1.UserService/CreateUser",
 		"/memos.api.v1.UserService/GetUser",
@@ -47,6 +48,7 @@ func TestProtectedMethodsRequireAuth(t *testing.T) {
 		"/memos.api.v1.AuthService/GetCurrentUser",
 		// Instance Service - admin operations
 		"/memos.api.v1.InstanceService/UpdateInstanceSetting",
+		"/memos.api.v1.InstanceService/UpdateMemoMoodDisplay",
 		"/memos.api.v1.InstanceService/TestInstanceEmailSetting",
 		// User Service - modification operations
 		"/memos.api.v1.UserService/ListUsers",
@@ -55,6 +57,7 @@ func TestProtectedMethodsRequireAuth(t *testing.T) {
 		// Memo Service - write operations
 		"/memos.api.v1.MemoService/CreateMemo",
 		"/memos.api.v1.MemoService/UpdateMemo",
+		"/memos.api.v1.MemoService/SetMemoMood",
 		"/memos.api.v1.MemoService/DeleteMemo",
 		// Attachment Service - write operations
 		"/memos.api.v1.AttachmentService/CreateAttachment",

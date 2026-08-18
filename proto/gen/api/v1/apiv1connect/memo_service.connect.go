@@ -42,6 +42,8 @@ const (
 	MemoServiceGetMemoProcedure = "/memos.api.v1.MemoService/GetMemo"
 	// MemoServiceUpdateMemoProcedure is the fully-qualified name of the MemoService's UpdateMemo RPC.
 	MemoServiceUpdateMemoProcedure = "/memos.api.v1.MemoService/UpdateMemo"
+	// MemoServiceSetMemoMoodProcedure is the fully-qualified name of the MemoService's SetMemoMood RPC.
+	MemoServiceSetMemoMoodProcedure = "/memos.api.v1.MemoService/SetMemoMood"
 	// MemoServiceDeleteMemoProcedure is the fully-qualified name of the MemoService's DeleteMemo RPC.
 	MemoServiceDeleteMemoProcedure = "/memos.api.v1.MemoService/DeleteMemo"
 	// MemoServiceSetMemoAttachmentsProcedure is the fully-qualified name of the MemoService's
@@ -94,15 +96,23 @@ const (
 // MemoServiceClient is a client for the memos.api.v1.MemoService service.
 type MemoServiceClient interface {
 	// CreateMemo creates a memo. The request body is a Memo; set its content
-	// (Markdown) and visibility (PRIVATE | PROTECTED | PUBLIC, default PRIVATE).
+	// (Markdown), visibility (PRIVATE | PROTECTED | PUBLIC, default PRIVATE),
+	// and optional mood_level from 1 through 7.
 	// The memo is owned by the authenticated user; requires authentication.
 	CreateMemo(context.Context, *connect.Request[v1.CreateMemoRequest]) (*connect.Response[v1.Memo], error)
 	// ListMemos lists memos with pagination and filter.
 	ListMemos(context.Context, *connect.Request[v1.ListMemosRequest]) (*connect.Response[v1.ListMemosResponse], error)
 	// GetMemo gets a memo.
 	GetMemo(context.Context, *connect.Request[v1.GetMemoRequest]) (*connect.Response[v1.Memo], error)
-	// UpdateMemo updates a memo.
+	// UpdateMemo changes fields on one existing memo, including content,
+	// visibility, pinned, and mood_level. Use mood_level from 1 through 7 to
+	// change the mood recorded on this memo; this does not change the emoji or
+	// color used to display that level instance-wide.
 	UpdateMemo(context.Context, *connect.Request[v1.UpdateMemoRequest]) (*connect.Response[v1.Memo], error)
+	// SetMemoMood sets the mood recorded on one existing memo. Use mood_level
+	// 1-7 to select a mood or 0 to clear it. This does not change the
+	// instance-wide emoji or color used to display that level.
+	SetMemoMood(context.Context, *connect.Request[v1.SetMemoMoodRequest]) (*connect.Response[v1.Memo], error)
 	// DeleteMemo deletes a memo.
 	DeleteMemo(context.Context, *connect.Request[v1.DeleteMemoRequest]) (*connect.Response[emptypb.Empty], error)
 	// SetMemoAttachments replaces the full set of attachments on a memo with the
@@ -176,6 +186,12 @@ func NewMemoServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			httpClient,
 			baseURL+MemoServiceUpdateMemoProcedure,
 			connect.WithSchema(memoServiceMethods.ByName("UpdateMemo")),
+			connect.WithClientOptions(opts...),
+		),
+		setMemoMood: connect.NewClient[v1.SetMemoMoodRequest, v1.Memo](
+			httpClient,
+			baseURL+MemoServiceSetMemoMoodProcedure,
+			connect.WithSchema(memoServiceMethods.ByName("SetMemoMood")),
 			connect.WithClientOptions(opts...),
 		),
 		deleteMemo: connect.NewClient[v1.DeleteMemoRequest, emptypb.Empty](
@@ -283,6 +299,7 @@ type memoServiceClient struct {
 	listMemos            *connect.Client[v1.ListMemosRequest, v1.ListMemosResponse]
 	getMemo              *connect.Client[v1.GetMemoRequest, v1.Memo]
 	updateMemo           *connect.Client[v1.UpdateMemoRequest, v1.Memo]
+	setMemoMood          *connect.Client[v1.SetMemoMoodRequest, v1.Memo]
 	deleteMemo           *connect.Client[v1.DeleteMemoRequest, emptypb.Empty]
 	setMemoAttachments   *connect.Client[v1.SetMemoAttachmentsRequest, emptypb.Empty]
 	listMemoAttachments  *connect.Client[v1.ListMemoAttachmentsRequest, v1.ListMemoAttachmentsResponse]
@@ -319,6 +336,11 @@ func (c *memoServiceClient) GetMemo(ctx context.Context, req *connect.Request[v1
 // UpdateMemo calls memos.api.v1.MemoService.UpdateMemo.
 func (c *memoServiceClient) UpdateMemo(ctx context.Context, req *connect.Request[v1.UpdateMemoRequest]) (*connect.Response[v1.Memo], error) {
 	return c.updateMemo.CallUnary(ctx, req)
+}
+
+// SetMemoMood calls memos.api.v1.MemoService.SetMemoMood.
+func (c *memoServiceClient) SetMemoMood(ctx context.Context, req *connect.Request[v1.SetMemoMoodRequest]) (*connect.Response[v1.Memo], error) {
+	return c.setMemoMood.CallUnary(ctx, req)
 }
 
 // DeleteMemo calls memos.api.v1.MemoService.DeleteMemo.
@@ -404,15 +426,23 @@ func (c *memoServiceClient) BatchGetLinkMetadata(ctx context.Context, req *conne
 // MemoServiceHandler is an implementation of the memos.api.v1.MemoService service.
 type MemoServiceHandler interface {
 	// CreateMemo creates a memo. The request body is a Memo; set its content
-	// (Markdown) and visibility (PRIVATE | PROTECTED | PUBLIC, default PRIVATE).
+	// (Markdown), visibility (PRIVATE | PROTECTED | PUBLIC, default PRIVATE),
+	// and optional mood_level from 1 through 7.
 	// The memo is owned by the authenticated user; requires authentication.
 	CreateMemo(context.Context, *connect.Request[v1.CreateMemoRequest]) (*connect.Response[v1.Memo], error)
 	// ListMemos lists memos with pagination and filter.
 	ListMemos(context.Context, *connect.Request[v1.ListMemosRequest]) (*connect.Response[v1.ListMemosResponse], error)
 	// GetMemo gets a memo.
 	GetMemo(context.Context, *connect.Request[v1.GetMemoRequest]) (*connect.Response[v1.Memo], error)
-	// UpdateMemo updates a memo.
+	// UpdateMemo changes fields on one existing memo, including content,
+	// visibility, pinned, and mood_level. Use mood_level from 1 through 7 to
+	// change the mood recorded on this memo; this does not change the emoji or
+	// color used to display that level instance-wide.
 	UpdateMemo(context.Context, *connect.Request[v1.UpdateMemoRequest]) (*connect.Response[v1.Memo], error)
+	// SetMemoMood sets the mood recorded on one existing memo. Use mood_level
+	// 1-7 to select a mood or 0 to clear it. This does not change the
+	// instance-wide emoji or color used to display that level.
+	SetMemoMood(context.Context, *connect.Request[v1.SetMemoMoodRequest]) (*connect.Response[v1.Memo], error)
 	// DeleteMemo deletes a memo.
 	DeleteMemo(context.Context, *connect.Request[v1.DeleteMemoRequest]) (*connect.Response[emptypb.Empty], error)
 	// SetMemoAttachments replaces the full set of attachments on a memo with the
@@ -482,6 +512,12 @@ func NewMemoServiceHandler(svc MemoServiceHandler, opts ...connect.HandlerOption
 		MemoServiceUpdateMemoProcedure,
 		svc.UpdateMemo,
 		connect.WithSchema(memoServiceMethods.ByName("UpdateMemo")),
+		connect.WithHandlerOptions(opts...),
+	)
+	memoServiceSetMemoMoodHandler := connect.NewUnaryHandler(
+		MemoServiceSetMemoMoodProcedure,
+		svc.SetMemoMood,
+		connect.WithSchema(memoServiceMethods.ByName("SetMemoMood")),
 		connect.WithHandlerOptions(opts...),
 	)
 	memoServiceDeleteMemoHandler := connect.NewUnaryHandler(
@@ -590,6 +626,8 @@ func NewMemoServiceHandler(svc MemoServiceHandler, opts ...connect.HandlerOption
 			memoServiceGetMemoHandler.ServeHTTP(w, r)
 		case MemoServiceUpdateMemoProcedure:
 			memoServiceUpdateMemoHandler.ServeHTTP(w, r)
+		case MemoServiceSetMemoMoodProcedure:
+			memoServiceSetMemoMoodHandler.ServeHTTP(w, r)
 		case MemoServiceDeleteMemoProcedure:
 			memoServiceDeleteMemoHandler.ServeHTTP(w, r)
 		case MemoServiceSetMemoAttachmentsProcedure:
@@ -645,6 +683,10 @@ func (UnimplementedMemoServiceHandler) GetMemo(context.Context, *connect.Request
 
 func (UnimplementedMemoServiceHandler) UpdateMemo(context.Context, *connect.Request[v1.UpdateMemoRequest]) (*connect.Response[v1.Memo], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.MemoService.UpdateMemo is not implemented"))
+}
+
+func (UnimplementedMemoServiceHandler) SetMemoMood(context.Context, *connect.Request[v1.SetMemoMoodRequest]) (*connect.Response[v1.Memo], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.MemoService.SetMemoMood is not implemented"))
 }
 
 func (UnimplementedMemoServiceHandler) DeleteMemo(context.Context, *connect.Request[v1.DeleteMemoRequest]) (*connect.Response[emptypb.Empty], error) {

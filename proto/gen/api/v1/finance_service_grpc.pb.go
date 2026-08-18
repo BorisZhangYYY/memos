@@ -40,17 +40,29 @@ const (
 //
 // FinanceService manages a user's private wallets and ledger.
 type FinanceServiceClient interface {
+	// Lists the authenticated user's private finance wallets and current balances.
 	ListFinanceWallets(ctx context.Context, in *ListFinanceWalletsRequest, opts ...grpc.CallOption) (*ListFinanceWalletsResponse, error)
+	// Creates a private finance wallet. Set the opening balance with initial_balance_minor.
 	CreateFinanceWallet(ctx context.Context, in *CreateFinanceWalletRequest, opts ...grpc.CallOption) (*FinanceWallet, error)
+	// Updates a finance wallet's display name, negative-balance policy, or archive state.
 	UpdateFinanceWallet(ctx context.Context, in *UpdateFinanceWalletRequest, opts ...grpc.CallOption) (*FinanceWallet, error)
+	// Lists the authenticated user's income and expense categories, including their display emojis.
 	ListFinanceCategories(ctx context.Context, in *ListFinanceCategoriesRequest, opts ...grpc.CallOption) (*ListFinanceCategoriesResponse, error)
+	// Creates an income or expense category with an optional display emoji.
 	CreateFinanceCategory(ctx context.Context, in *CreateFinanceCategoryRequest, opts ...grpc.CallOption) (*FinanceCategory, error)
+	// Updates a finance category's display name, emoji, or archive state. The category type is immutable.
 	UpdateFinanceCategory(ctx context.Context, in *UpdateFinanceCategoryRequest, opts ...grpc.CallOption) (*FinanceCategory, error)
+	// Lists private ledger transactions, optionally filtered by wallet and time range.
 	ListFinanceTransactions(ctx context.Context, in *ListFinanceTransactionsRequest, opts ...grpc.CallOption) (*ListFinanceTransactionsResponse, error)
+	// Records income, expense, or a wallet transfer. occur_time is required.
 	CreateFinanceTransaction(ctx context.Context, in *CreateFinanceTransactionRequest, opts ...grpc.CallOption) (*FinanceTransaction, error)
+	// Corrects a ledger transaction and rebuilds affected chronological balance snapshots.
 	UpdateFinanceTransaction(ctx context.Context, in *UpdateFinanceTransactionRequest, opts ...grpc.CallOption) (*FinanceTransaction, error)
+	// Deletes a ledger transaction and rebuilds affected chronological balance snapshots.
 	DeleteFinanceTransaction(ctx context.Context, in *DeleteFinanceTransactionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Reconciles a wallet to an observed balance by creating an adjustment transaction.
 	AdjustFinanceWalletBalance(ctx context.Context, in *AdjustFinanceWalletBalanceRequest, opts ...grpc.CallOption) (*FinanceTransaction, error)
+	// Returns balance, income, expense, net, and daily summaries for a required time range and time zone.
 	GetFinanceSummary(ctx context.Context, in *GetFinanceSummaryRequest, opts ...grpc.CallOption) (*FinanceSummary, error)
 }
 
@@ -188,17 +200,29 @@ func (c *financeServiceClient) GetFinanceSummary(ctx context.Context, in *GetFin
 //
 // FinanceService manages a user's private wallets and ledger.
 type FinanceServiceServer interface {
+	// Lists the authenticated user's private finance wallets and current balances.
 	ListFinanceWallets(context.Context, *ListFinanceWalletsRequest) (*ListFinanceWalletsResponse, error)
+	// Creates a private finance wallet. Set the opening balance with initial_balance_minor.
 	CreateFinanceWallet(context.Context, *CreateFinanceWalletRequest) (*FinanceWallet, error)
+	// Updates a finance wallet's display name, negative-balance policy, or archive state.
 	UpdateFinanceWallet(context.Context, *UpdateFinanceWalletRequest) (*FinanceWallet, error)
+	// Lists the authenticated user's income and expense categories, including their display emojis.
 	ListFinanceCategories(context.Context, *ListFinanceCategoriesRequest) (*ListFinanceCategoriesResponse, error)
+	// Creates an income or expense category with an optional display emoji.
 	CreateFinanceCategory(context.Context, *CreateFinanceCategoryRequest) (*FinanceCategory, error)
+	// Updates a finance category's display name, emoji, or archive state. The category type is immutable.
 	UpdateFinanceCategory(context.Context, *UpdateFinanceCategoryRequest) (*FinanceCategory, error)
+	// Lists private ledger transactions, optionally filtered by wallet and time range.
 	ListFinanceTransactions(context.Context, *ListFinanceTransactionsRequest) (*ListFinanceTransactionsResponse, error)
+	// Records income, expense, or a wallet transfer. occur_time is required.
 	CreateFinanceTransaction(context.Context, *CreateFinanceTransactionRequest) (*FinanceTransaction, error)
+	// Corrects a ledger transaction and rebuilds affected chronological balance snapshots.
 	UpdateFinanceTransaction(context.Context, *UpdateFinanceTransactionRequest) (*FinanceTransaction, error)
+	// Deletes a ledger transaction and rebuilds affected chronological balance snapshots.
 	DeleteFinanceTransaction(context.Context, *DeleteFinanceTransactionRequest) (*emptypb.Empty, error)
+	// Reconciles a wallet to an observed balance by creating an adjustment transaction.
 	AdjustFinanceWalletBalance(context.Context, *AdjustFinanceWalletBalanceRequest) (*FinanceTransaction, error)
+	// Returns balance, income, expense, net, and daily summaries for a required time range and time zone.
 	GetFinanceSummary(context.Context, *GetFinanceSummaryRequest) (*FinanceSummary, error)
 	mustEmbedUnimplementedFinanceServiceServer()
 }

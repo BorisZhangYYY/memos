@@ -38,15 +38,25 @@ const (
 //
 // ReminderService manages a user's private reminder lists and reminder items.
 type ReminderServiceClient interface {
+	// Lists the authenticated user's private reminder lists and their pending counts.
 	ListReminderLists(ctx context.Context, in *ListReminderListsRequest, opts ...grpc.CallOption) (*ListReminderListsResponse, error)
+	// Creates a private reminder list used to organize reminder items.
 	CreateReminderList(ctx context.Context, in *CreateReminderListRequest, opts ...grpc.CallOption) (*ReminderList, error)
+	// Updates a reminder list's name, color, icon, order, or archive state.
 	UpdateReminderList(ctx context.Context, in *UpdateReminderListRequest, opts ...grpc.CallOption) (*ReminderList, error)
+	// Deletes a reminder list.
 	DeleteReminderList(ctx context.Context, in *DeleteReminderListRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Lists reminders using views such as TODAY, SCHEDULED, FLAGGED, or COMPLETED.
 	ListReminders(ctx context.Context, in *ListRemindersRequest, opts ...grpc.CallOption) (*ListRemindersResponse, error)
+	// Creates a reminder with an exact remind_time or a date-only due_date; there is no details field.
 	CreateReminder(ctx context.Context, in *CreateReminderRequest, opts ...grpc.CallOption) (*Reminder, error)
+	// Updates a reminder's scheduling, list, priority, tags, location, or archive state.
 	UpdateReminder(ctx context.Context, in *UpdateReminderRequest, opts ...grpc.CallOption) (*Reminder, error)
+	// Deletes a reminder.
 	DeleteReminder(ctx context.Context, in *DeleteReminderRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Marks a pending reminder complete and advances recurring reminders when applicable.
 	CompleteReminder(ctx context.Context, in *CompleteReminderRequest, opts ...grpc.CallOption) (*Reminder, error)
+	// Archives all completed reminders and returns the number cleared.
 	ClearCompletedReminders(ctx context.Context, in *ClearCompletedRemindersRequest, opts ...grpc.CallOption) (*ClearCompletedRemindersResponse, error)
 }
 
@@ -164,15 +174,25 @@ func (c *reminderServiceClient) ClearCompletedReminders(ctx context.Context, in 
 //
 // ReminderService manages a user's private reminder lists and reminder items.
 type ReminderServiceServer interface {
+	// Lists the authenticated user's private reminder lists and their pending counts.
 	ListReminderLists(context.Context, *ListReminderListsRequest) (*ListReminderListsResponse, error)
+	// Creates a private reminder list used to organize reminder items.
 	CreateReminderList(context.Context, *CreateReminderListRequest) (*ReminderList, error)
+	// Updates a reminder list's name, color, icon, order, or archive state.
 	UpdateReminderList(context.Context, *UpdateReminderListRequest) (*ReminderList, error)
+	// Deletes a reminder list.
 	DeleteReminderList(context.Context, *DeleteReminderListRequest) (*emptypb.Empty, error)
+	// Lists reminders using views such as TODAY, SCHEDULED, FLAGGED, or COMPLETED.
 	ListReminders(context.Context, *ListRemindersRequest) (*ListRemindersResponse, error)
+	// Creates a reminder with an exact remind_time or a date-only due_date; there is no details field.
 	CreateReminder(context.Context, *CreateReminderRequest) (*Reminder, error)
+	// Updates a reminder's scheduling, list, priority, tags, location, or archive state.
 	UpdateReminder(context.Context, *UpdateReminderRequest) (*Reminder, error)
+	// Deletes a reminder.
 	DeleteReminder(context.Context, *DeleteReminderRequest) (*emptypb.Empty, error)
+	// Marks a pending reminder complete and advances recurring reminders when applicable.
 	CompleteReminder(context.Context, *CompleteReminderRequest) (*Reminder, error)
+	// Archives all completed reminders and returns the number cleared.
 	ClearCompletedReminders(context.Context, *ClearCompletedRemindersRequest) (*ClearCompletedRemindersResponse, error)
 	mustEmbedUnimplementedReminderServiceServer()
 }

@@ -14,49 +14,59 @@ option go_package = "gen/api/v1";
 
 // ReminderService manages a user's private reminder lists and reminder items.
 service ReminderService {
+  // Lists the authenticated user's private reminder lists and their pending counts.
   rpc ListReminderLists(ListReminderListsRequest) returns (ListReminderListsResponse) {
     option (google.api.http) = {get: "/api/v1/{parent=users/*}/reminder-lists"};
   }
+  // Creates a private reminder list used to organize reminder items.
   rpc CreateReminderList(CreateReminderListRequest) returns (ReminderList) {
     option (google.api.http) = {
       post: "/api/v1/{parent=users/*}/reminder-lists"
       body: "reminder_list"
     };
   }
+  // Updates a reminder list's name, color, icon, order, or archive state.
   rpc UpdateReminderList(UpdateReminderListRequest) returns (ReminderList) {
     option (google.api.http) = {
       patch: "/api/v1/{reminder_list.name=users/*/reminderLists/*}"
       body: "reminder_list"
     };
   }
+  // Deletes a reminder list.
   rpc DeleteReminderList(DeleteReminderListRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {delete: "/api/v1/{name=users/*/reminderLists/*}"};
   }
 
+  // Lists reminders using views such as TODAY, SCHEDULED, FLAGGED, or COMPLETED.
   rpc ListReminders(ListRemindersRequest) returns (ListRemindersResponse) {
     option (google.api.http) = {get: "/api/v1/{parent=users/*}/reminders"};
   }
+  // Creates a reminder with an exact remind_time or a date-only due_date; there is no details field.
   rpc CreateReminder(CreateReminderRequest) returns (Reminder) {
     option (google.api.http) = {
       post: "/api/v1/{parent=users/*}/reminders"
       body: "reminder"
     };
   }
+  // Updates a reminder's scheduling, list, priority, tags, location, or archive state.
   rpc UpdateReminder(UpdateReminderRequest) returns (Reminder) {
     option (google.api.http) = {
       patch: "/api/v1/{reminder.name=users/*/reminders/*}"
       body: "reminder"
     };
   }
+  // Deletes a reminder.
   rpc DeleteReminder(DeleteReminderRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {delete: "/api/v1/{name=users/*/reminders/*}"};
   }
+  // Marks a pending reminder complete and advances recurring reminders when applicable.
   rpc CompleteReminder(CompleteReminderRequest) returns (Reminder) {
     option (google.api.http) = {
       post: "/api/v1/{name=users/*/reminders/*}:complete"
       body: "*"
     };
   }
+  // Archives all completed reminders and returns the number cleared.
   rpc ClearCompletedReminders(ClearCompletedRemindersRequest) returns (ClearCompletedRemindersResponse) {
     option (google.api.http) = {
       post: "/api/v1/{parent=users/*}/reminders:clearCompleted"

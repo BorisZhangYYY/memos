@@ -17,6 +17,7 @@ var PublicMethods = map[string]struct{}{
 	"/memos.api.v1.InstanceService/GetInstanceProfile":       {},
 	"/memos.api.v1.InstanceService/GetInstanceSetting":       {},
 	"/memos.api.v1.InstanceService/BatchGetInstanceSettings": {},
+	"/memos.api.v1.InstanceService/GetMemoMoodDisplay":       {},
 
 	// User Service - public user profiles and stats
 	"/memos.api.v1.UserService/CreateUser":       {}, // Registration policy is enforced in UserService

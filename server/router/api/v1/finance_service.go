@@ -18,8 +18,9 @@ import (
 )
 
 const (
-	maxFinanceNameLength = 100
-	maxFinanceNoteLength = 500
+	maxFinanceNameLength          = 100
+	maxFinanceNoteLength          = 500
+	maxFinanceCategoryEmojiLength = 16
 )
 
 func financeWalletName(username, uid string) string {
@@ -140,6 +141,7 @@ func convertFinanceCategoryFromStore(username string, category *store.FinanceCat
 		State:       convertStateFromStore(category.RowStatus),
 		CreateTime:  timestamppb.New(time.Unix(category.CreatedTs, 0)),
 		UpdateTime:  timestamppb.New(time.Unix(category.UpdatedTs, 0)),
+		Emoji:       category.Emoji,
 	}
 }
 
@@ -210,6 +212,14 @@ func validateFinanceDisplayName(value string) error {
 		return status.Errorf(codes.InvalidArgument, "display name exceeds %d characters", maxFinanceNameLength)
 	}
 	return nil
+}
+
+func normalizeFinanceCategoryEmoji(value string) (string, error) {
+	value = strings.TrimSpace(value)
+	if len([]rune(value)) > maxFinanceCategoryEmojiLength {
+		return "", status.Errorf(codes.InvalidArgument, "category emoji exceeds %d characters", maxFinanceCategoryEmojiLength)
+	}
+	return value, nil
 }
 
 func validateFinanceAmount(amount int64) error {
@@ -369,6 +379,10 @@ func (s *APIV1Service) CreateFinanceCategory(ctx context.Context, request *v1pb.
 	if request.Category.Type != v1pb.FinanceCategory_INCOME && request.Category.Type != v1pb.FinanceCategory_EXPENSE {
 		return nil, status.Error(codes.InvalidArgument, "category type must be income or expense")
 	}
+	emoji, err := normalizeFinanceCategoryEmoji(request.Category.Emoji)
+	if err != nil {
+		return nil, err
+	}
 	uid := request.RequestId
 	if uid == "" {
 		uid = util.GenUUID()
@@ -382,7 +396,7 @@ func (s *APIV1Service) CreateFinanceCategory(ctx context.Context, request *v1pb.
 		}
 	}
 	category, err := s.Store.CreateFinanceCategory(ctx, &store.FinanceCategory{
-		UID: uid, CreatorID: user.ID, Name: strings.TrimSpace(request.Category.DisplayName), Type: store.FinanceCategoryType(request.Category.Type.String()),
+		UID: uid, CreatorID: user.ID, Name: strings.TrimSpace(request.Category.DisplayName), Type: store.FinanceCategoryType(request.Category.Type.String()), Emoji: emoji,
 	})
 	if err != nil {
 		return nil, financeStoreError(err)
@@ -411,6 +425,12 @@ func (s *APIV1Service) UpdateFinanceCategory(ctx context.Context, request *v1pb.
 		case "state":
 			state := convertStateToStore(request.Category.State)
 			update.RowStatus = &state
+		case "emoji":
+			emoji, err := normalizeFinanceCategoryEmoji(request.Category.Emoji)
+			if err != nil {
+				return nil, err
+			}
+			update.Emoji = &emoji
 		default:
 			return nil, status.Errorf(codes.InvalidArgument, "unsupported category update path: %s", path)
 		}

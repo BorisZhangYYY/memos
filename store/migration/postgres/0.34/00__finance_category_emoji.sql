@@ -1,0 +1,1 @@
+ALTER TABLE finance_category ADD COLUMN emoji TEXT NOT NULL DEFAULT '';

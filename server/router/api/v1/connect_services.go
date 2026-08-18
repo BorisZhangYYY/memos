@@ -23,6 +23,22 @@ func (s *ConnectServiceHandler) GetInstanceProfile(ctx context.Context, req *con
 	return connect.NewResponse(resp), nil
 }
 
+func (s *ConnectServiceHandler) GetMemoMoodDisplay(ctx context.Context, req *connect.Request[v1pb.GetMemoMoodDisplayRequest]) (*connect.Response[v1pb.MemoMoodDisplay], error) {
+	resp, err := s.APIV1Service.GetMemoMoodDisplay(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) UpdateMemoMoodDisplay(ctx context.Context, req *connect.Request[v1pb.UpdateMemoMoodDisplayRequest]) (*connect.Response[v1pb.MemoMoodDisplay], error) {
+	resp, err := s.APIV1Service.UpdateMemoMoodDisplay(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
 func (s *ConnectServiceHandler) GetInstanceSetting(ctx context.Context, req *connect.Request[v1pb.GetInstanceSettingRequest]) (*connect.Response[v1pb.InstanceSetting], error) {
 	resp, err := s.APIV1Service.GetInstanceSetting(ctx, req.Msg)
 	if err != nil {
@@ -329,6 +345,14 @@ func (s *ConnectServiceHandler) GetMemo(ctx context.Context, req *connect.Reques
 
 func (s *ConnectServiceHandler) UpdateMemo(ctx context.Context, req *connect.Request[v1pb.UpdateMemoRequest]) (*connect.Response[v1pb.Memo], error) {
 	resp, err := s.APIV1Service.UpdateMemo(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) SetMemoMood(ctx context.Context, req *connect.Request[v1pb.SetMemoMoodRequest]) (*connect.Response[v1pb.Memo], error) {
+	resp, err := s.APIV1Service.SetMemoMood(ctx, req.Msg)
 	if err != nil {
 		return nil, convertGRPCError(err)
 	}

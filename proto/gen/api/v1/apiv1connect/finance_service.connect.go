@@ -74,17 +74,29 @@ const (
 
 // FinanceServiceClient is a client for the memos.api.v1.FinanceService service.
 type FinanceServiceClient interface {
+	// Lists the authenticated user's private finance wallets and current balances.
 	ListFinanceWallets(context.Context, *connect.Request[v1.ListFinanceWalletsRequest]) (*connect.Response[v1.ListFinanceWalletsResponse], error)
+	// Creates a private finance wallet. Set the opening balance with initial_balance_minor.
 	CreateFinanceWallet(context.Context, *connect.Request[v1.CreateFinanceWalletRequest]) (*connect.Response[v1.FinanceWallet], error)
+	// Updates a finance wallet's display name, negative-balance policy, or archive state.
 	UpdateFinanceWallet(context.Context, *connect.Request[v1.UpdateFinanceWalletRequest]) (*connect.Response[v1.FinanceWallet], error)
+	// Lists the authenticated user's income and expense categories, including their display emojis.
 	ListFinanceCategories(context.Context, *connect.Request[v1.ListFinanceCategoriesRequest]) (*connect.Response[v1.ListFinanceCategoriesResponse], error)
+	// Creates an income or expense category with an optional display emoji.
 	CreateFinanceCategory(context.Context, *connect.Request[v1.CreateFinanceCategoryRequest]) (*connect.Response[v1.FinanceCategory], error)
+	// Updates a finance category's display name, emoji, or archive state. The category type is immutable.
 	UpdateFinanceCategory(context.Context, *connect.Request[v1.UpdateFinanceCategoryRequest]) (*connect.Response[v1.FinanceCategory], error)
+	// Lists private ledger transactions, optionally filtered by wallet and time range.
 	ListFinanceTransactions(context.Context, *connect.Request[v1.ListFinanceTransactionsRequest]) (*connect.Response[v1.ListFinanceTransactionsResponse], error)
+	// Records income, expense, or a wallet transfer. occur_time is required.
 	CreateFinanceTransaction(context.Context, *connect.Request[v1.CreateFinanceTransactionRequest]) (*connect.Response[v1.FinanceTransaction], error)
+	// Corrects a ledger transaction and rebuilds affected chronological balance snapshots.
 	UpdateFinanceTransaction(context.Context, *connect.Request[v1.UpdateFinanceTransactionRequest]) (*connect.Response[v1.FinanceTransaction], error)
+	// Deletes a ledger transaction and rebuilds affected chronological balance snapshots.
 	DeleteFinanceTransaction(context.Context, *connect.Request[v1.DeleteFinanceTransactionRequest]) (*connect.Response[emptypb.Empty], error)
+	// Reconciles a wallet to an observed balance by creating an adjustment transaction.
 	AdjustFinanceWalletBalance(context.Context, *connect.Request[v1.AdjustFinanceWalletBalanceRequest]) (*connect.Response[v1.FinanceTransaction], error)
+	// Returns balance, income, expense, net, and daily summaries for a required time range and time zone.
 	GetFinanceSummary(context.Context, *connect.Request[v1.GetFinanceSummaryRequest]) (*connect.Response[v1.FinanceSummary], error)
 }
 
@@ -252,17 +264,29 @@ func (c *financeServiceClient) GetFinanceSummary(ctx context.Context, req *conne
 
 // FinanceServiceHandler is an implementation of the memos.api.v1.FinanceService service.
 type FinanceServiceHandler interface {
+	// Lists the authenticated user's private finance wallets and current balances.
 	ListFinanceWallets(context.Context, *connect.Request[v1.ListFinanceWalletsRequest]) (*connect.Response[v1.ListFinanceWalletsResponse], error)
+	// Creates a private finance wallet. Set the opening balance with initial_balance_minor.
 	CreateFinanceWallet(context.Context, *connect.Request[v1.CreateFinanceWalletRequest]) (*connect.Response[v1.FinanceWallet], error)
+	// Updates a finance wallet's display name, negative-balance policy, or archive state.
 	UpdateFinanceWallet(context.Context, *connect.Request[v1.UpdateFinanceWalletRequest]) (*connect.Response[v1.FinanceWallet], error)
+	// Lists the authenticated user's income and expense categories, including their display emojis.
 	ListFinanceCategories(context.Context, *connect.Request[v1.ListFinanceCategoriesRequest]) (*connect.Response[v1.ListFinanceCategoriesResponse], error)
+	// Creates an income or expense category with an optional display emoji.
 	CreateFinanceCategory(context.Context, *connect.Request[v1.CreateFinanceCategoryRequest]) (*connect.Response[v1.FinanceCategory], error)
+	// Updates a finance category's display name, emoji, or archive state. The category type is immutable.
 	UpdateFinanceCategory(context.Context, *connect.Request[v1.UpdateFinanceCategoryRequest]) (*connect.Response[v1.FinanceCategory], error)
+	// Lists private ledger transactions, optionally filtered by wallet and time range.
 	ListFinanceTransactions(context.Context, *connect.Request[v1.ListFinanceTransactionsRequest]) (*connect.Response[v1.ListFinanceTransactionsResponse], error)
+	// Records income, expense, or a wallet transfer. occur_time is required.
 	CreateFinanceTransaction(context.Context, *connect.Request[v1.CreateFinanceTransactionRequest]) (*connect.Response[v1.FinanceTransaction], error)
+	// Corrects a ledger transaction and rebuilds affected chronological balance snapshots.
 	UpdateFinanceTransaction(context.Context, *connect.Request[v1.UpdateFinanceTransactionRequest]) (*connect.Response[v1.FinanceTransaction], error)
+	// Deletes a ledger transaction and rebuilds affected chronological balance snapshots.
 	DeleteFinanceTransaction(context.Context, *connect.Request[v1.DeleteFinanceTransactionRequest]) (*connect.Response[emptypb.Empty], error)
+	// Reconciles a wallet to an observed balance by creating an adjustment transaction.
 	AdjustFinanceWalletBalance(context.Context, *connect.Request[v1.AdjustFinanceWalletBalanceRequest]) (*connect.Response[v1.FinanceTransaction], error)
+	// Returns balance, income, expense, net, and daily summaries for a required time range and time zone.
 	GetFinanceSummary(context.Context, *connect.Request[v1.GetFinanceSummaryRequest]) (*connect.Response[v1.FinanceSummary], error)
 }
 

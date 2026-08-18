@@ -16,7 +16,8 @@ option go_package = "gen/api/v1";
 
 service MemoService {
   // CreateMemo creates a memo. The request body is a Memo; set its content
-  // (Markdown) and visibility (PRIVATE | PROTECTED | PUBLIC, default PRIVATE).
+  // (Markdown), visibility (PRIVATE | PROTECTED | PUBLIC, default PRIVATE),
+  // and optional mood_level from 1 through 7.
   // The memo is owned by the authenticated user; requires authentication.
   rpc CreateMemo(CreateMemoRequest) returns (Memo) {
     option (google.api.http) = {
@@ -35,13 +36,26 @@ service MemoService {
     option (google.api.http) = {get: "/api/v1/{name=memos/*}"};
     option (google.api.method_signature) = "name";
   }
-  // UpdateMemo updates a memo.
+  // UpdateMemo changes fields on one existing memo, including content,
+  // visibility, pinned, and mood_level. Use mood_level from 1 through 7 to
+  // change the mood recorded on this memo; this does not change the emoji or
+  // color used to display that level instance-wide.
   rpc UpdateMemo(UpdateMemoRequest) returns (Memo) {
     option (google.api.http) = {
       patch: "/api/v1/{memo.name=memos/*}"
       body: "memo"
     };
     option (google.api.method_signature) = "memo,update_mask";
+  }
+  // SetMemoMood sets the mood recorded on one existing memo. Use mood_level
+  // 1-7 to select a mood or 0 to clear it. This does not change the
+  // instance-wide emoji or color used to display that level.
+  rpc SetMemoMood(SetMemoMoodRequest) returns (Memo) {
+    option (google.api.http) = {
+      patch: "/api/v1/{name=memos/*}/mood"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name,mood_level";
   }
   // DeleteMemo deletes a memo.
   rpc DeleteMemo(DeleteMemoRequest) returns (google.protobuf.Empty) {
@@ -371,6 +385,18 @@ message UpdateMemoRequest {
 
   // Required. The list of fields to update.
   google.protobuf.FieldMask update_mask = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message SetMemoMoodRequest {
+  // Required. The resource name of the memo whose recorded mood should change.
+  // Format: memos/{memo}
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "memos.api.v1/Memo"}
+  ];
+
+  // Required. The recorded mood level: 1-7 sets a mood and 0 clears it.
+  int32 mood_level = 2 [(google.api.field_behavior) = REQUIRED];
 }
 
 message DeleteMemoRequest {

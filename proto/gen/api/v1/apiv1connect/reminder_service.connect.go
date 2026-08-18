@@ -68,15 +68,25 @@ const (
 
 // ReminderServiceClient is a client for the memos.api.v1.ReminderService service.
 type ReminderServiceClient interface {
+	// Lists the authenticated user's private reminder lists and their pending counts.
 	ListReminderLists(context.Context, *connect.Request[v1.ListReminderListsRequest]) (*connect.Response[v1.ListReminderListsResponse], error)
+	// Creates a private reminder list used to organize reminder items.
 	CreateReminderList(context.Context, *connect.Request[v1.CreateReminderListRequest]) (*connect.Response[v1.ReminderList], error)
+	// Updates a reminder list's name, color, icon, order, or archive state.
 	UpdateReminderList(context.Context, *connect.Request[v1.UpdateReminderListRequest]) (*connect.Response[v1.ReminderList], error)
+	// Deletes a reminder list.
 	DeleteReminderList(context.Context, *connect.Request[v1.DeleteReminderListRequest]) (*connect.Response[emptypb.Empty], error)
+	// Lists reminders using views such as TODAY, SCHEDULED, FLAGGED, or COMPLETED.
 	ListReminders(context.Context, *connect.Request[v1.ListRemindersRequest]) (*connect.Response[v1.ListRemindersResponse], error)
+	// Creates a reminder with an exact remind_time or a date-only due_date; there is no details field.
 	CreateReminder(context.Context, *connect.Request[v1.CreateReminderRequest]) (*connect.Response[v1.Reminder], error)
+	// Updates a reminder's scheduling, list, priority, tags, location, or archive state.
 	UpdateReminder(context.Context, *connect.Request[v1.UpdateReminderRequest]) (*connect.Response[v1.Reminder], error)
+	// Deletes a reminder.
 	DeleteReminder(context.Context, *connect.Request[v1.DeleteReminderRequest]) (*connect.Response[emptypb.Empty], error)
+	// Marks a pending reminder complete and advances recurring reminders when applicable.
 	CompleteReminder(context.Context, *connect.Request[v1.CompleteReminderRequest]) (*connect.Response[v1.Reminder], error)
+	// Archives all completed reminders and returns the number cleared.
 	ClearCompletedReminders(context.Context, *connect.Request[v1.ClearCompletedRemindersRequest]) (*connect.Response[v1.ClearCompletedRemindersResponse], error)
 }
 
@@ -220,15 +230,25 @@ func (c *reminderServiceClient) ClearCompletedReminders(ctx context.Context, req
 
 // ReminderServiceHandler is an implementation of the memos.api.v1.ReminderService service.
 type ReminderServiceHandler interface {
+	// Lists the authenticated user's private reminder lists and their pending counts.
 	ListReminderLists(context.Context, *connect.Request[v1.ListReminderListsRequest]) (*connect.Response[v1.ListReminderListsResponse], error)
+	// Creates a private reminder list used to organize reminder items.
 	CreateReminderList(context.Context, *connect.Request[v1.CreateReminderListRequest]) (*connect.Response[v1.ReminderList], error)
+	// Updates a reminder list's name, color, icon, order, or archive state.
 	UpdateReminderList(context.Context, *connect.Request[v1.UpdateReminderListRequest]) (*connect.Response[v1.ReminderList], error)
+	// Deletes a reminder list.
 	DeleteReminderList(context.Context, *connect.Request[v1.DeleteReminderListRequest]) (*connect.Response[emptypb.Empty], error)
+	// Lists reminders using views such as TODAY, SCHEDULED, FLAGGED, or COMPLETED.
 	ListReminders(context.Context, *connect.Request[v1.ListRemindersRequest]) (*connect.Response[v1.ListRemindersResponse], error)
+	// Creates a reminder with an exact remind_time or a date-only due_date; there is no details field.
 	CreateReminder(context.Context, *connect.Request[v1.CreateReminderRequest]) (*connect.Response[v1.Reminder], error)
+	// Updates a reminder's scheduling, list, priority, tags, location, or archive state.
 	UpdateReminder(context.Context, *connect.Request[v1.UpdateReminderRequest]) (*connect.Response[v1.Reminder], error)
+	// Deletes a reminder.
 	DeleteReminder(context.Context, *connect.Request[v1.DeleteReminderRequest]) (*connect.Response[emptypb.Empty], error)
+	// Marks a pending reminder complete and advances recurring reminders when applicable.
 	CompleteReminder(context.Context, *connect.Request[v1.CompleteReminderRequest]) (*connect.Response[v1.Reminder], error)
+	// Archives all completed reminders and returns the number cleared.
 	ClearCompletedReminders(context.Context, *connect.Request[v1.ClearCompletedRemindersRequest]) (*connect.Response[v1.ClearCompletedRemindersResponse], error)
 }
 

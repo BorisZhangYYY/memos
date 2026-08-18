@@ -252,6 +252,8 @@
     "category": {
       "create-error": "添加类型失败",
       "created": "类型已添加",
+      "emoji": "Emoji",
+      "emoji-update-error": "更新 Emoji 失败",
       "empty": "暂未添加类型",
       "label": "收支类型",
       "management": "收入与支出类型",

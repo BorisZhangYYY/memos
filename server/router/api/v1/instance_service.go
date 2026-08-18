@@ -2,6 +2,7 @@ package v1
 
 import (
 	"context"
+	"regexp"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -20,6 +21,14 @@ const (
 	maxTranscriptionConfigLanguageLength = 32
 	maxTranscriptionConfigPromptLength   = 4096
 	maxBatchGetInstanceSettings          = 100
+	memoMoodLevelCount                   = 7
+	maxMemoMoodEmojiLength               = 16
+)
+
+var (
+	defaultMemoMoodEmojis = []string{"😫", "😟", "😔", "😐", "😌", "☺️", "😆"}
+	defaultMemoMoodColors = []string{"#ef4444", "#f97316", "#f59e0b", "#a8a29e", "#22c55e", "#06b6d4", "#8b5cf6"}
+	memoMoodColorPattern  = regexp.MustCompile(`^#[0-9A-Fa-f]{6}$`)
 )
 
 type instanceSettingCaller struct {
@@ -66,6 +75,119 @@ func (s *APIV1Service) GetInstanceProfile(ctx context.Context, _ *v1pb.GetInstan
 		NeedsSetup:  len(users) == 0,
 	}
 	return instanceProfile, nil
+}
+
+// GetMemoMoodDisplay returns the effective emoji and color assigned to every
+// memo mood level. The values are stored inside MEMO_RELATED, but this narrow
+// API prevents MCP clients from reading unrelated instance configuration.
+func (s *APIV1Service) GetMemoMoodDisplay(ctx context.Context, _ *v1pb.GetMemoMoodDisplayRequest) (*v1pb.MemoMoodDisplay, error) {
+	setting, err := s.GetInstanceSetting(ctx, &v1pb.GetInstanceSettingRequest{Name: "instance/settings/MEMO_RELATED"})
+	if err != nil {
+		return nil, err
+	}
+	return buildMemoMoodDisplay(setting.GetMemoRelatedSetting()), nil
+}
+
+// UpdateMemoMoodDisplay applies partial display-only changes while preserving
+// every unmentioned mood level and the rest of MEMO_RELATED. UpdateInstanceSetting
+// remains the single place that enforces admin and deployment-configured policy.
+func (s *APIV1Service) UpdateMemoMoodDisplay(ctx context.Context, request *v1pb.UpdateMemoMoodDisplayRequest) (*v1pb.MemoMoodDisplay, error) {
+	if len(request.Updates) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "at least one mood level update is required")
+	}
+	if len(request.Updates) > memoMoodLevelCount {
+		return nil, status.Errorf(codes.InvalidArgument, "too many mood level updates (max %d)", memoMoodLevelCount)
+	}
+
+	setting, err := s.GetInstanceSetting(ctx, &v1pb.GetInstanceSettingRequest{Name: "instance/settings/MEMO_RELATED"})
+	if err != nil {
+		return nil, err
+	}
+	memoRelated := setting.GetMemoRelatedSetting()
+	if memoRelated == nil {
+		memoRelated = &v1pb.InstanceSetting_MemoRelatedSetting{}
+		setting.Value = &v1pb.InstanceSetting_MemoRelatedSetting_{MemoRelatedSetting: memoRelated}
+	}
+	emojis := effectiveMemoMoodValues(memoRelated.MoodEmojis, defaultMemoMoodEmojis)
+	colors := effectiveMemoMoodValues(memoRelated.MoodColors, defaultMemoMoodColors)
+	seenLevels := map[int32]bool{}
+
+	for _, update := range request.Updates {
+		if update == nil {
+			return nil, status.Error(codes.InvalidArgument, "mood level update cannot be null")
+		}
+		if update.Level < 1 || update.Level > memoMoodLevelCount {
+			return nil, status.Errorf(codes.InvalidArgument, "mood level must be between 1 and %d", memoMoodLevelCount)
+		}
+		if seenLevels[update.Level] {
+			return nil, status.Errorf(codes.InvalidArgument, "duplicate mood level %d", update.Level)
+		}
+		seenLevels[update.Level] = true
+		if update.Emoji == nil && update.Color == nil {
+			return nil, status.Errorf(codes.InvalidArgument, "mood level %d must update emoji or color", update.Level)
+		}
+
+		index := int(update.Level - 1)
+		if update.Emoji != nil {
+			emoji := strings.TrimSpace(update.GetEmoji())
+			if len([]rune(emoji)) > maxMemoMoodEmojiLength {
+				return nil, status.Errorf(codes.InvalidArgument, "mood emoji exceeds %d characters", maxMemoMoodEmojiLength)
+			}
+			if emoji == "" {
+				emoji = defaultMemoMoodEmojis[index]
+			}
+			emojis[index] = emoji
+		}
+		if update.Color != nil {
+			color := strings.TrimSpace(update.GetColor())
+			if color == "" {
+				color = defaultMemoMoodColors[index]
+			} else if !memoMoodColorPattern.MatchString(color) {
+				return nil, status.Error(codes.InvalidArgument, "mood color must use #RRGGBB format")
+			}
+			colors[index] = strings.ToLower(color)
+		}
+	}
+
+	memoRelated.MoodEmojis = emojis
+	memoRelated.MoodColors = colors
+	updated, err := s.UpdateInstanceSetting(ctx, &v1pb.UpdateInstanceSettingRequest{Setting: setting})
+	if err != nil {
+		return nil, err
+	}
+	return buildMemoMoodDisplay(updated.GetMemoRelatedSetting()), nil
+}
+
+func buildMemoMoodDisplay(setting *v1pb.InstanceSetting_MemoRelatedSetting) *v1pb.MemoMoodDisplay {
+	var configuredEmojis, configuredColors []string
+	if setting != nil {
+		configuredEmojis = setting.MoodEmojis
+		configuredColors = setting.MoodColors
+	}
+	emojis := effectiveMemoMoodValues(configuredEmojis, defaultMemoMoodEmojis)
+	colors := effectiveMemoMoodValues(configuredColors, defaultMemoMoodColors)
+	levels := make([]*v1pb.MemoMoodDisplay_MoodLevel, 0, memoMoodLevelCount)
+	for index := range memoMoodLevelCount {
+		levels = append(levels, &v1pb.MemoMoodDisplay_MoodLevel{
+			Level: int32(index + 1),
+			Emoji: emojis[index],
+			Color: colors[index],
+		})
+	}
+	return &v1pb.MemoMoodDisplay{Levels: levels}
+}
+
+func effectiveMemoMoodValues(configured, defaults []string) []string {
+	values := append([]string(nil), defaults...)
+	if len(configured) != memoMoodLevelCount {
+		return values
+	}
+	for index, value := range configured {
+		if value = strings.TrimSpace(value); value != "" {
+			values[index] = value
+		}
+	}
+	return values
 }
 
 func (s *APIV1Service) GetInstanceSetting(ctx context.Context, request *v1pb.GetInstanceSettingRequest) (*v1pb.InstanceSetting, error) {

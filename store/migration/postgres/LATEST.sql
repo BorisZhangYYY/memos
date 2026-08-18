@@ -151,6 +151,7 @@ CREATE TABLE finance_category (
   row_status TEXT NOT NULL DEFAULT 'NORMAL',
   name TEXT NOT NULL,
   type TEXT NOT NULL,
+  emoji TEXT NOT NULL DEFAULT '',
   UNIQUE (creator_id, type, name)
 );
 

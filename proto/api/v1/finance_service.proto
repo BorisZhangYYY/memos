@@ -14,15 +14,18 @@ option go_package = "gen/api/v1";
 
 // FinanceService manages a user's private wallets and ledger.
 service FinanceService {
+  // Lists the authenticated user's private finance wallets and current balances.
   rpc ListFinanceWallets(ListFinanceWalletsRequest) returns (ListFinanceWalletsResponse) {
     option (google.api.http) = {get: "/api/v1/{parent=users/*}/wallets"};
   }
+  // Creates a private finance wallet. Set the opening balance with initial_balance_minor.
   rpc CreateFinanceWallet(CreateFinanceWalletRequest) returns (FinanceWallet) {
     option (google.api.http) = {
       post: "/api/v1/{parent=users/*}/wallets"
       body: "wallet"
     };
   }
+  // Updates a finance wallet's display name, negative-balance policy, or archive state.
   rpc UpdateFinanceWallet(UpdateFinanceWalletRequest) returns (FinanceWallet) {
     option (google.api.http) = {
       patch: "/api/v1/{wallet.name=users/*/wallets/*}"
@@ -30,15 +33,18 @@ service FinanceService {
     };
   }
 
+  // Lists the authenticated user's income and expense categories, including their display emojis.
   rpc ListFinanceCategories(ListFinanceCategoriesRequest) returns (ListFinanceCategoriesResponse) {
     option (google.api.http) = {get: "/api/v1/{parent=users/*}/finance-categories"};
   }
+  // Creates an income or expense category with an optional display emoji.
   rpc CreateFinanceCategory(CreateFinanceCategoryRequest) returns (FinanceCategory) {
     option (google.api.http) = {
       post: "/api/v1/{parent=users/*}/finance-categories"
       body: "category"
     };
   }
+  // Updates a finance category's display name, emoji, or archive state. The category type is immutable.
   rpc UpdateFinanceCategory(UpdateFinanceCategoryRequest) returns (FinanceCategory) {
     option (google.api.http) = {
       patch: "/api/v1/{category.name=users/*/financeCategories/*}"
@@ -46,30 +52,36 @@ service FinanceService {
     };
   }
 
+  // Lists private ledger transactions, optionally filtered by wallet and time range.
   rpc ListFinanceTransactions(ListFinanceTransactionsRequest) returns (ListFinanceTransactionsResponse) {
     option (google.api.http) = {get: "/api/v1/{parent=users/*}/finance-transactions"};
   }
+  // Records income, expense, or a wallet transfer. occur_time is required.
   rpc CreateFinanceTransaction(CreateFinanceTransactionRequest) returns (FinanceTransaction) {
     option (google.api.http) = {
       post: "/api/v1/{parent=users/*}/finance-transactions"
       body: "transaction"
     };
   }
+  // Corrects a ledger transaction and rebuilds affected chronological balance snapshots.
   rpc UpdateFinanceTransaction(UpdateFinanceTransactionRequest) returns (FinanceTransaction) {
     option (google.api.http) = {
       patch: "/api/v1/{transaction.name=users/*/financeTransactions/*}"
       body: "transaction"
     };
   }
+  // Deletes a ledger transaction and rebuilds affected chronological balance snapshots.
   rpc DeleteFinanceTransaction(DeleteFinanceTransactionRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {delete: "/api/v1/{name=users/*/financeTransactions/*}"};
   }
+  // Reconciles a wallet to an observed balance by creating an adjustment transaction.
   rpc AdjustFinanceWalletBalance(AdjustFinanceWalletBalanceRequest) returns (FinanceTransaction) {
     option (google.api.http) = {
       post: "/api/v1/{wallet=users/*/wallets/*}:adjustBalance"
       body: "*"
     };
   }
+  // Returns balance, income, expense, net, and daily summaries for a required time range and time zone.
   rpc GetFinanceSummary(GetFinanceSummaryRequest) returns (FinanceSummary) {
     option (google.api.http) = {get: "/api/v1/{parent=users/*}/finance-summary"};
   }
@@ -114,6 +126,8 @@ message FinanceCategory {
   State state = 4 [(google.api.field_behavior) = OPTIONAL];
   google.protobuf.Timestamp create_time = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
   google.protobuf.Timestamp update_time = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // Optional emoji displayed for this income or expense category.
+  string emoji = 7 [(google.api.field_behavior) = OPTIONAL];
 }
 
 message FinanceTransaction {

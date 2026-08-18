@@ -1,6 +1,7 @@
 import { ArchiveIcon, ArrowDownIcon, ArrowUpIcon, PlusIcon, RefreshCcwIcon, ScaleIcon, WalletCardsIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
+import FinanceCategoryEmojiInput from "@/components/Finance/FinanceCategoryEmojiInput";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -41,6 +42,7 @@ const FinanceSettings = () => {
   const [allowNegative, setAllowNegative] = useState(false);
   const [categoryName, setCategoryName] = useState("");
   const [categoryType, setCategoryType] = useState(FinanceCategory_Type.EXPENSE);
+  const [categoryEmoji, setCategoryEmoji] = useState("");
   const [adjustWallet, setAdjustWallet] = useState<FinanceWallet>();
   const [actualBalance, setActualBalance] = useState("");
   const [adjustNote, setAdjustNote] = useState("");
@@ -74,11 +76,20 @@ const FinanceSettings = () => {
   const handleCreateCategory = async () => {
     if (!categoryName.trim()) return;
     try {
-      await createCategory({ parent, category: { displayName: categoryName.trim(), type: categoryType } });
+      await createCategory({ parent, category: { displayName: categoryName.trim(), type: categoryType, emoji: categoryEmoji } });
       setCategoryName("");
+      setCategoryEmoji("");
       toast.success(t("finance.category.created"));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("finance.category.create-error"));
+    }
+  };
+
+  const updateCategoryEmoji = async (name: string, emoji: string) => {
+    try {
+      await updateCategory({ category: { name, emoji }, updateMask: ["emoji"] });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("finance.category.emoji-update-error"));
     }
   };
 
@@ -186,31 +197,43 @@ const FinanceSettings = () => {
 
       <SettingGroup title={t("finance.category.management")} description={t("finance.category.management-description")} showSeparator>
         <div className="rounded-lg border border-border bg-background p-3">
-          <div className="grid gap-3 sm:grid-cols-[9rem_minmax(10rem,1fr)_auto] sm:items-end">
+          <div className="grid gap-3 sm:grid-cols-[5rem_9rem_minmax(10rem,1fr)_auto] sm:items-end">
+            <div className="space-y-1.5">
+              <Label>{t("finance.category.emoji")}</Label>
+              <FinanceCategoryEmojiInput
+                value={categoryEmoji}
+                onChange={setCategoryEmoji}
+                className="w-full"
+                ariaLabel={t("finance.category.emoji")}
+              />
+            </div>
             <div className="space-y-1.5">
               <Label>{t("finance.category.type")}</Label>
-              <Select value={String(categoryType)} onValueChange={(value) => setCategoryType(Number(value) as FinanceCategory_Type)}>
-                <SelectTrigger className="w-full">
-                  <span className="truncate">
-                    {categoryType === FinanceCategory_Type.INCOME ? t("finance.type.income") : t("finance.type.expense")}
-                  </span>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={String(FinanceCategory_Type.EXPENSE)}>{t("finance.type.expense")}</SelectItem>
-                  <SelectItem value={String(FinanceCategory_Type.INCOME)}>{t("finance.type.income")}</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="h-9">
+                <Select value={String(categoryType)} onValueChange={(value) => setCategoryType(Number(value) as FinanceCategory_Type)}>
+                  <SelectTrigger className="h-9! w-full">
+                    <span className="truncate">
+                      {categoryType === FinanceCategory_Type.INCOME ? t("finance.type.income") : t("finance.type.expense")}
+                    </span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={String(FinanceCategory_Type.EXPENSE)}>{t("finance.type.expense")}</SelectItem>
+                    <SelectItem value={String(FinanceCategory_Type.INCOME)}>{t("finance.type.income")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="new-category-name">{t("finance.category.name")}</Label>
               <Input
                 id="new-category-name"
+                className="h-9"
                 value={categoryName}
                 onChange={(event) => setCategoryName(event.target.value)}
                 placeholder={t("finance.category.name-placeholder")}
               />
             </div>
-            <Button onClick={handleCreateCategory} disabled={!categoryName.trim() || creatingCategory}>
+            <Button size="lg" onClick={handleCreateCategory} disabled={!categoryName.trim() || creatingCategory}>
               <PlusIcon className="mr-1.5 size-4" />
               {t("common.add")}
             </Button>
@@ -233,9 +256,22 @@ const FinanceSettings = () => {
               ) : (
                 group.rows.map((category) => (
                   <div key={category.name} className="flex items-center justify-between gap-3 px-3 py-3">
-                    <span className={category.state === State.ARCHIVED ? "text-sm text-muted-foreground line-through" : "text-sm"}>
-                      {category.displayName}
-                    </span>
+                    <div className="flex min-w-0 items-center gap-2">
+                      <FinanceCategoryEmojiInput
+                        value={category.emoji}
+                        onChange={(emoji) => void updateCategoryEmoji(category.name, emoji)}
+                        className="size-9 min-w-9 px-0"
+                        commitOnBlur
+                        ariaLabel={`${t("finance.category.emoji")}: ${category.displayName}`}
+                      />
+                      <span
+                        className={
+                          category.state === State.ARCHIVED ? "truncate text-sm text-muted-foreground line-through" : "truncate text-sm"
+                        }
+                      >
+                        {category.displayName}
+                      </span>
+                    </div>
                     <Button
                       variant="ghost"
                       size="sm"

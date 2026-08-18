@@ -79,7 +79,7 @@ const FinanceDashboard = ({ parent, onAdd, embedded = false }: Props) => {
   );
 
   const walletNames = useMemo(() => new Map(wallets.map((wallet) => [wallet.name, wallet.displayName])), [wallets]);
-  const categoryNames = useMemo(() => new Map(categories.map((category) => [category.name, category.displayName])), [categories]);
+  const categoriesByName = useMemo(() => new Map(categories.map((category) => [category.name, category])), [categories]);
   const detailsRows = useMemo(() => {
     const byDate = new Map(detailsSummary?.dailySummaries.map((item) => [item.date, item]));
     const rows: Array<{ date: string; income: bigint; expense: bigint }> = [];
@@ -263,13 +263,17 @@ const FinanceDashboard = ({ parent, onAdd, embedded = false }: Props) => {
               <div className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
                 {todayTransactions.map((transaction) => {
                   const presentation = transactionPresentation(transaction);
-                  const categoryName = categoryNames.get(transaction.category);
+                  const category = categoriesByName.get(transaction.category);
                   const destinationName = walletNames.get(transaction.destinationWallet);
-                  const title = transaction.note || categoryName || presentation.label;
+                  const title = transaction.note || category?.displayName || presentation.label;
                   return (
                     <div key={transaction.name} className="flex items-center gap-3 rounded-lg border bg-background/60 px-3 py-2.5">
                       <span className={cn("flex size-8 items-center justify-center rounded-full bg-muted", presentation.color)}>
-                        <presentation.icon className="size-4" />
+                        {category?.emoji ? (
+                          <span className="text-base leading-none">{category.emoji}</span>
+                        ) : (
+                          <presentation.icon className="size-4" />
+                        )}
                       </span>
                       <div className="min-w-0 flex-1">
                         <div className="truncate text-sm font-medium">{title}</div>
@@ -349,13 +353,17 @@ const FinanceDashboard = ({ parent, onAdd, embedded = false }: Props) => {
                     <div className="divide-y rounded-xl border bg-background">
                       {historyDateTransactions.map((transaction) => {
                         const presentation = transactionPresentation(transaction);
-                        const categoryName = categoryNames.get(transaction.category);
+                        const category = categoriesByName.get(transaction.category);
                         const destinationName = walletNames.get(transaction.destinationWallet);
-                        const title = transaction.note || categoryName || presentation.label;
+                        const title = transaction.note || category?.displayName || presentation.label;
                         return (
                           <div key={transaction.name} className="flex items-center gap-3 px-3 py-2.5">
                             <span className={cn("flex size-8 items-center justify-center rounded-full bg-muted", presentation.color)}>
-                              <presentation.icon className="size-4" />
+                              {category?.emoji ? (
+                                <span className="text-base leading-none">{category.emoji}</span>
+                              ) : (
+                                <presentation.icon className="size-4" />
+                              )}
                             </span>
                             <div className="min-w-0 flex-1">
                               <div className="truncate text-sm font-medium">{title}</div>

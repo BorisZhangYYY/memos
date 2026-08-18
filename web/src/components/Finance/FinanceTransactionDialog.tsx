@@ -59,6 +59,7 @@ const FinanceTransactionDialog = ({ open, onOpenChange, parent, initialType = Fi
       setCategory(matchingCategories[0]?.name ?? "");
     }
   }, [type, category, matchingCategories]);
+  const selectedCategory = matchingCategories.find((item) => item.name === category);
 
   const minor = parseYuanToMinor(amount);
   const canSubmit =
@@ -179,14 +180,16 @@ const FinanceTransactionDialog = ({ open, onOpenChange, parent, initialType = Fi
                   <Label>{t("finance.category.label")}</Label>
                   <Select value={category} onValueChange={setCategory}>
                     <SelectTrigger className="w-full">
-                      <span className={category ? "truncate" : "truncate text-muted-foreground"}>
-                        {matchingCategories.find((item) => item.name === category)?.displayName ?? t("finance.category.select")}
+                      <span className={category ? "flex min-w-0 items-center gap-2" : "truncate text-muted-foreground"}>
+                        {selectedCategory?.emoji && <span className="shrink-0 text-base">{selectedCategory.emoji}</span>}
+                        <span className="truncate">{selectedCategory?.displayName ?? t("finance.category.select")}</span>
                       </span>
                     </SelectTrigger>
                     <SelectContent>
                       {matchingCategories.map((item) => (
                         <SelectItem key={item.name} value={item.name}>
-                          {item.displayName}
+                          {item.emoji && <span className="text-base">{item.emoji}</span>}
+                          <span>{item.displayName}</span>
                         </SelectItem>
                       ))}
                     </SelectContent>
