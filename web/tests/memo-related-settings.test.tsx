@@ -49,6 +49,7 @@ describe("<MemoRelatedSettings> mood emojis", () => {
 
     expect(moodInputs()).toHaveLength(7);
     expect(moodInputs().map((input) => input.value)).toEqual(DEFAULT_MOOD_EMOJIS);
+    expect(screen.queryByText("setting.memo.visibility-policy")).not.toBeInTheDocument();
   });
 
   it("restores the default emoji when a mood emoji is cleared before saving", () => {

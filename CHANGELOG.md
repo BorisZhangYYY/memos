@@ -1,5 +1,49 @@
 # Changelog
 
+## [0.33.4](https://github.com/BorisZhangYYY/memos/compare/v0.33.3...v0.33.4) (2026-08-20)
+
+### Summary
+
+This patch release polishes the reminder center, simplifies the public-access
+policy, and makes the externally reachable Instance URL configurable from the
+admin UI. It also improves compatibility in browsers without native UUID
+generation and clarifies how existing public memos behave when public access is
+disabled.
+
+### Features
+
+* **Configurable Instance URL:** lets administrators configure or clear the
+  externally reachable URL in System settings, applies changes without a
+  restart, and uses the value consistently for email links, CORS, MCP origins,
+  frontend metadata, and anonymous access decisions.
+* **Reminder list customization:** adds a focused dialog for creating and
+  editing reminder lists with names, colors, and icons while keeping the
+  built-in Reminders list protected as the reliable default.
+
+### Bug Fixes
+
+* **Reminder navigation and creation:** aligns list counters, remembers the last
+  selected list per user, falls back when that list is deleted, and lets an
+  empty-list click create a reminder in the active list.
+* **Public-access routing:** only opens Explore to signed-out visitors when both
+  an Instance URL is configured and Public visibility is enabled; logout and
+  navigation now follow the same policy.
+* **Visibility transitions:** keeps creators able to see and downgrade their
+  existing public memos after Public is disabled, prevents switching back until
+  it is enabled again, and explains the restriction in the editor.
+* **Browser compatibility:** provides a cryptographically secure UUID fallback
+  for reminder, finance, AI provider, and Live Photo identifiers.
+* **Memo error handling:** reports memo-detail loading failures without
+  redirecting users to a misleading not-found page.
+
+### Interface Changes
+
+* The home-page reminder dashboard is now completion-only; creating and
+  configuring reminders is handled in the reminder center.
+* Public visibility policy now lives in System settings as a single Public
+  switch. Private and Protected remain available, while the user's default memo
+  visibility stays in Preferences.
+
 ## [0.33.3](https://github.com/BorisZhangYYY/memos/compare/v0.33.2...v0.33.3) (2026-08-18)
 
 ### Summary

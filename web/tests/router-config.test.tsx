@@ -1,9 +1,10 @@
 import { isValidElement } from "react";
 import type { RouteObject } from "react-router-dom";
 import { describe, expect, it } from "vitest";
-import { routeConfig, ROUTES } from "@/router";
+import { ROUTES, routeConfig } from "@/router";
 import {
   RequireAuthRoute,
+  RequireExploreEnabledRoute,
   RequireFullInitializationRoute,
   RequireGuestRoute,
   RequireInstanceInitializationRoute,
@@ -80,6 +81,10 @@ describe("router configuration", () => {
     for (const path of [ROUTES.ABOUT, ROUTES.EXPLORE, "memos/:uid", "memos/shares/:token", "u/:username"]) {
       expect(hasAncestorOfType(routeConfig, path, RequireAuthRoute)).toBe(false);
     }
+  });
+
+  it("wraps Explore in its public-access guard", () => {
+    expect(hasAncestorOfType(routeConfig, ROUTES.EXPLORE, RequireExploreEnabledRoute)).toBe(true);
   });
 
   it("exposes an accessible /auth/callback route definition", () => {

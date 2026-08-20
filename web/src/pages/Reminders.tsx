@@ -8,7 +8,8 @@ import {
   FlagIcon,
   InboxIcon,
   InfoIcon,
-  ListIcon,
+  MoreHorizontalIcon,
+  PencilIcon,
   PlusIcon,
   SearchIcon,
   Trash2Icon,
@@ -19,8 +20,11 @@ import { Link, useLocation } from "react-router-dom";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { ReminderDatePicker } from "@/components/Reminder/ReminderDateTimePicker";
 import ReminderDetailDialog, { type ReminderDraft } from "@/components/Reminder/ReminderDetailDialog";
+import ReminderListDialog, { type ReminderListDialogValue } from "@/components/Reminder/ReminderListDialog";
+import ReminderListIcon, { isDefaultReminderList } from "@/components/Reminder/ReminderListIcon";
 import ReminderMetadata from "@/components/Reminder/ReminderMetadata";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import {
@@ -29,9 +33,11 @@ import {
   useCreateReminder,
   useCreateReminderList,
   useDeleteReminder,
+  useDeleteReminderList,
   useReminderLists,
   useReminders,
   useUpdateReminder,
+  useUpdateReminderList,
 } from "@/hooks/useReminderQueries";
 import { cn } from "@/lib/utils";
 import { State } from "@/types/proto/api/v1/common_pb";
@@ -43,6 +49,7 @@ import {
   type ReminderList,
 } from "@/types/proto/api/v1/reminder_service_pb";
 import { useTranslate } from "@/utils/i18n";
+import { readRememberedReminderList, rememberReminderList, resolveReminderListSelection } from "@/utils/reminder-list-selection";
 
 type SmartView = "today" | "scheduled" | "all" | "flagged" | "completed" | "archived";
 
@@ -54,8 +61,6 @@ const VIEW_BY_ID: Record<SmartView, ListRemindersRequest_View> = {
   completed: ListRemindersRequest_View.COMPLETED,
   archived: ListRemindersRequest_View.ALL,
 };
-
-const COLORS = ["#0A84FF", "#FF453A", "#FFD60A", "#30D158", "#BF5AF2", "#FF9F0A"];
 
 const listDisplayName = (list: { name: string; displayName: string }, translatedDefault: string) =>
   list.name.endsWith("/reminderLists/default") ? translatedDefault : list.displayName;
@@ -199,15 +204,17 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
   const [draftTitle, setDraftTitle] = useState("");
   const [draftDueDate, setDraftDueDate] = useState("");
   const [draftFlagged, setDraftFlagged] = useState(false);
-  const [newListVisible, setNewListVisible] = useState(false);
-  const [newListName, setNewListName] = useState("");
+  const [listDialogOpen, setListDialogOpen] = useState(false);
+  const [editingList, setEditingList] = useState<ReminderList>();
   const [selectedReminder, setSelectedReminder] = useState<Reminder>();
   const [deleteCandidate, setDeleteCandidate] = useState<Reminder>();
+  const [deleteListCandidate, setDeleteListCandidate] = useState<ReminderList>();
   const [detailDraft, setDetailDraft] = useState<ReminderDraft>();
   const draftRef = useRef<HTMLInputElement>(null);
   const draftContainerRef = useRef<HTMLDivElement>(null);
   const draftCommitInProgressRef = useRef(false);
   const suppressBlankClickRef = useRef(false);
+  const selectionOwnerRef = useRef("");
   const returnLocation = `${location.pathname}${location.search}${location.hash}`;
 
   const { data: lists = [] } = useReminderLists(parent);
@@ -225,8 +232,10 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
   const completeReminder = useCompleteReminder();
   const archiveCompleted = useArchiveCompletedReminders();
   const deleteReminder = useDeleteReminder();
+  const deleteReminderList = useDeleteReminderList();
   const updateReminder = useUpdateReminder();
   const createList = useCreateReminderList();
+  const updateList = useUpdateReminderList();
 
   const today = localDate();
   const counts = useMemo(
@@ -243,6 +252,26 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
     if (draftVisible) requestAnimationFrame(() => draftRef.current?.focus());
   }, [draftVisible]);
 
+  useEffect(() => {
+    if (!parent || lists.length === 0) return;
+
+    if (selectionOwnerRef.current !== parent) {
+      selectionOwnerRef.current = parent;
+      const selectedList = resolveReminderListSelection(lists, readRememberedReminderList(parent));
+      setActiveList(selectedList);
+      setActiveView("all");
+      rememberReminderList(parent, selectedList);
+      return;
+    }
+
+    if (activeList && !lists.some((list) => list.name === activeList)) {
+      const selectedList = resolveReminderListSelection(lists);
+      setActiveList(selectedList);
+      setActiveView("all");
+      rememberReminderList(parent, selectedList);
+    }
+  }, [activeList, lists, parent]);
+
   const selectView = (view: SmartView) => {
     setActiveView(view);
     setActiveList("");
@@ -253,9 +282,10 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
     setActiveList(name);
     setActiveView("all");
     setDraftVisible(false);
+    if (parent) rememberReminderList(parent, name);
   };
 
-  const defaultList = activeList || lists[0]?.name;
+  const defaultList = activeList || resolveReminderListSelection(lists);
   const resetDraft = useCallback(() => {
     setDraftTitle("");
     setDraftDueDate("");
@@ -308,23 +338,33 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
     resetDraft();
   };
 
-  const addList = async () => {
-    if (!parent || !newListName.trim()) {
-      setNewListVisible(false);
+  const openListDialog = (list?: ReminderList) => {
+    setEditingList(list);
+    setListDialogOpen(true);
+  };
+
+  const saveList = async ({ displayName, color, icon }: ReminderListDialogValue) => {
+    if (!parent) return;
+    if (editingList) {
+      const updateMask = ["color", "icon"];
+      if (!isDefaultReminderList(editingList.name)) updateMask.unshift("displayName");
+      await updateList.mutateAsync({
+        reminderList: { name: editingList.name, displayName, color, icon },
+        updateMask,
+      });
       return;
     }
+
     const list = await createList.mutateAsync({
       parent,
       reminderList: {
-        displayName: newListName.trim(),
-        color: COLORS[lists.length % COLORS.length],
-        icon: "list",
+        displayName,
+        color,
+        icon,
         sortOrder: lists.length,
-        state: 1,
+        state: State.NORMAL,
       },
     });
-    setNewListName("");
-    setNewListVisible(false);
     selectList(list.name);
   };
 
@@ -400,41 +440,52 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
 
         <div className="mt-6 flex items-center justify-between px-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           <span>{t("reminder.my-lists")}</span>
-          <button type="button" onClick={() => setNewListVisible(true)} aria-label={t("reminder.new-list")}>
+          <button type="button" onClick={() => openListDialog()} aria-label={t("reminder.new-list")}>
             <PlusIcon className="size-4" />
           </button>
         </div>
         <div className="mt-2 space-y-1">
           {lists.map((list) => (
-            <button
-              key={list.name}
-              type="button"
-              onClick={() => selectList(list.name)}
-              className={cn(
-                "flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm",
-                activeList === list.name ? "bg-background shadow-sm" : "hover:bg-background/70",
-              )}
-            >
-              <span
-                className="flex size-6 items-center justify-center rounded-full text-white"
-                style={{ backgroundColor: list.color || "#0A84FF" }}
+            <div key={list.name} className="group/list grid grid-cols-[minmax(0,1fr)_1.75rem] items-center gap-1">
+              <button
+                type="button"
+                onClick={() => selectList(list.name)}
+                className={cn(
+                  "flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-2 text-sm",
+                  activeList === list.name ? "bg-background shadow-sm" : "hover:bg-background/70",
+                )}
               >
-                <ListIcon className="size-3.5" />
-              </span>
-              <span className="min-w-0 flex-1 truncate text-left">{listDisplayName(list, t("common.reminders"))}</span>
-              <span className="text-xs tabular-nums text-muted-foreground">{list.pendingCount}</span>
-            </button>
+                <span
+                  className="flex size-6 shrink-0 items-center justify-center rounded-full text-white"
+                  style={{ backgroundColor: list.color || "#0A84FF" }}
+                >
+                  <ReminderListIcon icon={list.icon} className="size-3.5" />
+                </span>
+                <span className="min-w-0 flex-1 truncate text-left">{listDisplayName(list, t("common.reminders"))}</span>
+                <span className="text-xs tabular-nums text-muted-foreground">{list.pendingCount}</span>
+              </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground opacity-60 transition-opacity hover:bg-background hover:text-foreground sm:opacity-0 sm:group-hover/list:opacity-100 sm:focus-visible:opacity-100 data-popup-open:opacity-100"
+                  aria-label={`${t("common.actions")}: ${listDisplayName(list, t("common.reminders"))}`}
+                >
+                  <MoreHorizontalIcon className="size-3.5" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => openListDialog(list)}>
+                    <PencilIcon />
+                    {t("common.edit")}
+                  </DropdownMenuItem>
+                  {!isDefaultReminderList(list.name) && (
+                    <DropdownMenuItem variant="destructive" onClick={() => setDeleteListCandidate(list)}>
+                      <Trash2Icon />
+                      {t("reminder.delete-list")}
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           ))}
-          {newListVisible && (
-            <Input
-              autoFocus
-              value={newListName}
-              onChange={(event) => setNewListName(event.target.value)}
-              onKeyDown={(event) => event.key === "Enter" && addList()}
-              onBlur={() => !newListName.trim() && setNewListVisible(false)}
-              placeholder={t("reminder.list-name")}
-            />
-          )}
         </div>
         <button
           type="button"
@@ -585,7 +636,10 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
                       onChange={(event) => setDraftTitle(event.target.value)}
                       onKeyDown={(event) => {
                         if (event.key === "Enter") void commitDraft();
-                        if (event.key === "Escape") resetDraft();
+                        if (event.key === "Escape") {
+                          event.stopPropagation();
+                          resetDraft();
+                        }
                       }}
                       onBlur={(event) => {
                         const next = event.relatedTarget;
@@ -640,6 +694,16 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
           }}
         />
       )}
+      <ReminderListDialog
+        open={listDialogOpen}
+        list={editingList}
+        pending={createList.isPending || updateList.isPending}
+        onOpenChange={(open) => {
+          setListDialogOpen(open);
+          if (!open) setEditingList(undefined);
+        }}
+        onSave={saveList}
+      />
       <ConfirmDialog
         open={!!deleteCandidate}
         onOpenChange={(open) => !open && setDeleteCandidate(undefined)}
@@ -652,6 +716,26 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
           await deleteReminder.mutateAsync(deleteCandidate.name);
           toast.success(t("reminder.deleted"));
           setDeleteCandidate(undefined);
+        }}
+        confirmVariant="destructive"
+      />
+      <ConfirmDialog
+        open={!!deleteListCandidate}
+        onOpenChange={(open) => !open && setDeleteListCandidate(undefined)}
+        title={t("reminder.delete-list-confirm")}
+        description={t("reminder.delete-list-confirm-description")}
+        confirmLabel={t("common.delete")}
+        cancelLabel={t("common.cancel")}
+        onConfirm={async () => {
+          if (!deleteListCandidate) return;
+          const defaultListName = resolveReminderListSelection(lists.filter((list) => list.name !== deleteListCandidate.name));
+          await deleteReminderList.mutateAsync(deleteListCandidate.name);
+          if (parent && readRememberedReminderList(parent) === deleteListCandidate.name) {
+            rememberReminderList(parent, defaultListName);
+          }
+          if (activeList === deleteListCandidate.name) defaultListName ? selectList(defaultListName) : selectView("all");
+          toast.success(t("reminder.list-deleted"));
+          setDeleteListCandidate(undefined);
         }}
         confirmVariant="destructive"
       />

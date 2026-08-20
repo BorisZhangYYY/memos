@@ -23,6 +23,7 @@ import {
   InstanceSettingSchema,
 } from "@/types/proto/api/v1/instance_service_pb";
 import { useTranslate } from "@/utils/i18n";
+import { generateUUID } from "@/utils/uuid";
 import SettingGroup from "./SettingGroup";
 import { SettingPanel } from "./SettingList";
 import SettingSection from "./SettingSection";
@@ -50,13 +51,6 @@ const providerTypeOptions = [InstanceSetting_AIProviderType.OPENAI, InstanceSett
 
 const byokNotes = ["setting.ai.byok-key-note", "setting.ai.byok-storage-note", "setting.ai.byok-model-note"] as const;
 
-const createProviderID = () => {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return crypto.randomUUID();
-  }
-  return `ai-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-};
-
 const getProviderTypeLabel = (type: InstanceSetting_AIProviderType) => {
   return InstanceSetting_AIProviderType[type] ?? "UNKNOWN";
 };
@@ -81,7 +75,7 @@ const toLocalTranscription = (config: InstanceSetting_TranscriptionConfig | unde
 });
 
 const newProvider = (): LocalAIProvider => ({
-  id: createProviderID(),
+  id: generateUUID(),
   title: "",
   type: InstanceSetting_AIProviderType.OPENAI,
   endpoint: "",

@@ -69,7 +69,7 @@ func (s *APIV1Service) GetInstanceProfile(ctx context.Context, _ *v1pb.GetInstan
 	instanceProfile := &v1pb.InstanceProfile{
 		Version:     s.Profile.Version,
 		Demo:        s.Profile.Demo,
-		InstanceUrl: s.Profile.InstanceURL,
+		InstanceUrl: s.Profile.GetInstanceURL(),
 		Admin:       admin, // for display only; may be nil even on a populated instance
 		Commit:      s.Profile.Commit,
 		NeedsSetup:  len(users) == 0,
@@ -330,6 +330,14 @@ func (s *APIV1Service) UpdateInstanceSetting(ctx context.Context, request *v1pb.
 	}
 
 	updateSetting := convertInstanceSettingToStore(request.Setting)
+	instanceURLWasProvided := request.Setting.GetGeneralSetting() != nil && request.Setting.GetGeneralSetting().InstanceUrl != nil
+	if updateSetting.Key == storepb.InstanceSettingKey_GENERAL && updateSetting.GetGeneralSetting().InstanceUrl == nil {
+		existing, getErr := s.Store.GetInstanceGeneralSetting(ctx)
+		if getErr != nil {
+			return nil, status.Errorf(codes.Internal, "failed to get existing general setting: %v", getErr)
+		}
+		updateSetting.GetGeneralSetting().InstanceUrl = existing.InstanceUrl
+	}
 
 	// Preserve write-only credential fields when the caller sends an empty value.
 	// An empty string means "no change", not "clear the credential".
@@ -370,6 +378,9 @@ func (s *APIV1Service) UpdateInstanceSetting(ctx context.Context, request *v1pb.
 			return nil, status.Error(codes.FailedPrecondition, err.Error())
 		}
 		return nil, status.Errorf(codes.Internal, "failed to upsert instance setting: %v", err)
+	}
+	if updateSetting.Key == storepb.InstanceSettingKey_GENERAL && instanceURLWasProvided {
+		s.Profile.SetInstanceURL(instanceSetting.GetGeneralSetting().GetInstanceUrl())
 	}
 
 	return convertInstanceSettingFromStore(instanceSetting), nil

@@ -52,6 +52,7 @@ import { State } from "@/types/proto/api/v1/common_pb";
 import type { Shortcut } from "@/types/proto/api/v1/shortcut_service_pb";
 import { User_Role, UserNotification_Status } from "@/types/proto/api/v1/user_service_pb";
 import { useTranslate } from "@/utils/i18n";
+import { isPublicMemoEnabled } from "@/utils/visibility";
 import MemosLogo from "../MemosLogo";
 import MoodFilterSection from "./MoodFilterSection";
 import { getSidebarRouteKind } from "./routes";
@@ -431,7 +432,7 @@ const GlobalNavigation = () => {
   const { memoRelatedSetting } = useInstance();
   const unreadCount = notifications.filter((notification) => notification.status === UserNotification_Status.UNREAD).length;
   // The Explore scope is hidden when the instance disables the PUBLIC level.
-  const exploreEnabled = !memoRelatedSetting?.allowedVisibilities?.length || memoRelatedSetting.allowedVisibilities.includes("PUBLIC");
+  const exploreEnabled = isPublicMemoEnabled(memoRelatedSetting?.allowedVisibilities);
   const routeKind = getSidebarRouteKind(location.pathname);
   const resolvedScope = resolveMemoScope(location.pathname, {
     currentUsername: currentUser?.username,

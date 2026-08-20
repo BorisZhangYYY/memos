@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useInstance } from "@/contexts/InstanceContext";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { AUTH_REDIRECT_PARAM, buildAuthRoute, getSafeRedirectPath } from "@/utils/auth-redirect";
+import { isAnonymousExploreEnabled, isPublicMemoEnabled } from "@/utils/visibility";
 import { ROUTES } from "./routes";
 
 /** Waits for instance settings used by public/auth pages to settle. */
@@ -27,8 +28,17 @@ export const RequireFullInitializationRoute = () => {
 export const LandingRoute = () => {
   const currentUser = useCurrentUser();
   const location = useLocation();
+  const { isInitialized, memoRelatedSetting, profile } = useInstance();
+
+  if (!isInitialized) {
+    return null;
+  }
 
   if (!currentUser) {
+    if (!isAnonymousExploreEnabled(profile.instanceUrl, memoRelatedSetting.allowedVisibilities)) {
+      const redirect = `${location.pathname}${location.search}${location.hash}`;
+      return <Navigate to={buildAuthRoute({ redirect })} replace />;
+    }
     return (
       <Navigate
         to={{
@@ -39,6 +49,24 @@ export const LandingRoute = () => {
         replace
       />
     );
+  }
+
+  return <Outlet />;
+};
+
+/** Keeps the Explore feed out of instances that disable PUBLIC visibility. */
+export const RequireExploreEnabledRoute = () => {
+  const currentUser = useCurrentUser();
+  const { isInitialized, memoRelatedSetting, profile } = useInstance();
+
+  if (!isInitialized) {
+    return null;
+  }
+  if (!isPublicMemoEnabled(memoRelatedSetting.allowedVisibilities)) {
+    return <Navigate to={currentUser ? ROUTES.HOME : ROUTES.AUTH} replace />;
+  }
+  if (!currentUser && !isAnonymousExploreEnabled(profile.instanceUrl, memoRelatedSetting.allowedVisibilities)) {
+    return <Navigate to={ROUTES.AUTH} replace />;
   }
 
   return <Outlet />;

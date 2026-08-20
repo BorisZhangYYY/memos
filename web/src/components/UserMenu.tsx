@@ -100,8 +100,9 @@ const UserMenu = (props: Props) => {
       // Ignore errors from localStorage operations
     }
 
-    // Always redirect to auth page (use replace to prevent back navigation)
-    window.location.replace(Routes.AUTH);
+    // Let the centralized landing route choose Explore when PUBLIC is enabled,
+    // or the sign-in page when the instance is private.
+    window.location.replace(Routes.HOME);
   };
 
   const navigateFromMenu = (path: string) => {

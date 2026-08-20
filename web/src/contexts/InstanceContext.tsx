@@ -192,10 +192,18 @@ export function InstanceProvider({ children }: { children: ReactNode }) {
 
   const updateSetting = useCallback(async (setting: InstanceSetting) => {
     const updatedSetting = await instanceServiceClient.updateInstanceSetting({ setting });
-    setState((prev) => ({
-      ...prev,
-      settings: [...prev.settings.filter((s) => s.name !== updatedSetting.name), updatedSetting],
-    }));
+    setState((prev) => {
+      const updatedGeneralSetting = updatedSetting.value.case === "generalSetting" ? updatedSetting.value.value : undefined;
+      const profile =
+        updatedGeneralSetting?.instanceUrl === undefined
+          ? prev.profile
+          : create(InstanceProfileSchema, { ...prev.profile, instanceUrl: updatedGeneralSetting.instanceUrl });
+      return {
+        ...prev,
+        profile,
+        settings: [...prev.settings.filter((s) => s.name !== updatedSetting.name), updatedSetting],
+      };
+    });
   }, []);
 
   // Memoize context value to prevent unnecessary re-renders of consumers

@@ -26,6 +26,7 @@ import (
 
 	"github.com/usememos/memos/internal/profile"
 	"github.com/usememos/memos/internal/version"
+	storepb "github.com/usememos/memos/proto/gen/store"
 	"github.com/usememos/memos/server"
 	"github.com/usememos/memos/store"
 	"github.com/usememos/memos/store/db"
@@ -46,6 +47,10 @@ type instanceOptions struct {
 	// dataDir reuses an existing data directory instead of a fresh one, which
 	// is how a restart against an already-migrated database is simulated.
 	dataDir string
+	// storedInstanceURL simulates an Instance URL previously saved from the
+	// system settings UI. Nil means no persisted override; a pointer to an empty
+	// string explicitly overrides a non-empty startup value.
+	storedInstanceURL *string
 }
 
 // instance is a booted server plus the HTTP plumbing needed to talk to it.
@@ -87,6 +92,15 @@ func bootInstance(ctx context.Context, t *testing.T, opts instanceOptions) *inst
 
 	storeInstance := store.New(dbDriver, instanceProfile)
 	require.NoError(t, storeInstance.Migrate(ctx), "should migrate database")
+	if opts.storedInstanceURL != nil {
+		_, err := storeInstance.UpsertInstanceGeneralSettingSafely(ctx, &storepb.InstanceSetting{
+			Key: storepb.InstanceSettingKey_GENERAL,
+			Value: &storepb.InstanceSetting_GeneralSetting{
+				GeneralSetting: &storepb.InstanceGeneralSetting{InstanceUrl: opts.storedInstanceURL},
+			},
+		})
+		require.NoError(t, err, "should persist the configured instance URL")
+	}
 
 	// main.go calls LoadDeploymentConfiguration, which scans the fixed
 	// /etc/secrets path. Point the scan at a per-test directory so the result
@@ -377,6 +391,32 @@ func TestStartupPrivateInstance(t *testing.T) {
 	token := inst.signIn(t)
 	inst.createMemo(t, token, "startup-private", "private instance sentinel")
 	inst.requireMemo(t, token, "startup-private", "private instance sentinel")
+}
+
+func TestStartupPersistedInstanceURLOverridesStartupConfiguration(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("persisted URL wins", func(t *testing.T) {
+		storedInstanceURL := "https://settings.example.com/memos"
+		inst := bootInstance(ctx, t, instanceOptions{
+			instanceURL:       "https://environment.example.com",
+			storedInstanceURL: &storedInstanceURL,
+		})
+
+		require.Equal(t, storedInstanceURL, inst.profile.GetInstanceURL())
+		require.True(t, inst.profile.AllowAnonymous())
+	})
+
+	t.Run("persisted empty URL disables startup fallback", func(t *testing.T) {
+		storedInstanceURL := ""
+		inst := bootInstance(ctx, t, instanceOptions{
+			instanceURL:       "https://environment.example.com",
+			storedInstanceURL: &storedInstanceURL,
+		})
+
+		require.Empty(t, inst.profile.GetInstanceURL())
+		require.False(t, inst.profile.AllowAnonymous())
+	})
 }
 
 // TestStartupPrivateInstanceGatewayPolicy asserts the private-instance policy is

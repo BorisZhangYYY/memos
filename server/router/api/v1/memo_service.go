@@ -52,9 +52,9 @@ func isVisibilityValidationSuppressed(ctx context.Context) bool {
 	return ok && v
 }
 
-// resolveAllowedVisibilities returns the visibilities currently allowed by the
-// instance's memo-related setting. An empty allowed_visibilities list means all
-// levels are permitted.
+// resolveAllowedVisibilities translates the legacy allowlist into the simplified
+// public-access policy. PRIVATE and PROTECTED are always available; PUBLIC is
+// available when the allowlist is empty or explicitly contains PUBLIC.
 func (s *APIV1Service) resolveAllowedVisibilities(ctx context.Context) ([]store.Visibility, error) {
 	setting, err := s.Store.GetInstanceMemoRelatedSetting(ctx)
 	if err != nil {
@@ -63,18 +63,16 @@ func (s *APIV1Service) resolveAllowedVisibilities(ctx context.Context) ([]store.
 	if setting == nil || len(setting.AllowedVisibilities) == 0 {
 		return []store.Visibility{store.Private, store.Protected, store.Public}, nil
 	}
-	allowed := []store.Visibility{}
+	publicEnabled := false
 	for _, value := range setting.AllowedVisibilities {
-		switch store.Visibility(value) {
-		case store.Private:
-			allowed = append(allowed, store.Private)
-		case store.Protected:
-			allowed = append(allowed, store.Protected)
-		case store.Public:
-			allowed = append(allowed, store.Public)
-		default:
-			// Unknown levels are ignored.
+		if store.Visibility(value) == store.Public {
+			publicEnabled = true
+			break
 		}
+	}
+	allowed := []store.Visibility{store.Private, store.Protected}
+	if publicEnabled {
+		allowed = append(allowed, store.Public)
 	}
 	return allowed, nil
 }
@@ -92,37 +90,33 @@ func (s *APIV1Service) checkMemoReadAccess(ctx context.Context, memo *store.Memo
 	if memo == nil {
 		return status.Errorf(codes.NotFound, "memo not found")
 	}
+	currentUser, err := s.fetchCurrentUser(ctx)
+	if err != nil {
+		return status.Errorf(codes.Internal, "failed to get user")
+	}
 
 	// Archived memos are only visible to their creator.
 	if memo.RowStatus == store.Archived {
-		user, err := s.fetchCurrentUser(ctx)
-		if err != nil {
-			return status.Errorf(codes.Internal, "failed to get user")
-		}
-		if user == nil || memo.CreatorID != user.ID {
+		if currentUser == nil || memo.CreatorID != currentUser.ID {
 			return status.Errorf(codes.NotFound, "memo not found")
 		}
 	}
 
 	// A memo whose visibility level has been disabled by the instance setting is
-	// hidden entirely, as if it did not exist.
+	// hidden from everyone except its creator, as if it did not exist.
 	allowedVis, err := s.resolveAllowedVisibilities(ctx)
 	if err != nil {
 		return status.Errorf(codes.Internal, "failed to get instance setting")
 	}
-	if !containsVisibility(allowedVis, memo.Visibility) {
+	if !containsVisibility(allowedVis, memo.Visibility) && (currentUser == nil || memo.CreatorID != currentUser.ID) {
 		return status.Errorf(codes.NotFound, "memo not found")
 	}
 
 	if memo.Visibility != store.Public {
-		user, err := s.fetchCurrentUser(ctx)
-		if err != nil {
-			return status.Errorf(codes.Internal, "failed to get user")
-		}
-		if user == nil {
+		if currentUser == nil {
 			return status.Errorf(codes.Unauthenticated, "user not authenticated")
 		}
-		if memo.Visibility == store.Private && memo.CreatorID != user.ID {
+		if memo.Visibility == store.Private && memo.CreatorID != currentUser.ID {
 			return status.Errorf(codes.PermissionDenied, "permission denied")
 		}
 	}
@@ -303,7 +297,7 @@ func (s *APIV1Service) ListMemos(ctx context.Context, request *v1pb.ListMemosReq
 	}
 
 	// Resolve which visibility levels the instance currently allows. Disabled
-	// levels hide every memo at that level (including the current user's own),
+	// levels remain visible to their creator but are hidden from everyone else,
 	// and anonymous access only remains possible while PUBLIC is allowed.
 	allowedVis, err := s.resolveAllowedVisibilities(ctx)
 	if err != nil {
@@ -325,18 +319,13 @@ func (s *APIV1Service) ListMemos(ctx context.Context, request *v1pb.ListMemosReq
 		}
 	} else {
 		if memoFind.CreatorID == nil {
-			// Own memos are filtered by the allowed list (a disabled level hides
-			// the user's own memos too); other users' memos are only reachable
-			// through the shared (non-PRIVATE) levels.
-			quoted := make([]string, 0, len(allowedVis))
-			for _, v := range allowedVis {
-				quoted = append(quoted, fmt.Sprintf("%q", v.String()))
-			}
+			// The caller always sees their own memos. Other users' memos are only
+			// reachable through visibility levels currently shared by the instance.
 			sharedQuoted := make([]string, 0, len(sharedVis))
 			for _, v := range sharedVis {
 				sharedQuoted = append(sharedQuoted, fmt.Sprintf("%q", v.String()))
 			}
-			filter := fmt.Sprintf(`(creator_id == %d && visibility in [%s]) || visibility in [%s]`, currentUser.ID, strings.Join(quoted, ", "), strings.Join(sharedQuoted, ", "))
+			filter := fmt.Sprintf(`creator_id == %d || visibility in [%s]`, currentUser.ID, strings.Join(sharedQuoted, ", "))
 			memoFind.Filters = append(memoFind.Filters, filter)
 		} else if *memoFind.CreatorID != currentUser.ID {
 			memoFind.VisibilityList = sharedVis
@@ -747,25 +736,17 @@ func (s *APIV1Service) getContentLengthLimit(ctx context.Context) (int, error) {
 	return int(instanceMemoRelatedSetting.ContentLengthLimit), nil
 }
 
-// validateMemoVisibility checks that the given visibility is in the allowed
-// list of the instance memo related setting. An empty allowed list means all
-// visibilities are allowed.
+// validateMemoVisibility checks the simplified public-access policy. PRIVATE
+// and PROTECTED remain available; PUBLIC can be disabled instance-wide.
 func (s *APIV1Service) validateMemoVisibility(ctx context.Context, visibility store.Visibility) error {
-	instanceMemoRelatedSetting, err := s.Store.GetInstanceMemoRelatedSetting(ctx)
+	allowedVisibilities, err := s.resolveAllowedVisibilities(ctx)
 	if err != nil {
 		return status.Errorf(codes.Internal, "failed to get instance setting")
 	}
-	allowedVisibilities := instanceMemoRelatedSetting.AllowedVisibilities
-	if len(allowedVisibilities) == 0 {
+	if containsVisibility(allowedVisibilities, visibility) {
 		return nil
 	}
-	visStr := visibility.String()
-	for _, allowed := range allowedVisibilities {
-		if allowed == visStr {
-			return nil
-		}
-	}
-	return status.Errorf(codes.InvalidArgument, "visibility %q is not allowed", visStr)
+	return status.Errorf(codes.InvalidArgument, "visibility %q is not allowed", visibility.String())
 }
 
 // DispatchMemoCreatedWebhook dispatches webhook when memo is created.

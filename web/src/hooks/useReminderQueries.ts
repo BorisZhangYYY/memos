@@ -5,6 +5,7 @@ import { reminderServiceClient } from "@/connect";
 import { userKeys } from "@/hooks/useUserQueries";
 import { State } from "@/types/proto/api/v1/common_pb";
 import { ListRemindersRequest_View, ReminderListSchema, ReminderSchema } from "@/types/proto/api/v1/reminder_service_pb";
+import { generateUUID } from "@/utils/uuid";
 
 type ReminderInput = MessageInitShape<typeof ReminderSchema>;
 type ReminderListInput = MessageInitShape<typeof ReminderListSchema>;
@@ -65,8 +66,28 @@ export const useCreateReminderList = () => {
       reminderServiceClient.createReminderList({
         parent,
         reminderList: create(ReminderListSchema, reminderList),
-        reminderListId: crypto.randomUUID(),
+        reminderListId: generateUUID(),
       }),
+    onSuccess: invalidate,
+  });
+};
+
+export const useUpdateReminderList = () => {
+  const invalidate = useInvalidateReminders();
+  return useMutation({
+    mutationFn: ({ reminderList, updateMask }: { reminderList: ReminderListInput; updateMask: string[] }) =>
+      reminderServiceClient.updateReminderList({
+        reminderList: create(ReminderListSchema, reminderList),
+        updateMask: create(FieldMaskSchema, { paths: updateMask }),
+      }),
+    onSuccess: invalidate,
+  });
+};
+
+export const useDeleteReminderList = () => {
+  const invalidate = useInvalidateReminders();
+  return useMutation({
+    mutationFn: (name: string) => reminderServiceClient.deleteReminderList({ name }),
     onSuccess: invalidate,
   });
 };
@@ -75,7 +96,7 @@ export const useCreateReminder = () => {
   const invalidate = useInvalidateReminders();
   return useMutation({
     mutationFn: ({ parent, reminder }: { parent: string; reminder: ReminderInput }) =>
-      reminderServiceClient.createReminder({ parent, reminder: create(ReminderSchema, reminder), reminderId: crypto.randomUUID() }),
+      reminderServiceClient.createReminder({ parent, reminder: create(ReminderSchema, reminder), reminderId: generateUUID() }),
     onSuccess: invalidate,
   });
 };

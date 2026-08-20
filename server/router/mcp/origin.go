@@ -20,10 +20,10 @@ func isAllowedMCPOrigin(host string, origin string, profile *profile.Profile) bo
 		return true
 	}
 
-	if profile == nil || profile.InstanceURL == "" {
+	if profile == nil {
 		return false
 	}
-	instanceURL, err := url.Parse(profile.InstanceURL)
+	instanceURL, err := url.Parse(profile.GetInstanceURL())
 	if err != nil || instanceURL.Scheme == "" || instanceURL.Host == "" {
 		return false
 	}

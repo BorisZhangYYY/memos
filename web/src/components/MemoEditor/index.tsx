@@ -11,6 +11,7 @@ import { InstanceSetting_Key } from "@/types/proto/api/v1/instance_service_pb";
 import { ListRemindersRequest_View } from "@/types/proto/api/v1/reminder_service_pb";
 import { useTranslate } from "@/utils/i18n";
 import { convertVisibilityFromString } from "@/utils/memo";
+import { resolveDefaultMemoVisibility } from "@/utils/visibility";
 import { AudioRecorderPanel, EditorContent, EditorMetadata, FocusModeOverlay, TimestampPopover } from "./components";
 import { FOCUS_MODE_STYLES, FORMATTING_TOOLBAR_STORAGE_KEY } from "./constants";
 import { useAudioRecorder, useAutoSave, useFocusMode, useMemoInit, useMemoSave } from "./hooks";
@@ -50,7 +51,7 @@ const MemoEditorImpl: React.FC<MemoEditorProps> = ({
   const isFocusMode = useEditorSelector((s) => s.ui.isFocusMode);
   const hasTimestamp = useEditorSelector((s) => Boolean(s.timestamps.createTime));
   const { userGeneralSetting } = useAuth();
-  const { aiSetting, fetchSetting } = useInstance();
+  const { aiSetting, fetchSetting, memoRelatedSetting } = useInstance();
   const [isAudioRecorderOpen, setIsAudioRecorderOpen] = useState(false);
   const [isTranscribingAudio, setIsTranscribingAudio] = useState(false);
   const { data: reminders = [], isSuccess: remindersLoaded } = useReminders(currentUser?.name, {
@@ -96,7 +97,9 @@ const MemoEditorImpl: React.FC<MemoEditorProps> = ({
   }, [aiSetting.providers, aiSetting.transcription?.providerId]);
 
   // Get default visibility from user settings
-  const defaultVisibility = userGeneralSetting?.memoVisibility ? convertVisibilityFromString(userGeneralSetting.memoVisibility) : undefined;
+  const defaultVisibility = userGeneralSetting?.memoVisibility
+    ? convertVisibilityFromString(resolveDefaultMemoVisibility(userGeneralSetting.memoVisibility, memoRelatedSetting.allowedVisibilities))
+    : undefined;
   const editorCacheKey = cacheService.key(currentUser?.name ?? "", cacheKey);
 
   const { isInitialized } = useMemoInit({

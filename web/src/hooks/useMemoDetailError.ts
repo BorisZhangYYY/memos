@@ -1,14 +1,14 @@
 import { Code, ConnectError } from "@connectrpc/connect";
 import { useEffect } from "react";
 import { toast } from "react-hot-toast";
-import useNavigateTo from "@/hooks/useNavigateTo";
+import { useTranslate } from "@/utils/i18n";
 
 interface UseMemoDetailErrorOptions {
   error: Error | null;
 }
 
 const useMemoDetailError = ({ error }: UseMemoDetailErrorOptions) => {
-  const navigateTo = useNavigateTo();
+  const t = useTranslate();
 
   useEffect(() => {
     if (!error) {
@@ -17,7 +17,7 @@ const useMemoDetailError = ({ error }: UseMemoDetailErrorOptions) => {
 
     if (error instanceof ConnectError) {
       if (error.code === Code.Unauthenticated || error.code === Code.PermissionDenied || error.code === Code.NotFound) {
-        navigateTo("/404", { replace: true });
+        toast.error(t("message.memo-not-found"));
         return;
       }
 
@@ -26,7 +26,7 @@ const useMemoDetailError = ({ error }: UseMemoDetailErrorOptions) => {
     }
 
     toast.error(error.message);
-  }, [error, navigateTo]);
+  }, [error, t]);
 };
 
 export default useMemoDetailError;

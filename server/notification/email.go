@@ -317,10 +317,10 @@ func displayNameForEmail(user *store.User) string {
 }
 
 func (d *EmailDispatcher) baseURL() string {
-	if d.profile == nil || strings.TrimSpace(d.profile.InstanceURL) == "" {
+	if d.profile == nil {
 		return ""
 	}
-	return strings.TrimRight(strings.TrimSpace(d.profile.InstanceURL), "/")
+	return strings.TrimRight(strings.TrimSpace(d.profile.GetInstanceURL()), "/")
 }
 
 func (d *EmailDispatcher) memoURL(memo *store.Memo) string {

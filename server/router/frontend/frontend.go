@@ -126,7 +126,7 @@ func (s *FrontendService) registerRoutes(e *echo.Echo) {
 }
 
 func (s *FrontendService) getRobotsTXT(c *echo.Context) error {
-	instanceURL, err := normalizeInstanceURL(s.Profile.InstanceURL)
+	instanceURL, err := normalizeInstanceURL(s.Profile.GetInstanceURL())
 	if err != nil {
 		return err
 	}
@@ -141,7 +141,7 @@ func (s *FrontendService) getRobotsTXT(c *echo.Context) error {
 }
 
 func (s *FrontendService) getSitemapXML(c *echo.Context) error {
-	instanceURL, err := normalizeInstanceURL(s.Profile.InstanceURL)
+	instanceURL, err := normalizeInstanceURL(s.Profile.GetInstanceURL())
 	if err != nil {
 		return err
 	}

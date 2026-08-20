@@ -16,6 +16,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/usememos/memos/internal/base"
+	"github.com/usememos/memos/internal/profile"
 	storepb "github.com/usememos/memos/proto/gen/store"
 )
 
@@ -222,11 +223,19 @@ func validateDeploymentIdentityProvider(provider *storepb.IdentityProvider) erro
 func validateAndNormalizeDeploymentInstanceSetting(setting *storepb.InstanceSetting) error {
 	switch setting.Key {
 	case storepb.InstanceSettingKey_GENERAL:
-		if setting.GetGeneralSetting() == nil {
+		general := setting.GetGeneralSetting()
+		if general == nil {
 			return errors.New("generalSetting must be populated for key GENERAL")
 		}
-		if offset := setting.GetGeneralSetting().WeekStartDayOffset; offset < -1 || offset > 6 {
+		if offset := general.WeekStartDayOffset; offset < -1 || offset > 6 {
 			return errors.New("generalSetting.weekStartDayOffset must be between -1 and 6")
+		}
+		if general.InstanceUrl != nil {
+			instanceURL, err := profile.NormalizeInstanceURL(general.GetInstanceUrl())
+			if err != nil {
+				return errors.Wrap(err, "generalSetting.instanceUrl is invalid")
+			}
+			general.InstanceUrl = &instanceURL
 		}
 	case storepb.InstanceSettingKey_STORAGE:
 		storage := setting.GetStorageSetting()

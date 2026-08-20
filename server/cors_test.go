@@ -79,6 +79,21 @@ func TestAllowedCORSOrigin(t *testing.T) {
 	}
 }
 
+func TestAllowedCORSOriginUsesRuntimeInstanceURL(t *testing.T) {
+	p := &profile.Profile{InstanceURL: "https://old.example"}
+	requireOrigin := func(origin string, want bool) {
+		t.Helper()
+		if got := isAllowedCORSOrigin(p, "localhost", origin); got != want {
+			t.Fatalf("isAllowedCORSOrigin(%q) = %t, want %t", origin, got, want)
+		}
+	}
+
+	requireOrigin("https://old.example", true)
+	p.SetInstanceURL("https://new.example")
+	requireOrigin("https://old.example", false)
+	requireOrigin("https://new.example", true)
+}
+
 func TestCORSMiddleware(t *testing.T) {
 	e := echo.New()
 	e.Use(newCORSMiddleware(&profile.Profile{InstanceURL: "https://memos.example"}))

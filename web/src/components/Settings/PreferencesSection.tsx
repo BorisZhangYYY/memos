@@ -9,6 +9,7 @@ import { UserSetting_GeneralSetting, UserSetting_GeneralSettingSchema } from "@/
 import { loadLocale, useTranslate } from "@/utils/i18n";
 import { convertVisibilityFromString, convertVisibilityToString } from "@/utils/memo";
 import { loadTheme } from "@/utils/theme";
+import { isMemoVisibilityEnabled, resolveDefaultMemoVisibility } from "@/utils/visibility";
 import LocaleSelect from "../LocaleSelect";
 import ThemeSelect from "../ThemeSelect";
 import VisibilityIcon from "../VisibilityIcon";
@@ -37,13 +38,12 @@ const PreferencesSection = () => {
     );
   };
 
-  // An empty allowlist means every visibility level is allowed. If the user's
-  // current default visibility is not in the allowlist, leave it untouched;
-  // the backend validates on save.
+  // PUBLIC follows the instance-wide switch; PRIVATE and PROTECTED remain
+  // available as personal defaults.
   const visibilityOptions = useMemo(
     () =>
       [Visibility.PRIVATE, Visibility.PROTECTED, Visibility.PUBLIC]
-        .filter((v) => allowedVis.length === 0 || allowedVis.includes(convertVisibilityToString(v)))
+        .filter((v) => isMemoVisibilityEnabled(convertVisibilityToString(v), allowedVis))
         .map((v) => {
           const value = convertVisibilityToString(v);
           return { value, label: t(`memo.visibility.${value.toLowerCase() as Lowercase<typeof value>}`) };
@@ -84,6 +84,8 @@ const PreferencesSection = () => {
       memoVisibility: "PRIVATE",
       theme: "system",
     });
+  const effectiveMemoVisibility = resolveDefaultMemoVisibility(setting.memoVisibility || "PRIVATE", allowedVis);
+  const isSavedDefaultTemporarilyDisabled = effectiveMemoVisibility !== (setting.memoVisibility || "PRIVATE");
 
   return (
     <SettingSection title={t("setting.preference.label")}>
@@ -107,16 +109,21 @@ const PreferencesSection = () => {
         <SettingList>
           <SettingListItem
             label={t("setting.preference.default-memo-visibility")}
-            description={t("setting.preference.default-memo-visibility-description")}
+            description={
+              <>
+                {t("setting.preference.default-memo-visibility-description")}
+                {isSavedDefaultTemporarilyDisabled && (
+                  <span className="block text-amber-700 dark:text-amber-300">
+                    {t("setting.preference.default-memo-visibility-disabled")}
+                  </span>
+                )}
+              </>
+            }
           >
-            <Select
-              value={setting.memoVisibility || "PRIVATE"}
-              items={visibilityOptions}
-              onValueChange={handleDefaultMemoVisibilityChanged}
-            >
+            <Select value={effectiveMemoVisibility} items={visibilityOptions} onValueChange={handleDefaultMemoVisibilityChanged}>
               <SelectTrigger className="min-w-fit">
                 <div className="flex items-center gap-2">
-                  <VisibilityIcon visibility={convertVisibilityFromString(setting.memoVisibility)} />
+                  <VisibilityIcon visibility={convertVisibilityFromString(effectiveMemoVisibility)} />
                   <SelectValue />
                 </div>
               </SelectTrigger>

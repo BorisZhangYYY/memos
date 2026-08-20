@@ -14,10 +14,10 @@ import (
 	"github.com/usememos/memos/store"
 )
 
-// TestListMemos_DisabledVisibilityHidesMemos verifies that disabling PUBLIC via
-// allowed_visibilities hides already-published PUBLIC memos (including the
-// creator's own) from ListMemos, while PRIVATE/PROTECTED memos remain visible.
-func TestListMemos_DisabledVisibilityHidesMemos(t *testing.T) {
+// TestListMemos_DisabledVisibilityStaysVisibleToCreator verifies that disabling
+// a visibility hides existing memos from other users while their creator keeps
+// list, mood-filter, and direct-read access.
+func TestListMemos_DisabledVisibilityStaysVisibleToCreator(t *testing.T) {
 	ctx := context.Background()
 	svc := newIntegrationService(t)
 
@@ -38,12 +38,12 @@ func TestListMemos_DisabledVisibilityHidesMemos(t *testing.T) {
 		Memo: &v1pb.Memo{Content: "private", Visibility: v1pb.Visibility_PRIVATE},
 	})
 	require.NoError(t, err)
-	_, err = svc.CreateMemo(authorCtx, &v1pb.CreateMemoRequest{
+	protectedMemo, err := svc.CreateMemo(authorCtx, &v1pb.CreateMemoRequest{
 		Memo: &v1pb.Memo{Content: "protected", Visibility: v1pb.Visibility_PROTECTED},
 	})
 	require.NoError(t, err)
 	publicMemo, err := svc.CreateMemo(authorCtx, &v1pb.CreateMemoRequest{
-		Memo: &v1pb.Memo{Content: "public", Visibility: v1pb.Visibility_PUBLIC},
+		Memo: &v1pb.Memo{Content: "public", Visibility: v1pb.Visibility_PUBLIC, MoodLevel: 5},
 	})
 	require.NoError(t, err)
 
@@ -60,7 +60,7 @@ func TestListMemos_DisabledVisibilityHidesMemos(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	// The author's own feed hides the PUBLIC memo but keeps PRIVATE/PROTECTED.
+	// The author's own feed keeps the PUBLIC memo after PUBLIC is disabled.
 	ownList, err := svc.ListMemos(authorCtx, &v1pb.ListMemosRequest{})
 	require.NoError(t, err)
 	ownContents := map[string]bool{}
@@ -69,7 +69,13 @@ func TestListMemos_DisabledVisibilityHidesMemos(t *testing.T) {
 	}
 	assert.True(t, ownContents["private"])
 	assert.True(t, ownContents["protected"])
-	assert.False(t, ownContents["public"], "author's own PUBLIC memo must be hidden when PUBLIC is disabled")
+	assert.True(t, ownContents["public"], "author's own PUBLIC memo must stay visible when PUBLIC is disabled")
+
+	// Mood filters use the same creator-only visibility semantics.
+	moodList, err := svc.ListMemos(authorCtx, &v1pb.ListMemosRequest{Filter: "mood_level == 5"})
+	require.NoError(t, err)
+	require.Len(t, moodList.Memos, 1)
+	assert.Equal(t, publicMemo.Name, moodList.Memos[0].Name)
 
 	// A viewer sees PRIVATE/PROTECTED-visible memos but not the PUBLIC one.
 	viewerList, err := svc.ListMemos(viewerCtx, &v1pb.ListMemosRequest{})
@@ -86,8 +92,12 @@ func TestListMemos_DisabledVisibilityHidesMemos(t *testing.T) {
 	_, err = svc.GetMemo(viewerCtx, &v1pb.GetMemoRequest{Name: publicMemo.Name})
 	require.Error(t, err)
 	assert.Equal(t, codes.NotFound, status.Code(err))
+	gotPublic, err := svc.GetMemo(authorCtx, &v1pb.GetMemoRequest{Name: publicMemo.Name})
+	require.NoError(t, err)
+	assert.Equal(t, "public", gotPublic.Content)
 
-	// Disabling PROTECTED too leaves only PRIVATE.
+	// A legacy PRIVATE-only value now means the same thing as PUBLIC disabled;
+	// PROTECTED remains available under the simplified binary policy.
 	_, err = svc.UpdateInstanceSetting(authorCtx, &v1pb.UpdateInstanceSettingRequest{
 		Setting: &v1pb.InstanceSetting{
 			Name: "instance/settings/MEMO_RELATED",
@@ -107,12 +117,29 @@ func TestListMemos_DisabledVisibilityHidesMemos(t *testing.T) {
 		ownContents2[memo.Content] = true
 	}
 	assert.True(t, ownContents2["private"])
-	assert.False(t, ownContents2["protected"])
-	assert.False(t, ownContents2["public"])
+	assert.True(t, ownContents2["protected"])
+	assert.True(t, ownContents2["public"])
 
-	// Creating a memo at a disabled visibility is rejected.
+	gotProtected, err := svc.GetMemo(authorCtx, &v1pb.GetMemoRequest{Name: protectedMemo.Name})
+	require.NoError(t, err)
+	assert.Equal(t, "protected", gotProtected.Content)
+
+	viewerList2, err := svc.ListMemos(viewerCtx, &v1pb.ListMemosRequest{})
+	require.NoError(t, err)
+	viewerContents2 := map[string]bool{}
+	for _, memo := range viewerList2.Memos {
+		viewerContents2[memo.Content] = true
+	}
+	assert.True(t, viewerContents2["protected"])
+	assert.False(t, viewerContents2["public"])
+
+	// Creating PROTECTED remains valid, while PUBLIC is rejected.
 	_, err = svc.CreateMemo(authorCtx, &v1pb.CreateMemoRequest{
-		Memo: &v1pb.Memo{Content: "should fail", Visibility: v1pb.Visibility_PROTECTED},
+		Memo: &v1pb.Memo{Content: "new protected", Visibility: v1pb.Visibility_PROTECTED},
+	})
+	require.NoError(t, err)
+	_, err = svc.CreateMemo(authorCtx, &v1pb.CreateMemoRequest{
+		Memo: &v1pb.Memo{Content: "should fail", Visibility: v1pb.Visibility_PUBLIC},
 	})
 	require.Error(t, err)
 	assert.Equal(t, codes.InvalidArgument, status.Code(err))
@@ -123,9 +150,9 @@ func TestListMemos_DisabledVisibilityHidesMemos(t *testing.T) {
 	assert.Equal(t, "private", got.Content)
 }
 
-// TestUpdateInstanceSetting_VisibilityHierarchy verifies that a setting allowing
-// PUBLIC without PROTECTED is rejected, and unknown levels are rejected.
-func TestUpdateInstanceSetting_VisibilityHierarchy(t *testing.T) {
+// TestUpdateInstanceSetting_VisibilityValues verifies that legacy combinations
+// remain accepted while unknown visibility values are rejected.
+func TestUpdateInstanceSetting_VisibilityValues(t *testing.T) {
 	ctx := context.Background()
 	svc := newIntegrationService(t)
 
@@ -135,7 +162,8 @@ func TestUpdateInstanceSetting_VisibilityHierarchy(t *testing.T) {
 	require.NoError(t, err)
 	adminCtx := userCtx(ctx, admin.ID)
 
-	// PUBLIC without PROTECTED violates the hierarchy.
+	// PUBLIC no longer needs an explicit PROTECTED entry because the simplified
+	// runtime policy always keeps PRIVATE and PROTECTED available.
 	_, err = svc.UpdateInstanceSetting(adminCtx, &v1pb.UpdateInstanceSettingRequest{
 		Setting: &v1pb.InstanceSetting{
 			Name: "instance/settings/MEMO_RELATED",
@@ -146,8 +174,7 @@ func TestUpdateInstanceSetting_VisibilityHierarchy(t *testing.T) {
 			},
 		},
 	})
-	require.Error(t, err)
-	assert.Equal(t, codes.InvalidArgument, status.Code(err))
+	require.NoError(t, err)
 
 	// An unknown level is rejected.
 	_, err = svc.UpdateInstanceSetting(adminCtx, &v1pb.UpdateInstanceSettingRequest{
@@ -163,7 +190,7 @@ func TestUpdateInstanceSetting_VisibilityHierarchy(t *testing.T) {
 	require.Error(t, err)
 	assert.Equal(t, codes.InvalidArgument, status.Code(err))
 
-	// Valid combinations pass: empty (all allowed), PRIVATE+PROTECTED, PRIVATE.
+	// Valid legacy combinations pass: empty (all allowed), PRIVATE+PROTECTED, PRIVATE.
 	for _, allowed := range [][]string{nil, {"PRIVATE", "PROTECTED"}, {"PRIVATE"}} {
 		_, err = svc.UpdateInstanceSetting(adminCtx, &v1pb.UpdateInstanceSettingRequest{
 			Setting: &v1pb.InstanceSetting{

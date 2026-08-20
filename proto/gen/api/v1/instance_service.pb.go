@@ -989,8 +989,12 @@ type InstanceSetting_GeneralSetting struct {
 	DisallowChangeUsername bool `protobuf:"varint,8,opt,name=disallow_change_username,json=disallowChangeUsername,proto3" json:"disallow_change_username,omitempty"`
 	// disallow_change_nickname disallows changing nickname.
 	DisallowChangeNickname bool `protobuf:"varint,9,opt,name=disallow_change_nickname,json=disallowChangeNickname,proto3" json:"disallow_change_nickname,omitempty"`
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
+	// Instance URL is the externally reachable base URL of the instance.
+	// When absent, the startup --instance-url / MEMOS_INSTANCE_URL value is used.
+	// An explicitly empty value disables the startup fallback.
+	InstanceUrl   *string `protobuf:"bytes,10,opt,name=instance_url,json=instanceUrl,proto3,oneof" json:"instance_url,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *InstanceSetting_GeneralSetting) Reset() {
@@ -1079,6 +1083,13 @@ func (x *InstanceSetting_GeneralSetting) GetDisallowChangeNickname() bool {
 	return false
 }
 
+func (x *InstanceSetting_GeneralSetting) GetInstanceUrl() string {
+	if x != nil && x.InstanceUrl != nil {
+		return *x.InstanceUrl
+	}
+	return ""
+}
+
 // Storage configuration settings for instance attachments.
 type InstanceSetting_StorageSetting struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -1162,8 +1173,9 @@ type InstanceSetting_MemoRelatedSetting struct {
 	EnableDoubleClickEdit bool `protobuf:"varint,4,opt,name=enable_double_click_edit,json=enableDoubleClickEdit,proto3" json:"enable_double_click_edit,omitempty"`
 	// reactions is the list of reactions.
 	Reactions []string `protobuf:"bytes,7,rep,name=reactions,proto3" json:"reactions,omitempty"`
-	// allowed_visibilities restricts which visibility levels users can select.
-	// Values are PRIVATE, PROTECTED, PUBLIC. Empty means all levels are allowed.
+	// Legacy storage for the instance public-access switch. Empty or a list
+	// containing PUBLIC enables public access; any other valid list disables it.
+	// PRIVATE and PROTECTED are always available.
 	AllowedVisibilities []string `protobuf:"bytes,8,rep,name=allowed_visibilities,json=allowedVisibilities,proto3" json:"allowed_visibilities,omitempty"`
 	// mood_emojis are the emoji representations for mood levels 1-7.
 	// Index 0 = mood level 1, index 6 = mood level 7. Default emojis are used when empty.
@@ -2099,7 +2111,7 @@ const file_api_v1_instance_service_proto_rawDesc = "" +
 	"\x06commit\x18\b \x01(\tR\x06commit\x12\x1f\n" +
 	"\vneeds_setup\x18\t \x01(\bR\n" +
 	"needsSetup\"\x1b\n" +
-	"\x19GetInstanceProfileRequest\"\xfb\x1c\n" +
+	"\x19GetInstanceProfileRequest\"\xb4\x1d\n" +
 	"\x0fInstanceSetting\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12W\n" +
 	"\x0fgeneral_setting\x18\x02 \x01(\v2,.memos.api.v1.InstanceSetting.GeneralSettingH\x00R\x0egeneralSetting\x12W\n" +
@@ -2108,7 +2120,7 @@ const file_api_v1_instance_service_proto_rawDesc = "" +
 	"\ftags_setting\x18\x05 \x01(\v2).memos.api.v1.InstanceSetting.TagsSettingH\x00R\vtagsSetting\x12f\n" +
 	"\x14notification_setting\x18\x06 \x01(\v21.memos.api.v1.InstanceSetting.NotificationSettingH\x00R\x13notificationSetting\x12H\n" +
 	"\n" +
-	"ai_setting\x18\a \x01(\v2'.memos.api.v1.InstanceSetting.AISettingH\x00R\taiSetting\x1a\xca\x04\n" +
+	"ai_setting\x18\a \x01(\v2'.memos.api.v1.InstanceSetting.AISettingH\x00R\taiSetting\x1a\x83\x05\n" +
 	"\x0eGeneralSetting\x12<\n" +
 	"\x1adisallow_user_registration\x18\x02 \x01(\bR\x18disallowUserRegistration\x124\n" +
 	"\x16disallow_password_auth\x18\x03 \x01(\bR\x14disallowPasswordAuth\x12+\n" +
@@ -2117,11 +2129,14 @@ const file_api_v1_instance_service_proto_rawDesc = "" +
 	"\x0ecustom_profile\x18\x06 \x01(\v2:.memos.api.v1.InstanceSetting.GeneralSetting.CustomProfileR\rcustomProfile\x121\n" +
 	"\x15week_start_day_offset\x18\a \x01(\x05R\x12weekStartDayOffset\x128\n" +
 	"\x18disallow_change_username\x18\b \x01(\bR\x16disallowChangeUsername\x128\n" +
-	"\x18disallow_change_nickname\x18\t \x01(\bR\x16disallowChangeNickname\x1ab\n" +
+	"\x18disallow_change_nickname\x18\t \x01(\bR\x16disallowChangeNickname\x12&\n" +
+	"\finstance_url\x18\n" +
+	" \x01(\tH\x00R\vinstanceUrl\x88\x01\x01\x1ab\n" +
 	"\rCustomProfile\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x19\n" +
-	"\blogo_url\x18\x03 \x01(\tR\alogoUrl\x1a\xfa\x04\n" +
+	"\blogo_url\x18\x03 \x01(\tR\alogoUrlB\x0f\n" +
+	"\r_instance_url\x1a\xfa\x04\n" +
 	"\x0eStorageSetting\x12[\n" +
 	"\fstorage_type\x18\x01 \x01(\x0e28.memos.api.v1.InstanceSetting.StorageSetting.StorageTypeR\vstorageType\x12+\n" +
 	"\x11filepath_template\x18\x02 \x01(\tR\x10filepathTemplate\x12/\n" +
@@ -2373,6 +2388,7 @@ func file_api_v1_instance_service_proto_init() {
 		(*InstanceSetting_NotificationSetting_)(nil),
 		(*InstanceSetting_AiSetting)(nil),
 	}
+	file_api_v1_instance_service_proto_msgTypes[13].OneofWrappers = []any{}
 	file_api_v1_instance_service_proto_msgTypes[27].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{

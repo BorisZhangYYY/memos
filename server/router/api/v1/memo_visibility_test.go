@@ -25,11 +25,11 @@ func TestCreateMemo_VisibilityNotAllowed(t *testing.T) {
 	require.NoError(t, err)
 	authorCtx := userCtx(ctx, author.ID)
 
-	// Restrict allowed visibilities to PRIVATE only.
+	// Disable PUBLIC while PRIVATE and PROTECTED remain available.
 	_, err = svc.Store.UpsertInstanceSetting(ctx, &storepb.InstanceSetting{
 		Key: storepb.InstanceSettingKey_MEMO_RELATED,
 		Value: &storepb.InstanceSetting_MemoRelatedSetting{MemoRelatedSetting: &storepb.InstanceMemoRelatedSetting{
-			AllowedVisibilities: []string{"PRIVATE"},
+			AllowedVisibilities: []string{"PRIVATE", "PROTECTED"},
 		}},
 	})
 	require.NoError(t, err)
@@ -102,7 +102,8 @@ func TestCreateMemoComment_VisibilityInheritedFromParent(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	// Restrict allowed visibilities to PRIVATE only.
+	// Store a legacy PRIVATE-only value. The simplified policy treats this as
+	// PUBLIC disabled while keeping PROTECTED available.
 	_, err = svc.Store.UpsertInstanceSetting(ctx, &storepb.InstanceSetting{
 		Key: storepb.InstanceSettingKey_MEMO_RELATED,
 		Value: &storepb.InstanceSetting_MemoRelatedSetting{MemoRelatedSetting: &storepb.InstanceMemoRelatedSetting{

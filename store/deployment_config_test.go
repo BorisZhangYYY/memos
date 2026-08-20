@@ -261,6 +261,7 @@ func TestLoadDeploymentConfigurationRejectsInvalidSettingResources(t *testing.T)
 		{name: "TAGS", content: `{"key":"TAGS","tagsSetting":{}}`, errorString: "cannot be deployment configured"},
 		{name: "mismatched oneof", content: `{"key":"GENERAL","storageSetting":{}}`, errorString: "generalSetting must be populated"},
 		{name: "invalid week start", content: `{"key":"GENERAL","generalSetting":{"weekStartDayOffset":-2}}`, errorString: "must be between -1 and 6"},
+		{name: "invalid instance URL", content: `{"key":"GENERAL","generalSetting":{"instanceUrl":"javascript:alert(1)"}}`, errorString: "absolute HTTP(S) URL"},
 		{name: "unknown field", content: `{"key":"GENERAL","generalSetting":{},"typo":true}`, errorString: `unknown field "typo"`},
 	}
 	for _, test := range tests {

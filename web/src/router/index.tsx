@@ -7,6 +7,7 @@ import { lazyWithReload } from "@/utils/lazy";
 import {
   LandingRoute,
   RequireAuthRoute,
+  RequireExploreEnabledRoute,
   RequireFullInitializationRoute,
   RequireGuestRoute,
   RequireInstanceInitializationRoute,
@@ -91,7 +92,10 @@ export const routeConfig: RouteObject[] = [
                 element: <RequireInstanceInitializationRoute />,
                 children: [{ path: Routes.ABOUT, element: <About /> }],
               },
-              { path: Routes.EXPLORE, element: <Explore /> },
+              {
+                element: <RequireExploreEnabledRoute />,
+                children: [{ path: Routes.EXPLORE, element: <Explore /> }],
+              },
               { path: "u/:username", element: <UserProfile /> },
               {
                 element: <RequireAuthRoute />,

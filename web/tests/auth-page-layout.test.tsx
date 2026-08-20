@@ -3,10 +3,10 @@ import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import AuthPageLayout from "@/components/AuthPageLayout";
 
-const instance = vi.hoisted(() => ({ instanceUrl: "" }));
+const instance = vi.hoisted(() => ({ instanceUrl: "", allowedVisibilities: [] as string[] }));
 
 vi.mock("@/contexts/InstanceContext", () => ({
-  useInstance: () => ({ profile: instance, generalSetting: {} }),
+  useInstance: () => ({ profile: instance, generalSetting: {}, memoRelatedSetting: instance }),
 }));
 
 vi.mock("@/utils/i18n", () => ({
@@ -28,6 +28,7 @@ const renderLayout = (props?: { hideExplore?: boolean }) =>
 describe("<AuthPageLayout> explore band", () => {
   beforeEach(() => {
     instance.instanceUrl = "";
+    instance.allowedVisibilities = [];
   });
 
   it("links to Explore on public instances", () => {
@@ -37,7 +38,15 @@ describe("<AuthPageLayout> explore band", () => {
     expect(screen.getByRole("link", { name: /auth\.explore-public-memos/ })).toHaveAttribute("href", "/explore");
   });
 
-  it("omits the band on private instances", () => {
+  it("omits the band when no instance URL is configured", () => {
+    renderLayout();
+
+    expect(screen.queryByRole("link", { name: /auth\.explore-public-memos/ })).not.toBeInTheDocument();
+  });
+
+  it("omits the band when PUBLIC visibility is disabled", () => {
+    instance.instanceUrl = "https://private.example.com";
+    instance.allowedVisibilities = ["PRIVATE"];
     renderLayout();
 
     expect(screen.queryByRole("link", { name: /auth\.explore-public-memos/ })).not.toBeInTheDocument();

@@ -42,15 +42,27 @@ type Server struct {
 	backgroundRunnerWG      sync.WaitGroup
 }
 
-func NewServer(ctx context.Context, profile *profile.Profile, store *store.Store) (*Server, error) {
+func NewServer(ctx context.Context, instanceProfile *profile.Profile, store *store.Store) (*Server, error) {
+	generalSetting, err := store.GetInstanceGeneralSetting(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get instance general setting")
+	}
+	if generalSetting.InstanceUrl != nil {
+		instanceURL, err := profile.NormalizeInstanceURL(generalSetting.GetInstanceUrl())
+		if err != nil {
+			return nil, errors.Wrap(err, "invalid persisted instance URL")
+		}
+		instanceProfile.SetInstanceURL(instanceURL)
+	}
+
 	s := &Server{
 		Store:   store,
-		Profile: profile,
+		Profile: instanceProfile,
 	}
 
 	echoServer := echo.New()
 	echoServer.Use(middleware.Recover())
-	echoServer.Use(newCORSMiddleware(profile))
+	echoServer.Use(newCORSMiddleware(instanceProfile))
 	s.echoServer = echoServer
 
 	instanceBasicSetting, err := s.getOrUpsertInstanceBasicSetting(ctx)
@@ -59,7 +71,7 @@ func NewServer(ctx context.Context, profile *profile.Profile, store *store.Store
 	}
 
 	secret := "usememos"
-	if !profile.Demo {
+	if !instanceProfile.Demo {
 		secret = instanceBasicSetting.SecretKey
 	}
 	s.Secret = secret
@@ -70,11 +82,11 @@ func NewServer(ctx context.Context, profile *profile.Profile, store *store.Store
 	})
 
 	// Serve frontend static files.
-	frontend.NewFrontendService(profile, store).Serve(ctx, echoServer)
+	frontend.NewFrontendService(instanceProfile, store).Serve(ctx, echoServer)
 
 	rootGroup := echoServer.Group("")
 
-	apiV1Service := apiv1.NewAPIV1Service(s.Secret, profile, store)
+	apiV1Service := apiv1.NewAPIV1Service(s.Secret, instanceProfile, store)
 	s.sseHub = apiV1Service.SSEHub
 
 	// Register HTTP file server routes BEFORE gRPC-Gateway to ensure proper range request handling for Safari.
@@ -90,7 +102,7 @@ func NewServer(ctx context.Context, profile *profile.Profile, store *store.Store
 		return nil, errors.Wrap(err, "failed to register gRPC gateway")
 	}
 
-	mcpService, err := mcp.NewMCPService(profile, echoServer)
+	mcpService, err := mcp.NewMCPService(instanceProfile, echoServer)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create MCP service")
 	}

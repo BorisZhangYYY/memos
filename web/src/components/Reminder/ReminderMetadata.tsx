@@ -1,5 +1,6 @@
 import { timestampDate } from "@bufbuild/protobuf/wkt";
 import { AlarmClockIcon, BellRingIcon, CalendarDaysIcon, CheckCheckIcon, FileTextIcon, Repeat2Icon } from "lucide-react";
+import ReminderListIcon from "@/components/Reminder/ReminderListIcon";
 import { cn } from "@/lib/utils";
 import { type Reminder, type ReminderList, ReminderRecurrence_Frequency } from "@/types/proto/api/v1/reminder_service_pb";
 import { useTranslate } from "@/utils/i18n";
@@ -37,7 +38,7 @@ const ReminderMetadata = ({ reminder, list, className }: Props) => {
     <span className={cn("flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground", className)}>
       {listLabel && (
         <span className="inline-flex items-center gap-1">
-          <span className="size-1.5 rounded-full" style={{ backgroundColor: list?.color || "#0A84FF" }} />
+          <ReminderListIcon icon={list?.icon} className="size-3" style={{ color: list?.color || "#0A84FF" }} />
           {listLabel}
         </span>
       )}

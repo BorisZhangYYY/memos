@@ -63,6 +63,10 @@ message InstanceGeneralSetting {
   bool disallow_change_username = 8;
   // disallow_change_nickname disallows changing nickname.
   bool disallow_change_nickname = 9;
+  // instance_url is the externally reachable base URL of the instance.
+  // Absence preserves the startup configuration fallback; an explicitly empty
+  // value disables that fallback.
+  optional string instance_url = 10;
 }
 
 message InstanceCustomProfile {

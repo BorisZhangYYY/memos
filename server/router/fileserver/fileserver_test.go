@@ -495,11 +495,11 @@ func TestServeAttachmentFile_PrivateInstanceDeniesAnonymous(t *testing.T) {
 	}
 
 	// Open instance: anonymous access to a public memo's attachment is allowed.
-	fs.Profile.InstanceURL = "http://localhost:8080"
+	fs.Profile.SetInstanceURL("http://localhost:8080")
 	require.Equal(t, http.StatusOK, anonymousGet())
 
 	// Private instance: the same anonymous request is denied.
-	fs.Profile.InstanceURL = ""
+	fs.Profile.SetInstanceURL("")
 	require.Equal(t, http.StatusUnauthorized, anonymousGet())
 }
 
@@ -529,11 +529,11 @@ func TestServeUserAvatar_PrivateInstanceRequiresAuth(t *testing.T) {
 	}
 
 	// Open instance: anonymous avatar access is allowed.
-	fs.Profile.InstanceURL = "http://localhost:8080"
+	fs.Profile.SetInstanceURL("http://localhost:8080")
 	require.Equal(t, http.StatusOK, anonymousGet())
 
 	// Private instance: anonymous avatar access is denied.
-	fs.Profile.InstanceURL = ""
+	fs.Profile.SetInstanceURL("")
 	require.Equal(t, http.StatusUnauthorized, anonymousGet())
 }
 

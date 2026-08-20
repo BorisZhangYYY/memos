@@ -452,6 +452,75 @@ func TestTestInstanceEmailSettingRequiresPasswordWhenSMTPIdentityChanges(t *test
 func TestUpdateInstanceSetting(t *testing.T) {
 	ctx := context.Background()
 
+	t.Run("UpdateInstanceSetting - instance URL is normalized, hot-updated, and preserved when omitted", func(t *testing.T) {
+		ts := NewTestService(t)
+		defer ts.Cleanup()
+
+		hostUser, err := ts.CreateHostUser(ctx, "instance-url-admin")
+		require.NoError(t, err)
+		adminCtx := ts.CreateUserContext(ctx, hostUser.ID)
+		instanceURL := "  https://memos.example.com/app/  "
+
+		resp, err := ts.Service.UpdateInstanceSetting(adminCtx, &v1pb.UpdateInstanceSettingRequest{
+			Setting: &v1pb.InstanceSetting{
+				Name: "instance/settings/GENERAL",
+				Value: &v1pb.InstanceSetting_GeneralSetting_{
+					GeneralSetting: &v1pb.InstanceSetting_GeneralSetting{InstanceUrl: &instanceURL},
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, resp.GetGeneralSetting().InstanceUrl)
+		require.Equal(t, "https://memos.example.com/app", resp.GetGeneralSetting().GetInstanceUrl())
+		require.Equal(t, "https://memos.example.com/app", ts.Profile.GetInstanceURL())
+
+		// Older clients do not know this optional field. Updating another GENERAL
+		// value must not erase the URL they never sent.
+		resp, err = ts.Service.UpdateInstanceSetting(adminCtx, &v1pb.UpdateInstanceSettingRequest{
+			Setting: &v1pb.InstanceSetting{
+				Name: "instance/settings/GENERAL",
+				Value: &v1pb.InstanceSetting_GeneralSetting_{
+					GeneralSetting: &v1pb.InstanceSetting_GeneralSetting{DisallowUserRegistration: true},
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.Equal(t, "https://memos.example.com/app", resp.GetGeneralSetting().GetInstanceUrl())
+		require.Equal(t, "https://memos.example.com/app", ts.Profile.GetInstanceURL())
+
+		emptyInstanceURL := ""
+		_, err = ts.Service.UpdateInstanceSetting(adminCtx, &v1pb.UpdateInstanceSettingRequest{
+			Setting: &v1pb.InstanceSetting{
+				Name: "instance/settings/GENERAL",
+				Value: &v1pb.InstanceSetting_GeneralSetting_{
+					GeneralSetting: &v1pb.InstanceSetting_GeneralSetting{InstanceUrl: &emptyInstanceURL},
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.Empty(t, ts.Profile.GetInstanceURL())
+		require.False(t, ts.Profile.AllowAnonymous())
+	})
+
+	t.Run("UpdateInstanceSetting - rejects invalid instance URL without changing runtime state", func(t *testing.T) {
+		ts := NewTestService(t)
+		defer ts.Cleanup()
+
+		hostUser, err := ts.CreateHostUser(ctx, "invalid-instance-url-admin")
+		require.NoError(t, err)
+		invalidInstanceURL := "javascript:alert(1)"
+		_, err = ts.Service.UpdateInstanceSetting(ts.CreateUserContext(ctx, hostUser.ID), &v1pb.UpdateInstanceSettingRequest{
+			Setting: &v1pb.InstanceSetting{
+				Name: "instance/settings/GENERAL",
+				Value: &v1pb.InstanceSetting_GeneralSetting_{
+					GeneralSetting: &v1pb.InstanceSetting_GeneralSetting{InstanceUrl: &invalidInstanceURL},
+				},
+			},
+		})
+		require.ErrorContains(t, err, "absolute HTTP(S) URL")
+		require.Equal(t, "http://localhost:8080", ts.Profile.GetInstanceURL())
+	})
+
 	t.Run("UpdateInstanceSetting - AI setting requires admin", func(t *testing.T) {
 		ts := NewTestService(t)
 		defer ts.Cleanup()

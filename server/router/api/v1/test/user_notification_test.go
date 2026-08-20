@@ -237,7 +237,7 @@ func TestCreateMemoCommentSkipsEmailNotificationWithoutInstanceURL(t *testing.T)
 	ctx := context.Background()
 	ts := NewTestService(t)
 	defer ts.Cleanup()
-	ts.Profile.InstanceURL = ""
+	ts.Profile.SetInstanceURL("")
 
 	var sentMessage *email.Message
 	ts.Service.NotificationEmailSender = func(_ *email.Config, message *email.Message) {

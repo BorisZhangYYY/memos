@@ -3,10 +3,12 @@ package profile
 import (
 	"fmt"
 	"log/slog"
+	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 
 	"github.com/pkg/errors"
 )
@@ -34,6 +36,52 @@ type Profile struct {
 	Commit string
 	// InstanceURL is the url of your memos instance.
 	InstanceURL string
+
+	instanceURLMu sync.RWMutex
+}
+
+// GetInstanceURL returns the current externally reachable instance URL.
+func (p *Profile) GetInstanceURL() string {
+	if p == nil {
+		return ""
+	}
+	p.instanceURLMu.RLock()
+	defer p.instanceURLMu.RUnlock()
+	return p.InstanceURL
+}
+
+// SetInstanceURL updates the externally reachable instance URL at runtime.
+func (p *Profile) SetInstanceURL(instanceURL string) {
+	if p == nil {
+		return
+	}
+	p.instanceURLMu.Lock()
+	p.InstanceURL = instanceURL
+	p.instanceURLMu.Unlock()
+}
+
+// NormalizeInstanceURL validates and canonicalizes an externally reachable
+// HTTP(S) base URL. An empty value is valid and disables anonymous access and
+// URL-dependent features.
+func NormalizeInstanceURL(raw string) (string, error) {
+	instanceURL := strings.TrimSpace(raw)
+	if instanceURL == "" {
+		return "", nil
+	}
+
+	parsed, err := url.Parse(instanceURL)
+	if err != nil || parsed.Host == "" || (parsed.Scheme != "http" && parsed.Scheme != "https") {
+		return "", errors.New("instance URL must be an absolute HTTP(S) URL")
+	}
+	if parsed.User != nil {
+		return "", errors.New("instance URL must not contain credentials")
+	}
+	if parsed.RawQuery != "" || parsed.Fragment != "" {
+		return "", errors.New("instance URL must not contain a query or fragment")
+	}
+
+	parsed.Path = strings.TrimRight(parsed.Path, "/")
+	return parsed.String(), nil
 }
 
 // AllowAnonymous reports whether unauthenticated visitors may access the instance.
@@ -44,7 +92,7 @@ type Profile struct {
 // them to the sign-in page instead of the public Explore view. Authenticated callers
 // (session, access token, or personal access token) are never affected.
 func (p *Profile) AllowAnonymous() bool {
-	return strings.TrimSpace(p.InstanceURL) != ""
+	return strings.TrimSpace(p.GetInstanceURL()) != ""
 }
 
 func checkDataDir(dataDir string) (string, error) {
@@ -68,6 +116,12 @@ func checkDataDir(dataDir string) (string, error) {
 }
 
 func (p *Profile) Validate() error {
+	instanceURL, err := NormalizeInstanceURL(p.GetInstanceURL())
+	if err != nil {
+		return errors.Wrap(err, "invalid instance URL")
+	}
+	p.SetInstanceURL(instanceURL)
+
 	// Set default data directory if not specified
 	if p.Data == "" {
 		if runtime.GOOS == "windows" {

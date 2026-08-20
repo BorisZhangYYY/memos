@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
 import { render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -8,20 +8,30 @@ vi.mock("@/hooks/useCurrentUser", () => ({
   default: vi.fn(),
 }));
 
-const initialization = vi.hoisted(() => ({ auth: true, instance: true }));
+const initialization = vi.hoisted(() => ({
+  auth: true,
+  instance: true,
+  instanceUrl: "https://memos.example.com",
+  allowedVisibilities: [] as string[],
+}));
 
 vi.mock("@/contexts/AuthContext", () => ({
   useAuth: () => ({ isInitialized: initialization.auth }),
 }));
 
 vi.mock("@/contexts/InstanceContext", () => ({
-  useInstance: () => ({ isInitialized: initialization.instance }),
+  useInstance: () => ({
+    isInitialized: initialization.instance,
+    profile: { instanceUrl: initialization.instanceUrl },
+    memoRelatedSetting: { allowedVisibilities: initialization.allowedVisibilities },
+  }),
 }));
 
 import useCurrentUser from "@/hooks/useCurrentUser";
 import {
   LandingRoute,
   RequireAuthRoute,
+  RequireExploreEnabledRoute,
   RequireFullInitializationRoute,
   RequireGuestRoute,
   RequireInstanceInitializationRoute,
@@ -43,6 +53,8 @@ const renderAt = (initialEntry: string, children: ReactNode) =>
 beforeEach(() => {
   initialization.auth = true;
   initialization.instance = true;
+  initialization.instanceUrl = "https://memos.example.com";
+  initialization.allowedVisibilities = [];
 });
 
 describe("initialization guards", () => {
@@ -126,6 +138,93 @@ describe("LandingRoute", () => {
     );
 
     expect(screen.getByTestId("location").textContent).toBe("/explore?filter=tag:work#latest");
+  });
+
+  it("sends unauthenticated visitors to sign in when PUBLIC visibility is disabled", () => {
+    mockedUseCurrentUser.mockReturnValue(undefined);
+    initialization.allowedVisibilities = ["PRIVATE"];
+
+    renderAt(
+      "/?filter=tag:work",
+      <Routes>
+        <Route path="/" element={<LandingRoute />}>
+          <Route index element={<div>home</div>} />
+        </Route>
+        <Route path="/auth" element={<LocationProbe />} />
+      </Routes>,
+    );
+
+    expect(screen.getByTestId("location").textContent).toBe("/auth?redirect=%2F%3Ffilter%3Dtag%3Awork");
+  });
+
+  it("sends unauthenticated visitors to sign in when no instance URL is configured", () => {
+    mockedUseCurrentUser.mockReturnValue(undefined);
+    initialization.instanceUrl = "";
+
+    renderAt(
+      "/",
+      <Routes>
+        <Route path="/" element={<LandingRoute />}>
+          <Route index element={<div>home</div>} />
+        </Route>
+        <Route path="/auth" element={<LocationProbe />} />
+      </Routes>,
+    );
+
+    expect(screen.getByTestId("location").textContent).toBe("/auth?redirect=%2F");
+  });
+});
+
+describe("RequireExploreEnabledRoute", () => {
+  it("redirects a guest to sign in when PUBLIC visibility is disabled", () => {
+    mockedUseCurrentUser.mockReturnValue(undefined);
+    initialization.allowedVisibilities = ["PRIVATE"];
+
+    renderAt(
+      "/explore",
+      <Routes>
+        <Route element={<RequireExploreEnabledRoute />}>
+          <Route path="/explore" element={<div>explore</div>} />
+        </Route>
+        <Route path="/auth" element={<LocationProbe />} />
+      </Routes>,
+    );
+
+    expect(screen.getByTestId("location").textContent).toBe("/auth");
+  });
+
+  it("redirects an authenticated user home when PUBLIC visibility is disabled", () => {
+    mockedUseCurrentUser.mockReturnValue(fakeUser);
+    initialization.allowedVisibilities = ["PRIVATE"];
+
+    renderAt(
+      "/explore",
+      <Routes>
+        <Route element={<RequireExploreEnabledRoute />}>
+          <Route path="/explore" element={<div>explore</div>} />
+        </Route>
+        <Route path="/" element={<LocationProbe />} />
+      </Routes>,
+    );
+
+    expect(screen.getByTestId("location").textContent).toBe("/");
+  });
+
+  it("redirects a guest to sign in when no instance URL is configured", () => {
+    mockedUseCurrentUser.mockReturnValue(undefined);
+    initialization.instanceUrl = "";
+
+    renderAt(
+      "/explore",
+      <Routes>
+        <Route element={<RequireExploreEnabledRoute />}>
+          <Route path="/explore" element={<div>explore</div>} />
+        </Route>
+        <Route path="/auth" element={<LocationProbe />} />
+      </Routes>,
+    );
+
+    expect(screen.getByTestId("location").textContent).toBe("/auth");
   });
 });
 

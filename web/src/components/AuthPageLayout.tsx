@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useInstance } from "@/contexts/InstanceContext";
 import { ROUTES } from "@/router/routes";
 import { useTranslate } from "@/utils/i18n";
+import { isAnonymousExploreEnabled } from "@/utils/visibility";
 import AuthFooter from "./AuthFooter";
 
 interface Props {
@@ -54,8 +55,8 @@ export const AuthOptionsLoading = () => <div className="h-9 w-full animate-pulse
 
 const AuthPageLayout = ({ chip, title, subtitle, hideExplore, children }: Props) => {
   const t = useTranslate();
-  const { generalSetting, profile } = useInstance();
-  const showExplore = Boolean(profile.instanceUrl) && !hideExplore;
+  const { generalSetting, memoRelatedSetting, profile } = useInstance();
+  const showExplore = isAnonymousExploreEnabled(profile.instanceUrl, memoRelatedSetting.allowedVisibilities) && !hideExplore;
 
   return (
     <div className="min-h-svh w-full flex flex-col items-center px-4 py-4 sm:py-8">

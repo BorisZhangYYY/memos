@@ -9,6 +9,7 @@ interface SaveInstanceSettingOptions {
   key: InstanceSetting_Key;
   setting: InstanceSetting;
   errorContext: string;
+  showSuccess?: boolean;
 }
 
 export const buildInstanceSettingName = (key: InstanceSetting_Key) => `instance/settings/${InstanceSetting_Key[key]}`;
@@ -18,11 +19,13 @@ const useInstanceSettingUpdater = () => {
   const { updateSetting, fetchSetting } = useInstance();
 
   return useCallback(
-    async ({ key, setting, errorContext }: SaveInstanceSettingOptions) => {
+    async ({ key, setting, errorContext, showSuccess = true }: SaveInstanceSettingOptions) => {
       try {
         await updateSetting(setting);
         await fetchSetting(key);
-        toast.success(t("message.update-succeed"));
+        if (showSuccess) {
+          toast.success(t("message.update-succeed"));
+        }
         return true;
       } catch (error: unknown) {
         await handleError(error, toast.error, { context: errorContext });

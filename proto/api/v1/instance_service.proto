@@ -164,6 +164,10 @@ message InstanceSetting {
     bool disallow_change_username = 8;
     // disallow_change_nickname disallows changing nickname.
     bool disallow_change_nickname = 9;
+    // Instance URL is the externally reachable base URL of the instance.
+    // When absent, the startup --instance-url / MEMOS_INSTANCE_URL value is used.
+    // An explicitly empty value disables the startup fallback.
+    optional string instance_url = 10;
 
     // Custom profile configuration for instance branding.
     message CustomProfile {
@@ -221,8 +225,9 @@ message InstanceSetting {
     bool enable_double_click_edit = 4;
     // reactions is the list of reactions.
     repeated string reactions = 7;
-    // allowed_visibilities restricts which visibility levels users can select.
-    // Values are PRIVATE, PROTECTED, PUBLIC. Empty means all levels are allowed.
+    // Legacy storage for the instance public-access switch. Empty or a list
+    // containing PUBLIC enables public access; any other valid list disables it.
+    // PRIVATE and PROTECTED are always available.
     repeated string allowed_visibilities = 8;
     // mood_emojis are the emoji representations for mood levels 1-7.
     // Index 0 = mood level 1, index 6 = mood level 7. Default emojis are used when empty.

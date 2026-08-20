@@ -8,6 +8,7 @@ import {
   FinanceTransactionSchema,
   FinanceWalletSchema,
 } from "@/types/proto/api/v1/finance_service_pb";
+import { generateUUID } from "@/utils/uuid";
 
 type FinanceWalletInput = MessageInitShape<typeof FinanceWalletSchema>;
 type FinanceCategoryInput = MessageInitShape<typeof FinanceCategorySchema>;
@@ -93,7 +94,7 @@ export const useCreateFinanceWallet = () => {
   const invalidate = useInvalidateFinance();
   return useMutation({
     mutationFn: ({ parent, wallet }: { parent: string; wallet: FinanceWalletInput }) =>
-      financeServiceClient.createFinanceWallet({ parent, wallet: create(FinanceWalletSchema, wallet), requestId: crypto.randomUUID() }),
+      financeServiceClient.createFinanceWallet({ parent, wallet: create(FinanceWalletSchema, wallet), requestId: generateUUID() }),
     onSuccess: invalidate,
   });
 };
@@ -117,7 +118,7 @@ export const useCreateFinanceCategory = () => {
       financeServiceClient.createFinanceCategory({
         parent,
         category: create(FinanceCategorySchema, category),
-        requestId: crypto.randomUUID(),
+        requestId: generateUUID(),
       }),
     onSuccess: invalidate,
   });
@@ -142,7 +143,7 @@ export const useCreateFinanceTransaction = () => {
       financeServiceClient.createFinanceTransaction({
         parent,
         transaction: create(FinanceTransactionSchema, transaction),
-        requestId: crypto.randomUUID(),
+        requestId: generateUUID(),
       }),
     onSuccess: invalidate,
   });
@@ -157,7 +158,7 @@ export const useAdjustFinanceWalletBalance = () => {
         actualBalanceMinor,
         note,
         occurTime: timestampFromDate(new Date()),
-        requestId: crypto.randomUUID(),
+        requestId: generateUUID(),
       }),
     onSuccess: invalidate,
   });

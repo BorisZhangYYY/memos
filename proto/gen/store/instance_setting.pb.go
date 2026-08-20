@@ -441,8 +441,12 @@ type InstanceGeneralSetting struct {
 	DisallowChangeUsername bool `protobuf:"varint,8,opt,name=disallow_change_username,json=disallowChangeUsername,proto3" json:"disallow_change_username,omitempty"`
 	// disallow_change_nickname disallows changing nickname.
 	DisallowChangeNickname bool `protobuf:"varint,9,opt,name=disallow_change_nickname,json=disallowChangeNickname,proto3" json:"disallow_change_nickname,omitempty"`
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
+	// instance_url is the externally reachable base URL of the instance.
+	// Absence preserves the startup configuration fallback; an explicitly empty
+	// value disables that fallback.
+	InstanceUrl   *string `protobuf:"bytes,10,opt,name=instance_url,json=instanceUrl,proto3,oneof" json:"instance_url,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *InstanceGeneralSetting) Reset() {
@@ -529,6 +533,13 @@ func (x *InstanceGeneralSetting) GetDisallowChangeNickname() bool {
 		return x.DisallowChangeNickname
 	}
 	return false
+}
+
+func (x *InstanceGeneralSetting) GetInstanceUrl() string {
+	if x != nil && x.InstanceUrl != nil {
+		return *x.InstanceUrl
+	}
+	return ""
 }
 
 type InstanceCustomProfile struct {
@@ -1355,7 +1366,7 @@ const file_store_instance_setting_proto_rawDesc = "" +
 	"\x14InstanceBasicSetting\x12\x1d\n" +
 	"\n" +
 	"secret_key\x18\x01 \x01(\tR\tsecretKey\x12%\n" +
-	"\x0eschema_version\x18\x02 \x01(\tR\rschemaVersion\"\xd6\x03\n" +
+	"\x0eschema_version\x18\x02 \x01(\tR\rschemaVersion\"\x8f\x04\n" +
 	"\x16InstanceGeneralSetting\x12<\n" +
 	"\x1adisallow_user_registration\x18\x02 \x01(\bR\x18disallowUserRegistration\x124\n" +
 	"\x16disallow_password_auth\x18\x03 \x01(\bR\x14disallowPasswordAuth\x12+\n" +
@@ -1364,7 +1375,10 @@ const file_store_instance_setting_proto_rawDesc = "" +
 	"\x0ecustom_profile\x18\x06 \x01(\v2\".memos.store.InstanceCustomProfileR\rcustomProfile\x121\n" +
 	"\x15week_start_day_offset\x18\a \x01(\x05R\x12weekStartDayOffset\x128\n" +
 	"\x18disallow_change_username\x18\b \x01(\bR\x16disallowChangeUsername\x128\n" +
-	"\x18disallow_change_nickname\x18\t \x01(\bR\x16disallowChangeNickname\"j\n" +
+	"\x18disallow_change_nickname\x18\t \x01(\bR\x16disallowChangeNickname\x12&\n" +
+	"\finstance_url\x18\n" +
+	" \x01(\tH\x00R\vinstanceUrl\x88\x01\x01B\x0f\n" +
+	"\r_instance_url\"j\n" +
 	"\x15InstanceCustomProfile\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x19\n" +
@@ -1527,6 +1541,7 @@ func file_store_instance_setting_proto_init() {
 		(*InstanceSetting_NotificationSetting)(nil),
 		(*InstanceSetting_AiSetting)(nil),
 	}
+	file_store_instance_setting_proto_msgTypes[2].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
