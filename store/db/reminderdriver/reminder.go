@@ -431,8 +431,10 @@ func (a Adapter) ListOccurrences(ctx context.Context, find *store.FindReminderOc
 
 func (a Adapter) ListDueNotifications(ctx context.Context, now int64) ([]*store.ReminderNotification, error) {
 	rows, err := a.DB.QueryContext(ctx, a.bind(reminderSelect+` WHERE row_status = ? AND status = ? AND remind_ts IS NOT NULL
-		AND ((advance_notice_seconds > 0 AND early_notified_ts IS NULL AND remind_ts - advance_notice_seconds <= ? AND ? < remind_ts)
-		OR (notified_ts IS NULL AND remind_ts <= ?)) ORDER BY remind_ts ASC LIMIT 100`), store.Normal, store.ReminderPending, now, now, now)
+		AND ((recurrence_type = '' AND ((advance_notice_seconds > 0 AND early_notified_ts IS NULL AND remind_ts - advance_notice_seconds <= ? AND ? < remind_ts)
+		OR (notified_ts IS NULL AND remind_ts <= ?)))
+		OR (recurrence_type <> '' AND remind_ts - advance_notice_seconds <= ?)) ORDER BY remind_ts ASC`),
+		store.Normal, store.ReminderPending, now, now, now, now)
 	if err != nil {
 		return nil, err
 	}
@@ -443,24 +445,18 @@ func (a Adapter) ListDueNotifications(ctx context.Context, now int64) ([]*store.
 		if err != nil {
 			return nil, err
 		}
-		if value.RemindTs == nil {
-			continue
-		}
-		if value.AdvanceNoticeSeconds > 0 && value.EarlyNotifiedTs == nil && *value.RemindTs-value.AdvanceNoticeSeconds <= now && now < *value.RemindTs {
-			result = append(result, &store.ReminderNotification{Reminder: value, Early: true})
-		}
-		if value.NotifiedTs == nil && *value.RemindTs <= now {
-			result = append(result, &store.ReminderNotification{Reminder: value})
+		if notification := notificationForReminder(value, now); notification != nil {
+			result = append(result, notification)
 		}
 	}
 	return result, rows.Err()
 }
 
-func (a Adapter) MarkNotificationDelivered(ctx context.Context, reminderID int32, early bool, deliveredTs int64) error {
+func (a Adapter) MarkNotificationDelivered(ctx context.Context, reminderID int32, early bool, remindTs, deliveredTs int64) error {
 	column := "notified_ts"
 	if early {
 		column = "early_notified_ts"
 	}
-	_, err := a.DB.ExecContext(ctx, a.bind("UPDATE reminder SET "+column+" = ?, updated_ts = ? WHERE id = ? AND "+column+" IS NULL"), deliveredTs, deliveredTs, reminderID)
+	_, err := a.DB.ExecContext(ctx, a.bind("UPDATE reminder SET "+column+" = ?, updated_ts = ? WHERE id = ? AND ("+column+" IS NULL OR "+column+" < ?)"), remindTs, deliveredTs, reminderID, remindTs)
 	return err
 }

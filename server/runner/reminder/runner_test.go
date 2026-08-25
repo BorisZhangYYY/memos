@@ -37,8 +37,8 @@ func TestRunOnceDeliversEarlyAndDueNotificationsExactlyOnce(t *testing.T) {
 	list, err := testingStore.CreateReminderList(ctx, &store.ReminderList{UID: "default", CreatorID: user.ID, Name: "Reminders"})
 	require.NoError(t, err)
 
-	now := time.Now().Unix()
-	overdueTime := now - 30
+	nowSec := time.Now().Unix()
+	overdueTime := nowSec - 30
 	_, err = testingStore.CreateReminder(ctx, &store.Reminder{
 		UID: "overdue", CreatorID: user.ID, ListID: list.ID, Title: "Overdue reminder", RemindTs: &overdueTime,
 		TimeZone: "Asia/Shanghai", AdvanceNoticeSeconds: 300,
@@ -87,4 +87,49 @@ func TestRunOnceDeliversEarlyAndDueNotificationsExactlyOnce(t *testing.T) {
 	// Re-running inside the same advance window must not redeliver the early notification.
 	runner.RunOnce(ctx)
 	require.Len(t, sentMessages, 2)
+}
+
+func TestDailyReminderNotificationAdvancesWithoutCompletion(t *testing.T) {
+	ctx := context.Background()
+	testingStore := teststore.NewTestingStore(ctx, t)
+	t.Cleanup(func() { require.NoError(t, testingStore.Close()) })
+
+	user, err := testingStore.CreateUser(ctx, &store.User{Username: "daily-reminder-runner", Role: store.RoleUser})
+	require.NoError(t, err)
+	list, err := testingStore.CreateReminderList(ctx, &store.ReminderList{UID: "default", CreatorID: user.ID, Name: "Reminders"})
+	require.NoError(t, err)
+
+	location, err := time.LoadLocation("Asia/Shanghai")
+	require.NoError(t, err)
+	firstOccurrenceSec := time.Date(2026, time.August, 22, 21, 0, 0, 0, location).Unix()
+	_, err = testingStore.CreateReminder(ctx, &store.Reminder{
+		UID: "unfinished-daily", CreatorID: user.ID, ListID: list.ID, Title: "Write journal",
+		DueDate: "2026-08-22", RemindTs: &firstOccurrenceSec, TimeZone: "Asia/Shanghai",
+		RecurrenceType: store.ReminderRecurrenceDaily, RecurrenceInterval: 1, NotifiedTs: &firstOccurrenceSec,
+	})
+	require.NoError(t, err)
+
+	// The unfinished August 22 occurrence is stale and must not be emitted on
+	// August 23 before that day's own scheduled time.
+	due, err := testingStore.ListDueReminderNotifications(ctx, time.Date(2026, time.August, 23, 20, 0, 0, 0, location).Unix())
+	require.NoError(t, err)
+	require.Empty(t, due)
+
+	secondOccurrenceSec := time.Date(2026, time.August, 23, 21, 0, 0, 0, location).Unix()
+	due, err = testingStore.ListDueReminderNotifications(ctx, secondOccurrenceSec+30)
+	require.NoError(t, err)
+	require.Len(t, due, 1)
+	require.Equal(t, secondOccurrenceSec, due[0].RemindTs)
+	require.False(t, due[0].Early)
+
+	require.NoError(t, testingStore.MarkReminderNotificationDelivered(ctx, due[0].Reminder.ID, false, due[0].RemindTs, secondOccurrenceSec+30))
+	due, err = testingStore.ListDueReminderNotifications(ctx, secondOccurrenceSec+60)
+	require.NoError(t, err)
+	require.Empty(t, due)
+
+	thirdOccurrenceSec := time.Date(2026, time.August, 24, 21, 0, 0, 0, location).Unix()
+	due, err = testingStore.ListDueReminderNotifications(ctx, thirdOccurrenceSec+30)
+	require.NoError(t, err)
+	require.Len(t, due, 1)
+	require.Equal(t, thirdOccurrenceSec, due[0].RemindTs)
 }

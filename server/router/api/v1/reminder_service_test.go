@@ -117,6 +117,51 @@ func TestReminderAdvanceNoticeRequiresExactTime(t *testing.T) {
 	require.Equal(t, codes.InvalidArgument, status.Code(err))
 }
 
+func TestCompletingBacklogPreservesNewerNotificationMarker(t *testing.T) {
+	ctx := context.Background()
+	service := newIntegrationService(t)
+	user, err := service.Store.CreateUser(ctx, &store.User{Username: "reminder-notification-marker", Role: store.RoleUser})
+	require.NoError(t, err)
+	userContext := userCtx(ctx, user.ID)
+	lists, err := service.ListReminderLists(userContext, &v1pb.ListReminderListsRequest{Parent: "users/reminder-notification-marker"})
+	require.NoError(t, err)
+
+	location, err := time.LoadLocation("Asia/Shanghai")
+	require.NoError(t, err)
+	firstOccurrence := time.Date(2026, time.August, 22, 21, 0, 0, 0, location)
+	reminder, err := service.CreateReminder(userContext, &v1pb.CreateReminderRequest{
+		Parent: "users/reminder-notification-marker",
+		Reminder: &v1pb.Reminder{
+			Title: "Write journal", ReminderList: lists.ReminderLists[0].Name, DueDate: "2026-08-22",
+			RemindTime: timestamppb.New(firstOccurrence), TimeZone: "Asia/Shanghai",
+			Recurrence: &v1pb.ReminderRecurrence{Frequency: v1pb.ReminderRecurrence_DAILY, Interval: 1},
+		},
+	})
+	require.NoError(t, err)
+
+	uid := reminder.Name[len("users/reminder-notification-marker/reminders/"):]
+	stored, err := service.Store.ListReminders(ctx, &store.FindReminder{UID: &uid, CreatorID: &user.ID})
+	require.NoError(t, err)
+	require.Len(t, stored, 1)
+	secondOccurrenceSec := firstOccurrence.AddDate(0, 0, 1).Unix()
+	require.NoError(t, service.Store.MarkReminderNotificationDelivered(ctx, stored[0].ID, false, secondOccurrenceSec, secondOccurrenceSec+30))
+
+	_, err = service.CompleteReminder(userContext, &v1pb.CompleteReminderRequest{Name: reminder.Name})
+	require.NoError(t, err)
+	stored, err = service.Store.ListReminders(ctx, &store.FindReminder{UID: &uid, CreatorID: &user.ID})
+	require.NoError(t, err)
+	require.Equal(t, "2026-08-23", stored[0].DueDate)
+	require.NotNil(t, stored[0].NotifiedTs)
+	require.Equal(t, secondOccurrenceSec, *stored[0].NotifiedTs)
+
+	_, err = service.CompleteReminder(userContext, &v1pb.CompleteReminderRequest{Name: reminder.Name})
+	require.NoError(t, err)
+	stored, err = service.Store.ListReminders(ctx, &store.FindReminder{UID: &uid, CreatorID: &user.ID})
+	require.NoError(t, err)
+	require.Equal(t, "2026-08-24", stored[0].DueDate)
+	require.Nil(t, stored[0].NotifiedTs)
+}
+
 func TestReminderMemoLinkLimit(t *testing.T) {
 	ctx := context.Background()
 	service := newIntegrationService(t)

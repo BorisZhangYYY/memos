@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.33.5](https://github.com/BorisZhangYYY/memos/compare/v0.33.4...v0.33.5) (2026-08-25)
+
+### Summary
+
+This patch release makes recurring reminder notifications independent of
+unfinished earlier occurrences and fixes several reminder-center creation and
+list-customization interactions.
+
+### Bug Fixes
+
+* **Recurring reminder notifications:** delivers each scheduled daily, weekly,
+  monthly, or yearly occurrence even when an earlier occurrence remains
+  incomplete, while continuing to suppress stale overdue notifications and
+  duplicate delivery for the same occurrence.
+* **Recurring completion markers:** preserves notification markers for newer
+  occurrences when completing an older backlog item, preventing a notification
+  that already fired from being delivered again.
+* **Reminder draft interaction:** restores click-to-create on empty space and
+  makes subsequent blank clicks dismiss and reopen the draft predictably.
+* **Default-list placement:** places drafts created from the All view under the
+  built-in Reminders list instead of whichever custom list happens to render
+  last.
+* **Reminder list customization:** saves list names, colors, and icons with the
+  correct update mask and provides visible success or failure feedback.
+
 ## [0.33.4](https://github.com/BorisZhangYYY/memos/compare/v0.33.3...v0.33.4) (2026-08-20)
 
 ### Summary

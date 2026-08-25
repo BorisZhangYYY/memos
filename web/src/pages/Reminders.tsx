@@ -212,6 +212,7 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
   const [detailDraft, setDetailDraft] = useState<ReminderDraft>();
   const draftRef = useRef<HTMLInputElement>(null);
   const draftContainerRef = useRef<HTMLDivElement>(null);
+  const draftCreateAreaRef = useRef<HTMLDivElement>(null);
   const draftCommitInProgressRef = useRef(false);
   const suppressBlankClickRef = useRef(false);
   const selectionOwnerRef = useRef("");
@@ -318,10 +319,9 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
     if (!draftVisible) return;
     const handlePointerDown = (event: PointerEvent) => {
       if (draftContainerRef.current?.contains(event.target as Node)) return;
-      suppressBlankClickRef.current = true;
-      window.setTimeout(() => {
-        suppressBlankClickRef.current = false;
-      }, 0);
+      const target = event.target as HTMLElement;
+      suppressBlankClickRef.current =
+        !!draftCreateAreaRef.current?.contains(target) && !target.closest("button, input, [data-reminder-row], [data-reminder-draft], h2");
       void commitDraft();
     };
     document.addEventListener("pointerdown", handlePointerDown, true);
@@ -347,11 +347,12 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
     if (!parent) return;
     if (editingList) {
       const updateMask = ["color", "icon"];
-      if (!isDefaultReminderList(editingList.name)) updateMask.unshift("displayName");
+      if (!isDefaultReminderList(editingList.name)) updateMask.unshift("display_name");
       await updateList.mutateAsync({
         reminderList: { name: editingList.name, displayName, color, icon },
         updateMask,
       });
+      toast.success(t("reminder.list-saved"));
       return;
     }
 
@@ -366,6 +367,7 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
       },
     });
     selectList(list.name);
+    toast.success(t("reminder.list-saved"));
   };
 
   const smartViews: Array<{
@@ -403,6 +405,71 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
     for (const reminder of reminders) map.set(reminder.reminderList, [...(map.get(reminder.reminderList) ?? []), reminder]);
     return Array.from(map.entries()).map(([name, items]) => ({ list: lists.find((list) => list.name === name), reminders: items }));
   }, [activeList, lists, reminders]);
+
+  const draftGroupName = activeList || defaultList;
+  const groupsWithDraft = useMemo(() => {
+    if (!draftVisible || !draftGroupName || grouped.some((group) => group.list?.name === draftGroupName)) return grouped;
+    const targetList = lists.find((list) => list.name === draftGroupName);
+    if (!targetList) return grouped;
+
+    const next = [...grouped];
+    const targetOrder = lists.findIndex((list) => list.name === draftGroupName);
+    const insertionIndex = next.findIndex((group) => {
+      const groupOrder = lists.findIndex((list) => list.name === group.list?.name);
+      return groupOrder >= 0 && groupOrder > targetOrder;
+    });
+    const draftGroup = { list: targetList, reminders: [] as Reminder[] };
+    if (insertionIndex === -1) next.push(draftGroup);
+    else next.splice(insertionIndex, 0, draftGroup);
+    return next;
+  }, [draftGroupName, draftVisible, grouped, lists]);
+
+  const renderDraft = (bordered: boolean) => (
+    <div ref={draftContainerRef} data-reminder-draft className={cn("py-3", bordered && "border-t")}>
+      <div className="flex items-start gap-3">
+        <CircleIcon className="mt-1.5 size-5 shrink-0 text-muted-foreground/40" />
+        <div className="min-w-0 flex-1">
+          <Input
+            ref={draftRef}
+            value={draftTitle}
+            onChange={(event) => setDraftTitle(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") void commitDraft();
+              if (event.key === "Escape") {
+                event.stopPropagation();
+                resetDraft();
+              }
+            }}
+            className="h-8 border-0 px-0 text-[15px] shadow-none focus-visible:ring-0"
+            placeholder={t("reminder.new-reminder")}
+          />
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            <ReminderDatePicker compact value={draftDueDate} onChange={setDraftDueDate} />
+            <button
+              type="button"
+              className={cn(
+                "inline-flex size-7 items-center justify-center rounded-full bg-muted text-muted-foreground hover:text-foreground",
+                draftFlagged && "bg-orange-400/15 text-orange-500",
+              )}
+              onClick={() => setDraftFlagged((value) => !value)}
+              aria-label={t("reminder.flagged")}
+            >
+              <FlagIcon className={cn("size-3.5", draftFlagged && "fill-current")} />
+            </button>
+          </div>
+        </div>
+        <button
+          type="button"
+          className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full text-primary hover:bg-primary/10"
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={openDraftDetails}
+          aria-label={t("reminder.details")}
+        >
+          <InfoIcon className="size-5" />
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <div
@@ -552,6 +619,7 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
         </header>
 
         <div
+          ref={draftCreateAreaRef}
           className="min-h-0 flex-1 cursor-text overflow-y-auto overscroll-contain px-4 sm:px-6"
           onClick={(event) => {
             if (suppressBlankClickRef.current) {
@@ -559,9 +627,10 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
               return;
             }
             const target = event.target as HTMLElement;
-            if (target.closest("button, input, [data-reminder-row], h2")) return;
-            if (activeView !== "completed" && activeView !== "archived" && !draftVisible) {
-              setDraftVisible(true);
+            if (target.closest("button, input, [data-reminder-row], [data-reminder-draft], h2")) return;
+            if (activeView !== "completed" && activeView !== "archived") {
+              if (draftVisible) void commitDraft();
+              else setDraftVisible(true);
             }
           }}
         >
@@ -581,7 +650,7 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
                     : t("reminder.click-empty-to-create")}
               </button>
             ) : (
-              grouped.map((group) => (
+              groupsWithDraft.map((group) => (
                 <section key={group.list?.name ?? "unknown"}>
                   {!activeList && group.list && (
                     <h2 className="border-b pb-2 pt-3 text-lg font-bold" style={{ color: group.list.color || "#0A84FF" }}>
@@ -607,6 +676,7 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
                       returnLocation={returnLocation}
                     />
                   ))}
+                  {draftVisible && group.list?.name === draftGroupName && renderDraft(group.reminders.length > 0)}
                 </section>
               ))
             )}
@@ -614,10 +684,6 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
               <button
                 type="button"
                 className="min-h-20 w-full flex-1 cursor-text"
-                onPointerDown={(event) => {
-                  event.stopPropagation();
-                  setDraftVisible(true);
-                }}
                 onClick={(event) => {
                   event.stopPropagation();
                   setDraftVisible(true);
@@ -625,57 +691,7 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
                 aria-label={t("reminder.click-empty-to-create")}
               />
             )}
-            {draftVisible && activeView !== "completed" && activeView !== "archived" && (
-              <div ref={draftContainerRef} className={cn("py-3", grouped.length > 0 && "border-t")}>
-                <div className="flex items-start gap-3">
-                  <CircleIcon className="mt-1.5 size-5 shrink-0 text-muted-foreground/40" />
-                  <div className="min-w-0 flex-1">
-                    <Input
-                      ref={draftRef}
-                      value={draftTitle}
-                      onChange={(event) => setDraftTitle(event.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") void commitDraft();
-                        if (event.key === "Escape") {
-                          event.stopPropagation();
-                          resetDraft();
-                        }
-                      }}
-                      onBlur={(event) => {
-                        const next = event.relatedTarget;
-                        if (next && draftContainerRef.current?.contains(next)) return;
-                        void commitDraft();
-                      }}
-                      className="h-8 border-0 px-0 text-[15px] shadow-none focus-visible:ring-0"
-                      placeholder={t("reminder.new-reminder")}
-                    />
-                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                      <ReminderDatePicker compact value={draftDueDate} onChange={setDraftDueDate} />
-                      <button
-                        type="button"
-                        className={cn(
-                          "inline-flex size-7 items-center justify-center rounded-full bg-muted text-muted-foreground hover:text-foreground",
-                          draftFlagged && "bg-orange-400/15 text-orange-500",
-                        )}
-                        onClick={() => setDraftFlagged((value) => !value)}
-                        aria-label={t("reminder.flagged")}
-                      >
-                        <FlagIcon className={cn("size-3.5", draftFlagged && "fill-current")} />
-                      </button>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full text-primary hover:bg-primary/10"
-                    onMouseDown={(event) => event.preventDefault()}
-                    onClick={openDraftDetails}
-                    aria-label={t("reminder.details")}
-                  >
-                    <InfoIcon className="size-5" />
-                  </button>
-                </div>
-              </div>
-            )}
+            {draftVisible && !groupsWithDraft.some((group) => group.list?.name === draftGroupName) && renderDraft(grouped.length > 0)}
           </div>
         </div>
       </main>

@@ -835,8 +835,19 @@ func (s *APIV1Service) CompleteReminder(ctx context.Context, request *v1pb.Compl
 			statusValue = store.ReminderPending
 			completedTs = nil
 			nextTime := shiftReminderTime(value, nextDate)
-			var nilTs *int64
-			update.DueDate, update.RemindTs, update.EarlyNotifiedTs, update.NotifiedTs = &nextDate, &nextTime, &nilTs, &nilTs
+			update.DueDate, update.RemindTs = &nextDate, &nextTime
+			// The notification runner may already have delivered a later occurrence
+			// while an older occurrence remained incomplete. Preserve those markers
+			// so completing the backlog cannot redeliver the newer occurrence.
+			if nextTime != nil {
+				var nilTs *int64
+				if value.EarlyNotifiedTs == nil || *value.EarlyNotifiedTs < *nextTime {
+					update.EarlyNotifiedTs = &nilTs
+				}
+				if value.NotifiedTs == nil || *value.NotifiedTs < *nextTime {
+					update.NotifiedTs = &nilTs
+				}
+			}
 		}
 	}
 	update.Status, update.CompletedTs = &statusValue, &completedTs

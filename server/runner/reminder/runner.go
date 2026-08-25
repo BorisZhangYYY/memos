@@ -48,7 +48,7 @@ func (r *Runner) RunOnce(ctx context.Context) {
 		return
 	}
 	for _, delivery := range due {
-		if delivery == nil || delivery.Reminder == nil || delivery.Reminder.RemindTs == nil {
+		if delivery == nil || delivery.Reminder == nil {
 			continue
 		}
 		value := delivery.Reminder
@@ -57,7 +57,7 @@ func (r *Runner) RunOnce(ctx context.Context) {
 			Message: &storepb.InboxMessage{
 				Type: storepb.InboxMessage_REMINDER,
 				Payload: &storepb.InboxMessage_Reminder{Reminder: &storepb.InboxMessage_ReminderPayload{
-					ReminderId: value.ID, ReminderUid: value.UID, Title: value.Title, RemindTs: *value.RemindTs, Early: delivery.Early,
+					ReminderId: value.ID, ReminderUid: value.UID, Title: value.Title, RemindTs: delivery.RemindTs, Early: delivery.Early,
 					TimeZone: value.TimeZone,
 				}},
 			},
@@ -66,7 +66,7 @@ func (r *Runner) RunOnce(ctx context.Context) {
 			slog.Warn("Failed to create reminder inbox notification", slog.Any("err", err), slog.Int64("reminder_id", int64(value.ID)))
 			continue
 		}
-		if err := r.store.MarkReminderNotificationDelivered(ctx, value.ID, delivery.Early, nowSec); err != nil {
+		if err := r.store.MarkReminderNotificationDelivered(ctx, value.ID, delivery.Early, delivery.RemindTs, nowSec); err != nil {
 			slog.Warn("Failed to mark reminder notification delivered", slog.Any("err", err), slog.Int64("reminder_id", int64(value.ID)))
 		}
 		if err := r.dispatcher.DispatchInboxEmail(ctx, inbox); err != nil {

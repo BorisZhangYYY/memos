@@ -48,7 +48,7 @@ type Driver interface {
 	CreateReminderOccurrence(ctx context.Context, create *ReminderOccurrence) (*ReminderOccurrence, error)
 	ListReminderOccurrences(ctx context.Context, find *FindReminderOccurrence) ([]*ReminderOccurrence, error)
 	ListDueReminderNotifications(ctx context.Context, now int64) ([]*ReminderNotification, error)
-	MarkReminderNotificationDelivered(ctx context.Context, reminderID int32, early bool, deliveredTs int64) error
+	MarkReminderNotificationDelivered(ctx context.Context, reminderID int32, early bool, remindTs, deliveredTs int64) error
 
 	// Memo model related methods.
 	CreateMemo(ctx context.Context, create *Memo) (*Memo, error)

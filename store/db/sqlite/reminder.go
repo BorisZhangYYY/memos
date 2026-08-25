@@ -40,6 +40,6 @@ func (d *DB) ListReminderOccurrences(ctx context.Context, v *store.FindReminderO
 func (d *DB) ListDueReminderNotifications(ctx context.Context, now int64) ([]*store.ReminderNotification, error) {
 	return d.reminder().ListDueNotifications(ctx, now)
 }
-func (d *DB) MarkReminderNotificationDelivered(ctx context.Context, id int32, early bool, ts int64) error {
-	return d.reminder().MarkNotificationDelivered(ctx, id, early, ts)
+func (d *DB) MarkReminderNotificationDelivered(ctx context.Context, id int32, early bool, remindTs, deliveredTs int64) error {
+	return d.reminder().MarkNotificationDelivered(ctx, id, early, remindTs, deliveredTs)
 }

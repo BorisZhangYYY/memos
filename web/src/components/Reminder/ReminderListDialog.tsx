@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import ReminderListIcon, {
   isDefaultReminderList,
   normalizeReminderListIcon,
@@ -58,12 +59,16 @@ const ReminderListDialog = ({ open, list, pending = false, onOpenChange, onSave 
   const submit = async () => {
     const normalizedName = displayName.trim();
     if (!defaultList && !normalizedName) return;
-    await onSave({
-      displayName: defaultList ? list?.displayName || defaultDisplayName : normalizedName,
-      color,
-      icon,
-    });
-    onOpenChange(false);
+    try {
+      await onSave({
+        displayName: defaultList ? list?.displayName || defaultDisplayName : normalizedName,
+        color,
+        icon,
+      });
+      onOpenChange(false);
+    } catch {
+      toast.error(t("reminder.save-failed"));
+    }
   };
 
   return (

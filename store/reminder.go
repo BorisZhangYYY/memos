@@ -172,6 +172,9 @@ type DeleteReminder struct {
 // ReminderNotification identifies a due notification delivery.
 type ReminderNotification struct {
 	Reminder *Reminder
+	// RemindTs is the scheduled time of this recurrence occurrence. It can be
+	// later than Reminder.RemindTs when an earlier occurrence was left pending.
+	RemindTs int64
 	Early    bool
 }
 
@@ -215,6 +218,6 @@ func (s *Store) ListDueReminderNotifications(ctx context.Context, now int64) ([]
 	return s.driver.ListDueReminderNotifications(ctx, now)
 }
 
-func (s *Store) MarkReminderNotificationDelivered(ctx context.Context, reminderID int32, early bool, deliveredTs int64) error {
-	return s.driver.MarkReminderNotificationDelivered(ctx, reminderID, early, deliveredTs)
+func (s *Store) MarkReminderNotificationDelivered(ctx context.Context, reminderID int32, early bool, remindTs, deliveredTs int64) error {
+	return s.driver.MarkReminderNotificationDelivered(ctx, reminderID, early, remindTs, deliveredTs)
 }
