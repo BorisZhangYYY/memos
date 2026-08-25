@@ -106,7 +106,8 @@ const ReminderDetailDialog = ({ reminder, draft, lists, parent, open, onOpenChan
   }, [draft, lists, open, reminder]);
 
   const handleSave = async () => {
-    if (!title.trim() || !listName) return;
+    // 只校验标题；列表为空时交由后端兜底使用默认提醒列表，避免列表未加载完成时无法新建。
+    if (!title.trim()) return;
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const remindTime = dueDate && remindAt ? timestampFromDate(new Date(`${dueDate}T${remindAt}:00`)) : undefined;
     const recurrenceFrequency = Number(frequency) as ReminderRecurrence_Frequency;
@@ -291,11 +292,7 @@ const ReminderDetailDialog = ({ reminder, draft, lists, parent, open, onOpenChan
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               {t("common.cancel")}
             </Button>
-            <Button
-              type="button"
-              onClick={handleSave}
-              disabled={!title.trim() || !listName || createReminder.isPending || updateReminder.isPending}
-            >
+            <Button type="button" onClick={handleSave} disabled={!title.trim() || createReminder.isPending || updateReminder.isPending}>
               {t("common.save")}
             </Button>
           </DialogFooter>
