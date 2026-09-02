@@ -185,7 +185,10 @@ func (s *Store) applyMigrations(ctx context.Context, currentSchemaVersion, targe
 				return errors.Wrapf(err, "failed to read migration file: %s", filePath)
 			}
 
-			stmt := string(bytes)
+			stmt, err := s.resolveMigrationStatement(ctx, tx, filePath, string(bytes))
+			if err != nil {
+				return errors.Wrapf(err, "failed to resolve migration %s", filePath)
+			}
 			if err := s.execute(ctx, tx, stmt); err != nil {
 				return errors.Wrapf(err, "failed to execute migration %s: %s", filePath, err)
 			}
@@ -205,6 +208,41 @@ func (s *Store) applyMigrations(ctx context.Context, currentSchemaVersion, targe
 	}
 
 	return nil
+}
+
+func (s *Store) resolveMigrationStatement(ctx context.Context, tx *sql.Tx, filePath, statement string) (string, error) {
+	const reminderHistoryMigration = "migration/sqlite/0.35/00__reminder_occurrence_history.sql"
+	if s.profile.Driver != "sqlite" || filepath.ToSlash(filePath) != reminderHistoryMigration {
+		return statement, nil
+	}
+	// Early fork builds used a foreign-key reminder_id occurrence schema, while
+	// later 0.34 builds already stored reminder snapshots by UID.
+	rows, err := tx.QueryContext(ctx, "PRAGMA table_info(reminder_occurrence)")
+	if err != nil {
+		return "", errors.Wrap(err, "inspect reminder occurrence schema")
+	}
+	defer rows.Close()
+	legacy := false
+	for rows.Next() {
+		var cid, notNull, primaryKey int
+		var name, columnType string
+		var defaultValue any
+		if err := rows.Scan(&cid, &name, &columnType, &notNull, &defaultValue, &primaryKey); err != nil {
+			return "", errors.Wrap(err, "scan reminder occurrence schema")
+		}
+		legacy = legacy || name == "reminder_id"
+	}
+	if err := rows.Err(); err != nil {
+		return "", errors.Wrap(err, "inspect reminder occurrence schema")
+	}
+	if !legacy {
+		return statement, nil
+	}
+	bytes, err := migrationFS.ReadFile("migration/sqlite/0.35/legacy_reminder_occurrence_history.sql.txt")
+	if err != nil {
+		return "", errors.Wrap(err, "read legacy reminder occurrence migration")
+	}
+	return string(bytes), nil
 }
 
 // preMigrate checks if the database is initialized and applies the latest schema if not.
