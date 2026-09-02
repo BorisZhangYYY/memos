@@ -251,10 +251,15 @@ CREATE TABLE `reminder_occurrence` (
   `list_uid` VARCHAR(256) NOT NULL,
   `list_name` VARCHAR(255) NOT NULL,
   `title` VARCHAR(500) NOT NULL,
+  `memo_uid` VARCHAR(256) NOT NULL DEFAULT '',
   `created_ts` BIGINT NOT NULL DEFAULT (UNIX_TIMESTAMP()),
   `scheduled_date` VARCHAR(10) NOT NULL DEFAULT '',
   `remind_ts` BIGINT DEFAULT NULL,
   `completed_ts` BIGINT NOT NULL,
-  `status` VARCHAR(32) NOT NULL DEFAULT 'COMPLETED'
+  `completion_date` VARCHAR(10) NOT NULL DEFAULT '',
+  `resolved_ts` BIGINT NOT NULL DEFAULT 0,
+  `status` VARCHAR(32) NOT NULL DEFAULT 'COMPLETED_ON_TIME'
 );
 CREATE INDEX `idx_reminder_occurrence_creator_completed` ON `reminder_occurrence`(`creator_id`, `completed_ts` DESC);
+CREATE UNIQUE INDEX `idx_reminder_occurrence_period` ON `reminder_occurrence`(`creator_id`, `reminder_uid`, `scheduled_date`);
+CREATE INDEX `idx_reminder_occurrence_creator_schedule` ON `reminder_occurrence`(`creator_id`, `scheduled_date` DESC, `status`);

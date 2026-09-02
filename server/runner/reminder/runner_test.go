@@ -133,3 +133,30 @@ func TestDailyReminderNotificationAdvancesWithoutCompletion(t *testing.T) {
 	require.Len(t, due, 1)
 	require.Equal(t, thirdOccurrenceSec, due[0].RemindTs)
 }
+
+func TestRunOnceMaterializesDisplacedDailyPeriods(t *testing.T) {
+	ctx := context.Background()
+	testingStore := teststore.NewTestingStore(ctx, t)
+	t.Cleanup(func() { require.NoError(t, testingStore.Close()) })
+	user, err := testingStore.CreateUser(ctx, &store.User{Username: "daily-history-runner", Role: store.RoleUser})
+	require.NoError(t, err)
+	list, err := testingStore.CreateReminderList(ctx, &store.ReminderList{UID: "default", CreatorID: user.ID, Name: "Reminders"})
+	require.NoError(t, err)
+	today := time.Now().UTC()
+	first := today.AddDate(0, 0, -2).Format(time.DateOnly)
+	_, err = testingStore.CreateReminder(ctx, &store.Reminder{
+		UID: "daily-history", CreatorID: user.ID, ListID: list.ID, Title: "Daily journal", DueDate: first, TimeZone: "UTC",
+		RecurrenceType: store.ReminderRecurrenceDaily, RecurrenceInterval: 1,
+	})
+	require.NoError(t, err)
+
+	runner := NewRunner(testingStore, &profile.Profile{})
+	runner.RunOnce(ctx)
+	runner.RunOnce(ctx)
+	rows, err := testingStore.ListReminderOccurrences(ctx, &store.FindReminderOccurrence{CreatorID: &user.ID})
+	require.NoError(t, err)
+	require.Len(t, rows, 2)
+	require.Equal(t, today.AddDate(0, 0, -1).Format(time.DateOnly), rows[0].ScheduledDate)
+	require.Equal(t, store.ReminderOccurrenceSkipped, rows[0].Status)
+	require.Equal(t, first, rows[1].ScheduledDate)
+}

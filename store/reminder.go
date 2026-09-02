@@ -10,6 +10,15 @@ const (
 	ReminderCompleted ReminderStatus = "COMPLETED"
 )
 
+// ReminderOccurrenceStatus is the immutable outcome of one scheduled period.
+type ReminderOccurrenceStatus string
+
+const (
+	ReminderOccurrenceCompletedOnTime ReminderOccurrenceStatus = "COMPLETED_ON_TIME"
+	ReminderOccurrenceCompletedLate   ReminderOccurrenceStatus = "COMPLETED_LATE"
+	ReminderOccurrenceSkipped         ReminderOccurrenceStatus = "SKIPPED"
+)
+
 // ReminderRecurrenceType identifies a structured recurrence rule.
 type ReminderRecurrenceType string
 
@@ -141,25 +150,49 @@ type UpdateReminder struct {
 
 // ReminderOccurrence records one completion for deterministic daily and weekly reports.
 type ReminderOccurrence struct {
-	ID            int32
-	UID           string
-	CreatorID     int32
-	ReminderUID   string
-	ListUID       string
-	ListName      string
-	Title         string
-	CreatedTs     int64
-	ScheduledDate string
-	RemindTs      *int64
-	CompletedTs   int64
-	Status        ReminderStatus
+	ID             int32
+	UID            string
+	CreatorID      int32
+	ReminderUID    string
+	ListUID        string
+	ListName       string
+	Title          string
+	MemoUID        string
+	CreatedTs      int64
+	ScheduledDate  string
+	RemindTs       *int64
+	CompletedTs    int64
+	CompletionDate string
+	ResolvedTs     int64
+	Status         ReminderOccurrenceStatus
 }
 
 // FindReminderOccurrence filters immutable completion facts for reporting.
 type FindReminderOccurrence struct {
 	CreatorID       *int32
+	ReminderUID     *string
+	ScheduledAfter  *string
+	ScheduledBefore *string
+	Status          *ReminderOccurrenceStatus
 	CompletedAfter  *int64
 	CompletedBefore *int64
+}
+
+// DeleteReminderOccurrences removes occurrence snapshots for a reminder.
+type DeleteReminderOccurrences struct {
+	CreatorID   int32
+	ReminderUID string
+}
+
+// UpdateReminderOccurrence replaces the outcome for one scheduled period.
+type UpdateReminderOccurrence struct {
+	CreatorID      int32
+	ReminderUID    string
+	ScheduledDate  string
+	CompletedTs    int64
+	CompletionDate string
+	ResolvedTs     int64
+	Status         ReminderOccurrenceStatus
 }
 
 // DeleteReminder permanently removes a reminder. Completion occurrences are
@@ -212,6 +245,14 @@ func (s *Store) CreateReminderOccurrence(ctx context.Context, value *ReminderOcc
 
 func (s *Store) ListReminderOccurrences(ctx context.Context, find *FindReminderOccurrence) ([]*ReminderOccurrence, error) {
 	return s.driver.ListReminderOccurrences(ctx, find)
+}
+
+func (s *Store) DeleteReminderOccurrences(ctx context.Context, value *DeleteReminderOccurrences) error {
+	return s.driver.DeleteReminderOccurrences(ctx, value)
+}
+
+func (s *Store) UpdateReminderOccurrence(ctx context.Context, value *UpdateReminderOccurrence) error {
+	return s.driver.UpdateReminderOccurrence(ctx, value)
 }
 
 func (s *Store) ListDueReminderNotifications(ctx context.Context, now int64) ([]*ReminderNotification, error) {

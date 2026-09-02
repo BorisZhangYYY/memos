@@ -49,6 +49,12 @@ const (
 	// ReminderServiceListRemindersProcedure is the fully-qualified name of the ReminderService's
 	// ListReminders RPC.
 	ReminderServiceListRemindersProcedure = "/memos.api.v1.ReminderService/ListReminders"
+	// ReminderServiceListReminderOccurrencesProcedure is the fully-qualified name of the
+	// ReminderService's ListReminderOccurrences RPC.
+	ReminderServiceListReminderOccurrencesProcedure = "/memos.api.v1.ReminderService/ListReminderOccurrences"
+	// ReminderServiceGetReminderStatsProcedure is the fully-qualified name of the ReminderService's
+	// GetReminderStats RPC.
+	ReminderServiceGetReminderStatsProcedure = "/memos.api.v1.ReminderService/GetReminderStats"
 	// ReminderServiceCreateReminderProcedure is the fully-qualified name of the ReminderService's
 	// CreateReminder RPC.
 	ReminderServiceCreateReminderProcedure = "/memos.api.v1.ReminderService/CreateReminder"
@@ -78,6 +84,10 @@ type ReminderServiceClient interface {
 	DeleteReminderList(context.Context, *connect.Request[v1.DeleteReminderListRequest]) (*connect.Response[emptypb.Empty], error)
 	// Lists reminders using views such as TODAY, SCHEDULED, FLAGGED, or COMPLETED.
 	ListReminders(context.Context, *connect.Request[v1.ListRemindersRequest]) (*connect.Response[v1.ListRemindersResponse], error)
+	// Lists immutable outcomes for scheduled reminder periods.
+	ListReminderOccurrences(context.Context, *connect.Request[v1.ListReminderOccurrencesRequest]) (*connect.Response[v1.ListReminderOccurrencesResponse], error)
+	// Returns completion and skipped-period totals for the selected date range.
+	GetReminderStats(context.Context, *connect.Request[v1.GetReminderStatsRequest]) (*connect.Response[v1.ReminderStats], error)
 	// Creates a reminder with an exact remind_time or a date-only due_date; there is no details field.
 	CreateReminder(context.Context, *connect.Request[v1.CreateReminderRequest]) (*connect.Response[v1.Reminder], error)
 	// Updates a reminder's scheduling, list, priority, tags, location, or archive state.
@@ -131,6 +141,18 @@ func NewReminderServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(reminderServiceMethods.ByName("ListReminders")),
 			connect.WithClientOptions(opts...),
 		),
+		listReminderOccurrences: connect.NewClient[v1.ListReminderOccurrencesRequest, v1.ListReminderOccurrencesResponse](
+			httpClient,
+			baseURL+ReminderServiceListReminderOccurrencesProcedure,
+			connect.WithSchema(reminderServiceMethods.ByName("ListReminderOccurrences")),
+			connect.WithClientOptions(opts...),
+		),
+		getReminderStats: connect.NewClient[v1.GetReminderStatsRequest, v1.ReminderStats](
+			httpClient,
+			baseURL+ReminderServiceGetReminderStatsProcedure,
+			connect.WithSchema(reminderServiceMethods.ByName("GetReminderStats")),
+			connect.WithClientOptions(opts...),
+		),
 		createReminder: connect.NewClient[v1.CreateReminderRequest, v1.Reminder](
 			httpClient,
 			baseURL+ReminderServiceCreateReminderProcedure,
@@ -171,6 +193,8 @@ type reminderServiceClient struct {
 	updateReminderList      *connect.Client[v1.UpdateReminderListRequest, v1.ReminderList]
 	deleteReminderList      *connect.Client[v1.DeleteReminderListRequest, emptypb.Empty]
 	listReminders           *connect.Client[v1.ListRemindersRequest, v1.ListRemindersResponse]
+	listReminderOccurrences *connect.Client[v1.ListReminderOccurrencesRequest, v1.ListReminderOccurrencesResponse]
+	getReminderStats        *connect.Client[v1.GetReminderStatsRequest, v1.ReminderStats]
 	createReminder          *connect.Client[v1.CreateReminderRequest, v1.Reminder]
 	updateReminder          *connect.Client[v1.UpdateReminderRequest, v1.Reminder]
 	deleteReminder          *connect.Client[v1.DeleteReminderRequest, emptypb.Empty]
@@ -201,6 +225,16 @@ func (c *reminderServiceClient) DeleteReminderList(ctx context.Context, req *con
 // ListReminders calls memos.api.v1.ReminderService.ListReminders.
 func (c *reminderServiceClient) ListReminders(ctx context.Context, req *connect.Request[v1.ListRemindersRequest]) (*connect.Response[v1.ListRemindersResponse], error) {
 	return c.listReminders.CallUnary(ctx, req)
+}
+
+// ListReminderOccurrences calls memos.api.v1.ReminderService.ListReminderOccurrences.
+func (c *reminderServiceClient) ListReminderOccurrences(ctx context.Context, req *connect.Request[v1.ListReminderOccurrencesRequest]) (*connect.Response[v1.ListReminderOccurrencesResponse], error) {
+	return c.listReminderOccurrences.CallUnary(ctx, req)
+}
+
+// GetReminderStats calls memos.api.v1.ReminderService.GetReminderStats.
+func (c *reminderServiceClient) GetReminderStats(ctx context.Context, req *connect.Request[v1.GetReminderStatsRequest]) (*connect.Response[v1.ReminderStats], error) {
+	return c.getReminderStats.CallUnary(ctx, req)
 }
 
 // CreateReminder calls memos.api.v1.ReminderService.CreateReminder.
@@ -240,6 +274,10 @@ type ReminderServiceHandler interface {
 	DeleteReminderList(context.Context, *connect.Request[v1.DeleteReminderListRequest]) (*connect.Response[emptypb.Empty], error)
 	// Lists reminders using views such as TODAY, SCHEDULED, FLAGGED, or COMPLETED.
 	ListReminders(context.Context, *connect.Request[v1.ListRemindersRequest]) (*connect.Response[v1.ListRemindersResponse], error)
+	// Lists immutable outcomes for scheduled reminder periods.
+	ListReminderOccurrences(context.Context, *connect.Request[v1.ListReminderOccurrencesRequest]) (*connect.Response[v1.ListReminderOccurrencesResponse], error)
+	// Returns completion and skipped-period totals for the selected date range.
+	GetReminderStats(context.Context, *connect.Request[v1.GetReminderStatsRequest]) (*connect.Response[v1.ReminderStats], error)
 	// Creates a reminder with an exact remind_time or a date-only due_date; there is no details field.
 	CreateReminder(context.Context, *connect.Request[v1.CreateReminderRequest]) (*connect.Response[v1.Reminder], error)
 	// Updates a reminder's scheduling, list, priority, tags, location, or archive state.
@@ -289,6 +327,18 @@ func NewReminderServiceHandler(svc ReminderServiceHandler, opts ...connect.Handl
 		connect.WithSchema(reminderServiceMethods.ByName("ListReminders")),
 		connect.WithHandlerOptions(opts...),
 	)
+	reminderServiceListReminderOccurrencesHandler := connect.NewUnaryHandler(
+		ReminderServiceListReminderOccurrencesProcedure,
+		svc.ListReminderOccurrences,
+		connect.WithSchema(reminderServiceMethods.ByName("ListReminderOccurrences")),
+		connect.WithHandlerOptions(opts...),
+	)
+	reminderServiceGetReminderStatsHandler := connect.NewUnaryHandler(
+		ReminderServiceGetReminderStatsProcedure,
+		svc.GetReminderStats,
+		connect.WithSchema(reminderServiceMethods.ByName("GetReminderStats")),
+		connect.WithHandlerOptions(opts...),
+	)
 	reminderServiceCreateReminderHandler := connect.NewUnaryHandler(
 		ReminderServiceCreateReminderProcedure,
 		svc.CreateReminder,
@@ -331,6 +381,10 @@ func NewReminderServiceHandler(svc ReminderServiceHandler, opts ...connect.Handl
 			reminderServiceDeleteReminderListHandler.ServeHTTP(w, r)
 		case ReminderServiceListRemindersProcedure:
 			reminderServiceListRemindersHandler.ServeHTTP(w, r)
+		case ReminderServiceListReminderOccurrencesProcedure:
+			reminderServiceListReminderOccurrencesHandler.ServeHTTP(w, r)
+		case ReminderServiceGetReminderStatsProcedure:
+			reminderServiceGetReminderStatsHandler.ServeHTTP(w, r)
 		case ReminderServiceCreateReminderProcedure:
 			reminderServiceCreateReminderHandler.ServeHTTP(w, r)
 		case ReminderServiceUpdateReminderProcedure:
@@ -368,6 +422,14 @@ func (UnimplementedReminderServiceHandler) DeleteReminderList(context.Context, *
 
 func (UnimplementedReminderServiceHandler) ListReminders(context.Context, *connect.Request[v1.ListRemindersRequest]) (*connect.Response[v1.ListRemindersResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.ReminderService.ListReminders is not implemented"))
+}
+
+func (UnimplementedReminderServiceHandler) ListReminderOccurrences(context.Context, *connect.Request[v1.ListReminderOccurrencesRequest]) (*connect.Response[v1.ListReminderOccurrencesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.ReminderService.ListReminderOccurrences is not implemented"))
+}
+
+func (UnimplementedReminderServiceHandler) GetReminderStats(context.Context, *connect.Request[v1.GetReminderStatsRequest]) (*connect.Response[v1.ReminderStats], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.ReminderService.GetReminderStats is not implemented"))
 }
 
 func (UnimplementedReminderServiceHandler) CreateReminder(context.Context, *connect.Request[v1.CreateReminderRequest]) (*connect.Response[v1.Reminder], error) {

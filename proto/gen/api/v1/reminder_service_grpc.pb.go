@@ -25,6 +25,8 @@ const (
 	ReminderService_UpdateReminderList_FullMethodName      = "/memos.api.v1.ReminderService/UpdateReminderList"
 	ReminderService_DeleteReminderList_FullMethodName      = "/memos.api.v1.ReminderService/DeleteReminderList"
 	ReminderService_ListReminders_FullMethodName           = "/memos.api.v1.ReminderService/ListReminders"
+	ReminderService_ListReminderOccurrences_FullMethodName = "/memos.api.v1.ReminderService/ListReminderOccurrences"
+	ReminderService_GetReminderStats_FullMethodName        = "/memos.api.v1.ReminderService/GetReminderStats"
 	ReminderService_CreateReminder_FullMethodName          = "/memos.api.v1.ReminderService/CreateReminder"
 	ReminderService_UpdateReminder_FullMethodName          = "/memos.api.v1.ReminderService/UpdateReminder"
 	ReminderService_DeleteReminder_FullMethodName          = "/memos.api.v1.ReminderService/DeleteReminder"
@@ -48,6 +50,10 @@ type ReminderServiceClient interface {
 	DeleteReminderList(ctx context.Context, in *DeleteReminderListRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Lists reminders using views such as TODAY, SCHEDULED, FLAGGED, or COMPLETED.
 	ListReminders(ctx context.Context, in *ListRemindersRequest, opts ...grpc.CallOption) (*ListRemindersResponse, error)
+	// Lists immutable outcomes for scheduled reminder periods.
+	ListReminderOccurrences(ctx context.Context, in *ListReminderOccurrencesRequest, opts ...grpc.CallOption) (*ListReminderOccurrencesResponse, error)
+	// Returns completion and skipped-period totals for the selected date range.
+	GetReminderStats(ctx context.Context, in *GetReminderStatsRequest, opts ...grpc.CallOption) (*ReminderStats, error)
 	// Creates a reminder with an exact remind_time or a date-only due_date; there is no details field.
 	CreateReminder(ctx context.Context, in *CreateReminderRequest, opts ...grpc.CallOption) (*Reminder, error)
 	// Updates a reminder's scheduling, list, priority, tags, location, or archive state.
@@ -112,6 +118,26 @@ func (c *reminderServiceClient) ListReminders(ctx context.Context, in *ListRemin
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListRemindersResponse)
 	err := c.cc.Invoke(ctx, ReminderService_ListReminders_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *reminderServiceClient) ListReminderOccurrences(ctx context.Context, in *ListReminderOccurrencesRequest, opts ...grpc.CallOption) (*ListReminderOccurrencesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListReminderOccurrencesResponse)
+	err := c.cc.Invoke(ctx, ReminderService_ListReminderOccurrences_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *reminderServiceClient) GetReminderStats(ctx context.Context, in *GetReminderStatsRequest, opts ...grpc.CallOption) (*ReminderStats, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReminderStats)
+	err := c.cc.Invoke(ctx, ReminderService_GetReminderStats_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -184,6 +210,10 @@ type ReminderServiceServer interface {
 	DeleteReminderList(context.Context, *DeleteReminderListRequest) (*emptypb.Empty, error)
 	// Lists reminders using views such as TODAY, SCHEDULED, FLAGGED, or COMPLETED.
 	ListReminders(context.Context, *ListRemindersRequest) (*ListRemindersResponse, error)
+	// Lists immutable outcomes for scheduled reminder periods.
+	ListReminderOccurrences(context.Context, *ListReminderOccurrencesRequest) (*ListReminderOccurrencesResponse, error)
+	// Returns completion and skipped-period totals for the selected date range.
+	GetReminderStats(context.Context, *GetReminderStatsRequest) (*ReminderStats, error)
 	// Creates a reminder with an exact remind_time or a date-only due_date; there is no details field.
 	CreateReminder(context.Context, *CreateReminderRequest) (*Reminder, error)
 	// Updates a reminder's scheduling, list, priority, tags, location, or archive state.
@@ -218,6 +248,12 @@ func (UnimplementedReminderServiceServer) DeleteReminderList(context.Context, *D
 }
 func (UnimplementedReminderServiceServer) ListReminders(context.Context, *ListRemindersRequest) (*ListRemindersResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListReminders not implemented")
+}
+func (UnimplementedReminderServiceServer) ListReminderOccurrences(context.Context, *ListReminderOccurrencesRequest) (*ListReminderOccurrencesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListReminderOccurrences not implemented")
+}
+func (UnimplementedReminderServiceServer) GetReminderStats(context.Context, *GetReminderStatsRequest) (*ReminderStats, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetReminderStats not implemented")
 }
 func (UnimplementedReminderServiceServer) CreateReminder(context.Context, *CreateReminderRequest) (*Reminder, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateReminder not implemented")
@@ -345,6 +381,42 @@ func _ReminderService_ListReminders_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ReminderService_ListReminderOccurrences_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListReminderOccurrencesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ReminderServiceServer).ListReminderOccurrences(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ReminderService_ListReminderOccurrences_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ReminderServiceServer).ListReminderOccurrences(ctx, req.(*ListReminderOccurrencesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ReminderService_GetReminderStats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetReminderStatsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ReminderServiceServer).GetReminderStats(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ReminderService_GetReminderStats_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ReminderServiceServer).GetReminderStats(ctx, req.(*GetReminderStatsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ReminderService_CreateReminder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateReminderRequest)
 	if err := dec(in); err != nil {
@@ -461,6 +533,14 @@ var ReminderService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListReminders",
 			Handler:    _ReminderService_ListReminders_Handler,
+		},
+		{
+			MethodName: "ListReminderOccurrences",
+			Handler:    _ReminderService_ListReminderOccurrences_Handler,
+		},
+		{
+			MethodName: "GetReminderStats",
+			Handler:    _ReminderService_GetReminderStats_Handler,
 		},
 		{
 			MethodName: "CreateReminder",

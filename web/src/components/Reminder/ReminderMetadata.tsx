@@ -4,6 +4,7 @@ import ReminderListIcon from "@/components/Reminder/ReminderListIcon";
 import { cn } from "@/lib/utils";
 import { type Reminder, type ReminderList, ReminderRecurrence_Frequency } from "@/types/proto/api/v1/reminder_service_pb";
 import { useTranslate } from "@/utils/i18n";
+import { isReminderOverdue } from "@/utils/reminder-overdue";
 
 interface Props {
   reminder: Reminder;
@@ -33,6 +34,7 @@ const ReminderMetadata = ({ reminder, list, className }: Props) => {
             ? t("reminder.yearly")
             : undefined;
   const listLabel = list?.name.endsWith("/reminderLists/default") ? t("common.reminders") : list?.displayName;
+  const overdue = isReminderOverdue(reminder);
 
   return (
     <span className={cn("flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground", className)}>
@@ -43,9 +45,10 @@ const ReminderMetadata = ({ reminder, list, className }: Props) => {
         </span>
       )}
       {reminder.dueDate && (
-        <span className="inline-flex items-center gap-1">
+        <span className={cn("inline-flex items-center gap-1", overdue && "font-medium text-destructive")}>
           <CalendarDaysIcon className="size-3" />
           {reminder.dueDate}
+          {overdue && <span className="rounded-full bg-destructive/10 px-1.5 py-0.5 leading-none">{t("reminder.overdue")}</span>}
         </span>
       )}
       {remindTime && (

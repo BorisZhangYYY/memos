@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/usememos/memos/internal/profile"
+	"github.com/usememos/memos/internal/reminderhistory"
 	storepb "github.com/usememos/memos/proto/gen/store"
 	"github.com/usememos/memos/server/notification"
 	"github.com/usememos/memos/store"
@@ -41,6 +42,9 @@ func (r *Runner) Run(ctx context.Context) {
 
 // RunOnce delivers every early or due reminder notification currently ready.
 func (r *Runner) RunOnce(ctx context.Context) {
+	if err := reminderhistory.MaterializeSkipped(ctx, r.store, time.Now()); err != nil {
+		slog.Warn("Failed to record skipped reminder periods", slog.Any("err", err))
+	}
 	nowSec := time.Now().Unix()
 	due, err := r.store.ListDueReminderNotifications(ctx, nowSec)
 	if err != nil {

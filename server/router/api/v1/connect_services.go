@@ -729,6 +729,22 @@ func (s *ConnectServiceHandler) ListReminders(ctx context.Context, req *connect.
 	return connect.NewResponse(resp), nil
 }
 
+func (s *ConnectServiceHandler) ListReminderOccurrences(ctx context.Context, req *connect.Request[v1pb.ListReminderOccurrencesRequest]) (*connect.Response[v1pb.ListReminderOccurrencesResponse], error) {
+	resp, err := s.APIV1Service.ListReminderOccurrences(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (s *ConnectServiceHandler) GetReminderStats(ctx context.Context, req *connect.Request[v1pb.GetReminderStatsRequest]) (*connect.Response[v1pb.ReminderStats], error) {
+	resp, err := s.APIV1Service.GetReminderStats(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
 func (s *ConnectServiceHandler) CreateReminder(ctx context.Context, req *connect.Request[v1pb.CreateReminderRequest]) (*connect.Response[v1pb.Reminder], error) {
 	resp, err := s.APIV1Service.CreateReminder(ctx, req.Msg)
 	if err != nil {

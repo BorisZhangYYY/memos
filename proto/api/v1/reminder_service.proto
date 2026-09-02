@@ -41,6 +41,14 @@ service ReminderService {
   rpc ListReminders(ListRemindersRequest) returns (ListRemindersResponse) {
     option (google.api.http) = {get: "/api/v1/{parent=users/*}/reminders"};
   }
+  // Lists immutable outcomes for scheduled reminder periods.
+  rpc ListReminderOccurrences(ListReminderOccurrencesRequest) returns (ListReminderOccurrencesResponse) {
+    option (google.api.http) = {get: "/api/v1/{parent=users/*}/reminder-occurrences"};
+  }
+  // Returns completion and skipped-period totals for the selected date range.
+  rpc GetReminderStats(GetReminderStatsRequest) returns (ReminderStats) {
+    option (google.api.http) = {get: "/api/v1/{parent=users/*}/reminder-stats"};
+  }
   // Creates a reminder with an exact remind_time or a date-only due_date; there is no details field.
   rpc CreateReminder(CreateReminderRequest) returns (Reminder) {
     option (google.api.http) = {
@@ -218,6 +226,54 @@ message ListRemindersResponse {
   repeated Reminder reminders = 1;
 }
 
+message ReminderOccurrence {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    COMPLETED_ON_TIME = 1;
+    COMPLETED_LATE = 2;
+    SKIPPED = 3;
+  }
+
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+  string reminder = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+  string reminder_list = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+  string reminder_list_display_name = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+  string title = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+  string memo = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+  string scheduled_date = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+  google.protobuf.Timestamp scheduled_time = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+  string completion_date = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
+  google.protobuf.Timestamp completion_time = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
+  Status status = 11 [(google.api.field_behavior) = OUTPUT_ONLY];
+  int32 late_days = 12 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+message ListReminderOccurrencesRequest {
+  string parent = 1 [(google.api.field_behavior) = REQUIRED];
+  string start_date = 2 [(google.api.field_behavior) = OPTIONAL];
+  string end_date = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message ListReminderOccurrencesResponse {
+  repeated ReminderOccurrence reminder_occurrences = 1;
+}
+
+message GetReminderStatsRequest {
+  string parent = 1 [(google.api.field_behavior) = REQUIRED];
+  string start_date = 2 [(google.api.field_behavior) = OPTIONAL];
+  string end_date = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message ReminderStats {
+  int32 total_count = 1;
+  int32 completed_on_time_count = 2;
+  int32 completed_late_count = 3;
+  int32 skipped_count = 4;
+  double on_time_rate = 5;
+  double final_completion_rate = 6;
+  double skipped_rate = 7;
+}
+
 message CreateReminderRequest {
   string parent = 1 [(google.api.field_behavior) = REQUIRED];
   Reminder reminder = 2 [(google.api.field_behavior) = REQUIRED];
@@ -235,6 +291,9 @@ message DeleteReminderRequest {
 
 message CompleteReminderRequest {
   string name = 1 [(google.api.field_behavior) = REQUIRED];
+  // Optional calendar date on which the user completed the reminder. The
+  // completion belongs to the latest scheduled period on or before that date.
+  string completion_date = 2 [(google.api.field_behavior) = OPTIONAL];
 }
 
 message ClearCompletedRemindersRequest {

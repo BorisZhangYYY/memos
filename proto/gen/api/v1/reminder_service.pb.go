@@ -288,6 +288,58 @@ func (ListRemindersRequest_View) EnumDescriptor() ([]byte, []int) {
 	return file_api_v1_reminder_service_proto_rawDescGZIP(), []int{9, 0}
 }
 
+type ReminderOccurrence_Status int32
+
+const (
+	ReminderOccurrence_STATUS_UNSPECIFIED ReminderOccurrence_Status = 0
+	ReminderOccurrence_COMPLETED_ON_TIME  ReminderOccurrence_Status = 1
+	ReminderOccurrence_COMPLETED_LATE     ReminderOccurrence_Status = 2
+	ReminderOccurrence_SKIPPED            ReminderOccurrence_Status = 3
+)
+
+// Enum value maps for ReminderOccurrence_Status.
+var (
+	ReminderOccurrence_Status_name = map[int32]string{
+		0: "STATUS_UNSPECIFIED",
+		1: "COMPLETED_ON_TIME",
+		2: "COMPLETED_LATE",
+		3: "SKIPPED",
+	}
+	ReminderOccurrence_Status_value = map[string]int32{
+		"STATUS_UNSPECIFIED": 0,
+		"COMPLETED_ON_TIME":  1,
+		"COMPLETED_LATE":     2,
+		"SKIPPED":            3,
+	}
+)
+
+func (x ReminderOccurrence_Status) Enum() *ReminderOccurrence_Status {
+	p := new(ReminderOccurrence_Status)
+	*p = x
+	return p
+}
+
+func (x ReminderOccurrence_Status) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ReminderOccurrence_Status) Descriptor() protoreflect.EnumDescriptor {
+	return file_api_v1_reminder_service_proto_enumTypes[5].Descriptor()
+}
+
+func (ReminderOccurrence_Status) Type() protoreflect.EnumType {
+	return &file_api_v1_reminder_service_proto_enumTypes[5]
+}
+
+func (x ReminderOccurrence_Status) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ReminderOccurrence_Status.Descriptor instead.
+func (ReminderOccurrence_Status) EnumDescriptor() ([]byte, []int) {
+	return file_api_v1_reminder_service_proto_rawDescGZIP(), []int{11, 0}
+}
+
 type ReminderList struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
@@ -1137,6 +1189,394 @@ func (x *ListRemindersResponse) GetReminders() []*Reminder {
 	return nil
 }
 
+type ReminderOccurrence struct {
+	state                   protoimpl.MessageState    `protogen:"open.v1"`
+	Name                    string                    `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Reminder                string                    `protobuf:"bytes,2,opt,name=reminder,proto3" json:"reminder,omitempty"`
+	ReminderList            string                    `protobuf:"bytes,3,opt,name=reminder_list,json=reminderList,proto3" json:"reminder_list,omitempty"`
+	ReminderListDisplayName string                    `protobuf:"bytes,4,opt,name=reminder_list_display_name,json=reminderListDisplayName,proto3" json:"reminder_list_display_name,omitempty"`
+	Title                   string                    `protobuf:"bytes,5,opt,name=title,proto3" json:"title,omitempty"`
+	Memo                    string                    `protobuf:"bytes,6,opt,name=memo,proto3" json:"memo,omitempty"`
+	ScheduledDate           string                    `protobuf:"bytes,7,opt,name=scheduled_date,json=scheduledDate,proto3" json:"scheduled_date,omitempty"`
+	ScheduledTime           *timestamppb.Timestamp    `protobuf:"bytes,8,opt,name=scheduled_time,json=scheduledTime,proto3" json:"scheduled_time,omitempty"`
+	CompletionDate          string                    `protobuf:"bytes,9,opt,name=completion_date,json=completionDate,proto3" json:"completion_date,omitempty"`
+	CompletionTime          *timestamppb.Timestamp    `protobuf:"bytes,10,opt,name=completion_time,json=completionTime,proto3" json:"completion_time,omitempty"`
+	Status                  ReminderOccurrence_Status `protobuf:"varint,11,opt,name=status,proto3,enum=memos.api.v1.ReminderOccurrence_Status" json:"status,omitempty"`
+	LateDays                int32                     `protobuf:"varint,12,opt,name=late_days,json=lateDays,proto3" json:"late_days,omitempty"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
+}
+
+func (x *ReminderOccurrence) Reset() {
+	*x = ReminderOccurrence{}
+	mi := &file_api_v1_reminder_service_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReminderOccurrence) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReminderOccurrence) ProtoMessage() {}
+
+func (x *ReminderOccurrence) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_reminder_service_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReminderOccurrence.ProtoReflect.Descriptor instead.
+func (*ReminderOccurrence) Descriptor() ([]byte, []int) {
+	return file_api_v1_reminder_service_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *ReminderOccurrence) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *ReminderOccurrence) GetReminder() string {
+	if x != nil {
+		return x.Reminder
+	}
+	return ""
+}
+
+func (x *ReminderOccurrence) GetReminderList() string {
+	if x != nil {
+		return x.ReminderList
+	}
+	return ""
+}
+
+func (x *ReminderOccurrence) GetReminderListDisplayName() string {
+	if x != nil {
+		return x.ReminderListDisplayName
+	}
+	return ""
+}
+
+func (x *ReminderOccurrence) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *ReminderOccurrence) GetMemo() string {
+	if x != nil {
+		return x.Memo
+	}
+	return ""
+}
+
+func (x *ReminderOccurrence) GetScheduledDate() string {
+	if x != nil {
+		return x.ScheduledDate
+	}
+	return ""
+}
+
+func (x *ReminderOccurrence) GetScheduledTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ScheduledTime
+	}
+	return nil
+}
+
+func (x *ReminderOccurrence) GetCompletionDate() string {
+	if x != nil {
+		return x.CompletionDate
+	}
+	return ""
+}
+
+func (x *ReminderOccurrence) GetCompletionTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CompletionTime
+	}
+	return nil
+}
+
+func (x *ReminderOccurrence) GetStatus() ReminderOccurrence_Status {
+	if x != nil {
+		return x.Status
+	}
+	return ReminderOccurrence_STATUS_UNSPECIFIED
+}
+
+func (x *ReminderOccurrence) GetLateDays() int32 {
+	if x != nil {
+		return x.LateDays
+	}
+	return 0
+}
+
+type ListReminderOccurrencesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Parent        string                 `protobuf:"bytes,1,opt,name=parent,proto3" json:"parent,omitempty"`
+	StartDate     string                 `protobuf:"bytes,2,opt,name=start_date,json=startDate,proto3" json:"start_date,omitempty"`
+	EndDate       string                 `protobuf:"bytes,3,opt,name=end_date,json=endDate,proto3" json:"end_date,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListReminderOccurrencesRequest) Reset() {
+	*x = ListReminderOccurrencesRequest{}
+	mi := &file_api_v1_reminder_service_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListReminderOccurrencesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListReminderOccurrencesRequest) ProtoMessage() {}
+
+func (x *ListReminderOccurrencesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_reminder_service_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListReminderOccurrencesRequest.ProtoReflect.Descriptor instead.
+func (*ListReminderOccurrencesRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_reminder_service_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *ListReminderOccurrencesRequest) GetParent() string {
+	if x != nil {
+		return x.Parent
+	}
+	return ""
+}
+
+func (x *ListReminderOccurrencesRequest) GetStartDate() string {
+	if x != nil {
+		return x.StartDate
+	}
+	return ""
+}
+
+func (x *ListReminderOccurrencesRequest) GetEndDate() string {
+	if x != nil {
+		return x.EndDate
+	}
+	return ""
+}
+
+type ListReminderOccurrencesResponse struct {
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	ReminderOccurrences []*ReminderOccurrence  `protobuf:"bytes,1,rep,name=reminder_occurrences,json=reminderOccurrences,proto3" json:"reminder_occurrences,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *ListReminderOccurrencesResponse) Reset() {
+	*x = ListReminderOccurrencesResponse{}
+	mi := &file_api_v1_reminder_service_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListReminderOccurrencesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListReminderOccurrencesResponse) ProtoMessage() {}
+
+func (x *ListReminderOccurrencesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_reminder_service_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListReminderOccurrencesResponse.ProtoReflect.Descriptor instead.
+func (*ListReminderOccurrencesResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_reminder_service_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *ListReminderOccurrencesResponse) GetReminderOccurrences() []*ReminderOccurrence {
+	if x != nil {
+		return x.ReminderOccurrences
+	}
+	return nil
+}
+
+type GetReminderStatsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Parent        string                 `protobuf:"bytes,1,opt,name=parent,proto3" json:"parent,omitempty"`
+	StartDate     string                 `protobuf:"bytes,2,opt,name=start_date,json=startDate,proto3" json:"start_date,omitempty"`
+	EndDate       string                 `protobuf:"bytes,3,opt,name=end_date,json=endDate,proto3" json:"end_date,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetReminderStatsRequest) Reset() {
+	*x = GetReminderStatsRequest{}
+	mi := &file_api_v1_reminder_service_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetReminderStatsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetReminderStatsRequest) ProtoMessage() {}
+
+func (x *GetReminderStatsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_reminder_service_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetReminderStatsRequest.ProtoReflect.Descriptor instead.
+func (*GetReminderStatsRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_reminder_service_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *GetReminderStatsRequest) GetParent() string {
+	if x != nil {
+		return x.Parent
+	}
+	return ""
+}
+
+func (x *GetReminderStatsRequest) GetStartDate() string {
+	if x != nil {
+		return x.StartDate
+	}
+	return ""
+}
+
+func (x *GetReminderStatsRequest) GetEndDate() string {
+	if x != nil {
+		return x.EndDate
+	}
+	return ""
+}
+
+type ReminderStats struct {
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	TotalCount           int32                  `protobuf:"varint,1,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`
+	CompletedOnTimeCount int32                  `protobuf:"varint,2,opt,name=completed_on_time_count,json=completedOnTimeCount,proto3" json:"completed_on_time_count,omitempty"`
+	CompletedLateCount   int32                  `protobuf:"varint,3,opt,name=completed_late_count,json=completedLateCount,proto3" json:"completed_late_count,omitempty"`
+	SkippedCount         int32                  `protobuf:"varint,4,opt,name=skipped_count,json=skippedCount,proto3" json:"skipped_count,omitempty"`
+	OnTimeRate           float64                `protobuf:"fixed64,5,opt,name=on_time_rate,json=onTimeRate,proto3" json:"on_time_rate,omitempty"`
+	FinalCompletionRate  float64                `protobuf:"fixed64,6,opt,name=final_completion_rate,json=finalCompletionRate,proto3" json:"final_completion_rate,omitempty"`
+	SkippedRate          float64                `protobuf:"fixed64,7,opt,name=skipped_rate,json=skippedRate,proto3" json:"skipped_rate,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
+}
+
+func (x *ReminderStats) Reset() {
+	*x = ReminderStats{}
+	mi := &file_api_v1_reminder_service_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReminderStats) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReminderStats) ProtoMessage() {}
+
+func (x *ReminderStats) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_reminder_service_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReminderStats.ProtoReflect.Descriptor instead.
+func (*ReminderStats) Descriptor() ([]byte, []int) {
+	return file_api_v1_reminder_service_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *ReminderStats) GetTotalCount() int32 {
+	if x != nil {
+		return x.TotalCount
+	}
+	return 0
+}
+
+func (x *ReminderStats) GetCompletedOnTimeCount() int32 {
+	if x != nil {
+		return x.CompletedOnTimeCount
+	}
+	return 0
+}
+
+func (x *ReminderStats) GetCompletedLateCount() int32 {
+	if x != nil {
+		return x.CompletedLateCount
+	}
+	return 0
+}
+
+func (x *ReminderStats) GetSkippedCount() int32 {
+	if x != nil {
+		return x.SkippedCount
+	}
+	return 0
+}
+
+func (x *ReminderStats) GetOnTimeRate() float64 {
+	if x != nil {
+		return x.OnTimeRate
+	}
+	return 0
+}
+
+func (x *ReminderStats) GetFinalCompletionRate() float64 {
+	if x != nil {
+		return x.FinalCompletionRate
+	}
+	return 0
+}
+
+func (x *ReminderStats) GetSkippedRate() float64 {
+	if x != nil {
+		return x.SkippedRate
+	}
+	return 0
+}
+
 type CreateReminderRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Parent        string                 `protobuf:"bytes,1,opt,name=parent,proto3" json:"parent,omitempty"`
@@ -1148,7 +1588,7 @@ type CreateReminderRequest struct {
 
 func (x *CreateReminderRequest) Reset() {
 	*x = CreateReminderRequest{}
-	mi := &file_api_v1_reminder_service_proto_msgTypes[11]
+	mi := &file_api_v1_reminder_service_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1160,7 +1600,7 @@ func (x *CreateReminderRequest) String() string {
 func (*CreateReminderRequest) ProtoMessage() {}
 
 func (x *CreateReminderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_reminder_service_proto_msgTypes[11]
+	mi := &file_api_v1_reminder_service_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1173,7 +1613,7 @@ func (x *CreateReminderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateReminderRequest.ProtoReflect.Descriptor instead.
 func (*CreateReminderRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_reminder_service_proto_rawDescGZIP(), []int{11}
+	return file_api_v1_reminder_service_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *CreateReminderRequest) GetParent() string {
@@ -1207,7 +1647,7 @@ type UpdateReminderRequest struct {
 
 func (x *UpdateReminderRequest) Reset() {
 	*x = UpdateReminderRequest{}
-	mi := &file_api_v1_reminder_service_proto_msgTypes[12]
+	mi := &file_api_v1_reminder_service_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1219,7 +1659,7 @@ func (x *UpdateReminderRequest) String() string {
 func (*UpdateReminderRequest) ProtoMessage() {}
 
 func (x *UpdateReminderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_reminder_service_proto_msgTypes[12]
+	mi := &file_api_v1_reminder_service_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1232,7 +1672,7 @@ func (x *UpdateReminderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateReminderRequest.ProtoReflect.Descriptor instead.
 func (*UpdateReminderRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_reminder_service_proto_rawDescGZIP(), []int{12}
+	return file_api_v1_reminder_service_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *UpdateReminderRequest) GetReminder() *Reminder {
@@ -1258,7 +1698,7 @@ type DeleteReminderRequest struct {
 
 func (x *DeleteReminderRequest) Reset() {
 	*x = DeleteReminderRequest{}
-	mi := &file_api_v1_reminder_service_proto_msgTypes[13]
+	mi := &file_api_v1_reminder_service_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1270,7 +1710,7 @@ func (x *DeleteReminderRequest) String() string {
 func (*DeleteReminderRequest) ProtoMessage() {}
 
 func (x *DeleteReminderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_reminder_service_proto_msgTypes[13]
+	mi := &file_api_v1_reminder_service_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1283,7 +1723,7 @@ func (x *DeleteReminderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteReminderRequest.ProtoReflect.Descriptor instead.
 func (*DeleteReminderRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_reminder_service_proto_rawDescGZIP(), []int{13}
+	return file_api_v1_reminder_service_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *DeleteReminderRequest) GetName() string {
@@ -1294,15 +1734,18 @@ func (x *DeleteReminderRequest) GetName() string {
 }
 
 type CompleteReminderRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Name  string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// Optional calendar date on which the user completed the reminder. The
+	// completion belongs to the latest scheduled period on or before that date.
+	CompletionDate string `protobuf:"bytes,2,opt,name=completion_date,json=completionDate,proto3" json:"completion_date,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *CompleteReminderRequest) Reset() {
 	*x = CompleteReminderRequest{}
-	mi := &file_api_v1_reminder_service_proto_msgTypes[14]
+	mi := &file_api_v1_reminder_service_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1314,7 +1757,7 @@ func (x *CompleteReminderRequest) String() string {
 func (*CompleteReminderRequest) ProtoMessage() {}
 
 func (x *CompleteReminderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_reminder_service_proto_msgTypes[14]
+	mi := &file_api_v1_reminder_service_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1327,12 +1770,19 @@ func (x *CompleteReminderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CompleteReminderRequest.ProtoReflect.Descriptor instead.
 func (*CompleteReminderRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_reminder_service_proto_rawDescGZIP(), []int{14}
+	return file_api_v1_reminder_service_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *CompleteReminderRequest) GetName() string {
 	if x != nil {
 		return x.Name
+	}
+	return ""
+}
+
+func (x *CompleteReminderRequest) GetCompletionDate() string {
+	if x != nil {
+		return x.CompletionDate
 	}
 	return ""
 }
@@ -1346,7 +1796,7 @@ type ClearCompletedRemindersRequest struct {
 
 func (x *ClearCompletedRemindersRequest) Reset() {
 	*x = ClearCompletedRemindersRequest{}
-	mi := &file_api_v1_reminder_service_proto_msgTypes[15]
+	mi := &file_api_v1_reminder_service_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1358,7 +1808,7 @@ func (x *ClearCompletedRemindersRequest) String() string {
 func (*ClearCompletedRemindersRequest) ProtoMessage() {}
 
 func (x *ClearCompletedRemindersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_reminder_service_proto_msgTypes[15]
+	mi := &file_api_v1_reminder_service_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1371,7 +1821,7 @@ func (x *ClearCompletedRemindersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClearCompletedRemindersRequest.ProtoReflect.Descriptor instead.
 func (*ClearCompletedRemindersRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_reminder_service_proto_rawDescGZIP(), []int{15}
+	return file_api_v1_reminder_service_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *ClearCompletedRemindersRequest) GetParent() string {
@@ -1391,7 +1841,7 @@ type ClearCompletedRemindersResponse struct {
 
 func (x *ClearCompletedRemindersResponse) Reset() {
 	*x = ClearCompletedRemindersResponse{}
-	mi := &file_api_v1_reminder_service_proto_msgTypes[16]
+	mi := &file_api_v1_reminder_service_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1403,7 +1853,7 @@ func (x *ClearCompletedRemindersResponse) String() string {
 func (*ClearCompletedRemindersResponse) ProtoMessage() {}
 
 func (x *ClearCompletedRemindersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_reminder_service_proto_msgTypes[16]
+	mi := &file_api_v1_reminder_service_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1416,7 +1866,7 @@ func (x *ClearCompletedRemindersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClearCompletedRemindersResponse.ProtoReflect.Descriptor instead.
 func (*ClearCompletedRemindersResponse) Descriptor() ([]byte, []int) {
-	return file_api_v1_reminder_service_proto_rawDescGZIP(), []int{16}
+	return file_api_v1_reminder_service_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *ClearCompletedRemindersResponse) GetClearedCount() int32 {
@@ -1539,7 +1989,48 @@ const file_api_v1_reminder_service_proto_rawDesc = "" +
 	"\aFLAGGED\x10\x04\x12\r\n" +
 	"\tCOMPLETED\x10\x05\"M\n" +
 	"\x15ListRemindersResponse\x124\n" +
-	"\treminders\x18\x01 \x03(\v2\x16.memos.api.v1.ReminderR\treminders\"\x93\x01\n" +
+	"\treminders\x18\x01 \x03(\v2\x16.memos.api.v1.ReminderR\treminders\"\x9c\x05\n" +
+	"\x12ReminderOccurrence\x12\x17\n" +
+	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12\x1f\n" +
+	"\breminder\x18\x02 \x01(\tB\x03\xe0A\x03R\breminder\x12(\n" +
+	"\rreminder_list\x18\x03 \x01(\tB\x03\xe0A\x03R\freminderList\x12@\n" +
+	"\x1areminder_list_display_name\x18\x04 \x01(\tB\x03\xe0A\x03R\x17reminderListDisplayName\x12\x19\n" +
+	"\x05title\x18\x05 \x01(\tB\x03\xe0A\x03R\x05title\x12\x17\n" +
+	"\x04memo\x18\x06 \x01(\tB\x03\xe0A\x03R\x04memo\x12*\n" +
+	"\x0escheduled_date\x18\a \x01(\tB\x03\xe0A\x03R\rscheduledDate\x12F\n" +
+	"\x0escheduled_time\x18\b \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\rscheduledTime\x12,\n" +
+	"\x0fcompletion_date\x18\t \x01(\tB\x03\xe0A\x03R\x0ecompletionDate\x12H\n" +
+	"\x0fcompletion_time\x18\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\x0ecompletionTime\x12D\n" +
+	"\x06status\x18\v \x01(\x0e2'.memos.api.v1.ReminderOccurrence.StatusB\x03\xe0A\x03R\x06status\x12 \n" +
+	"\tlate_days\x18\f \x01(\x05B\x03\xe0A\x03R\blateDays\"X\n" +
+	"\x06Status\x12\x16\n" +
+	"\x12STATUS_UNSPECIFIED\x10\x00\x12\x15\n" +
+	"\x11COMPLETED_ON_TIME\x10\x01\x12\x12\n" +
+	"\x0eCOMPLETED_LATE\x10\x02\x12\v\n" +
+	"\aSKIPPED\x10\x03\"\x81\x01\n" +
+	"\x1eListReminderOccurrencesRequest\x12\x1b\n" +
+	"\x06parent\x18\x01 \x01(\tB\x03\xe0A\x02R\x06parent\x12\"\n" +
+	"\n" +
+	"start_date\x18\x02 \x01(\tB\x03\xe0A\x01R\tstartDate\x12\x1e\n" +
+	"\bend_date\x18\x03 \x01(\tB\x03\xe0A\x01R\aendDate\"v\n" +
+	"\x1fListReminderOccurrencesResponse\x12S\n" +
+	"\x14reminder_occurrences\x18\x01 \x03(\v2 .memos.api.v1.ReminderOccurrenceR\x13reminderOccurrences\"z\n" +
+	"\x17GetReminderStatsRequest\x12\x1b\n" +
+	"\x06parent\x18\x01 \x01(\tB\x03\xe0A\x02R\x06parent\x12\"\n" +
+	"\n" +
+	"start_date\x18\x02 \x01(\tB\x03\xe0A\x01R\tstartDate\x12\x1e\n" +
+	"\bend_date\x18\x03 \x01(\tB\x03\xe0A\x01R\aendDate\"\xb7\x02\n" +
+	"\rReminderStats\x12\x1f\n" +
+	"\vtotal_count\x18\x01 \x01(\x05R\n" +
+	"totalCount\x125\n" +
+	"\x17completed_on_time_count\x18\x02 \x01(\x05R\x14completedOnTimeCount\x120\n" +
+	"\x14completed_late_count\x18\x03 \x01(\x05R\x12completedLateCount\x12#\n" +
+	"\rskipped_count\x18\x04 \x01(\x05R\fskippedCount\x12 \n" +
+	"\fon_time_rate\x18\x05 \x01(\x01R\n" +
+	"onTimeRate\x122\n" +
+	"\x15final_completion_rate\x18\x06 \x01(\x01R\x13finalCompletionRate\x12!\n" +
+	"\fskipped_rate\x18\a \x01(\x01R\vskippedRate\"\x93\x01\n" +
 	"\x15CreateReminderRequest\x12\x1b\n" +
 	"\x06parent\x18\x01 \x01(\tB\x03\xe0A\x02R\x06parent\x127\n" +
 	"\breminder\x18\x02 \x01(\v2\x16.memos.api.v1.ReminderB\x03\xe0A\x02R\breminder\x12$\n" +
@@ -1550,19 +2041,22 @@ const file_api_v1_reminder_service_proto_rawDesc = "" +
 	"\vupdate_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskB\x03\xe0A\x02R\n" +
 	"updateMask\"0\n" +
 	"\x15DeleteReminderRequest\x12\x17\n" +
-	"\x04name\x18\x01 \x01(\tB\x03\xe0A\x02R\x04name\"2\n" +
+	"\x04name\x18\x01 \x01(\tB\x03\xe0A\x02R\x04name\"`\n" +
 	"\x17CompleteReminderRequest\x12\x17\n" +
-	"\x04name\x18\x01 \x01(\tB\x03\xe0A\x02R\x04name\"=\n" +
+	"\x04name\x18\x01 \x01(\tB\x03\xe0A\x02R\x04name\x12,\n" +
+	"\x0fcompletion_date\x18\x02 \x01(\tB\x03\xe0A\x01R\x0ecompletionDate\"=\n" +
 	"\x1eClearCompletedRemindersRequest\x12\x1b\n" +
 	"\x06parent\x18\x01 \x01(\tB\x03\xe0A\x02R\x06parent\"F\n" +
 	"\x1fClearCompletedRemindersResponse\x12#\n" +
-	"\rcleared_count\x18\x01 \x01(\x05R\fclearedCount2\xd0\v\n" +
+	"\rcleared_count\x18\x01 \x01(\x05R\fclearedCount2\x8a\x0e\n" +
 	"\x0fReminderService\x12\x95\x01\n" +
 	"\x11ListReminderLists\x12&.memos.api.v1.ListReminderListsRequest\x1a'.memos.api.v1.ListReminderListsResponse\"/\x82\xd3\xe4\x93\x02)\x12'/api/v1/{parent=users/*}/reminder-lists\x12\x99\x01\n" +
 	"\x12CreateReminderList\x12'.memos.api.v1.CreateReminderListRequest\x1a\x1a.memos.api.v1.ReminderList\">\x82\xd3\xe4\x93\x028:\rreminder_list\"'/api/v1/{parent=users/*}/reminder-lists\x12\xa6\x01\n" +
 	"\x12UpdateReminderList\x12'.memos.api.v1.UpdateReminderListRequest\x1a\x1a.memos.api.v1.ReminderList\"K\x82\xd3\xe4\x93\x02E:\rreminder_list24/api/v1/{reminder_list.name=users/*/reminderLists/*}\x12\x85\x01\n" +
 	"\x12DeleteReminderList\x12'.memos.api.v1.DeleteReminderListRequest\x1a\x16.google.protobuf.Empty\".\x82\xd3\xe4\x93\x02(*&/api/v1/{name=users/*/reminderLists/*}\x12\x84\x01\n" +
-	"\rListReminders\x12\".memos.api.v1.ListRemindersRequest\x1a#.memos.api.v1.ListRemindersResponse\"*\x82\xd3\xe4\x93\x02$\x12\"/api/v1/{parent=users/*}/reminders\x12\x83\x01\n" +
+	"\rListReminders\x12\".memos.api.v1.ListRemindersRequest\x1a#.memos.api.v1.ListRemindersResponse\"*\x82\xd3\xe4\x93\x02$\x12\"/api/v1/{parent=users/*}/reminders\x12\xad\x01\n" +
+	"\x17ListReminderOccurrences\x12,.memos.api.v1.ListReminderOccurrencesRequest\x1a-.memos.api.v1.ListReminderOccurrencesResponse\"5\x82\xd3\xe4\x93\x02/\x12-/api/v1/{parent=users/*}/reminder-occurrences\x12\x87\x01\n" +
+	"\x10GetReminderStats\x12%.memos.api.v1.GetReminderStatsRequest\x1a\x1b.memos.api.v1.ReminderStats\"/\x82\xd3\xe4\x93\x02)\x12'/api/v1/{parent=users/*}/reminder-stats\x12\x83\x01\n" +
 	"\x0eCreateReminder\x12#.memos.api.v1.CreateReminderRequest\x1a\x16.memos.api.v1.Reminder\"4\x82\xd3\xe4\x93\x02.:\breminder\"\"/api/v1/{parent=users/*}/reminders\x12\x8c\x01\n" +
 	"\x0eUpdateReminder\x12#.memos.api.v1.UpdateReminderRequest\x1a\x16.memos.api.v1.Reminder\"=\x82\xd3\xe4\x93\x027:\breminder2+/api/v1/{reminder.name=users/*/reminders/*}\x12y\n" +
 	"\x0eDeleteReminder\x12#.memos.api.v1.DeleteReminderRequest\x1a\x16.google.protobuf.Empty\"*\x82\xd3\xe4\x93\x02$*\"/api/v1/{name=users/*/reminders/*}\x12\x89\x01\n" +
@@ -1582,87 +2076,101 @@ func file_api_v1_reminder_service_proto_rawDescGZIP() []byte {
 	return file_api_v1_reminder_service_proto_rawDescData
 }
 
-var file_api_v1_reminder_service_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
-var file_api_v1_reminder_service_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_api_v1_reminder_service_proto_enumTypes = make([]protoimpl.EnumInfo, 6)
+var file_api_v1_reminder_service_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_api_v1_reminder_service_proto_goTypes = []any{
 	(ReminderRecurrence_Frequency)(0),       // 0: memos.api.v1.ReminderRecurrence.Frequency
 	(ReminderLocation_Trigger)(0),           // 1: memos.api.v1.ReminderLocation.Trigger
 	(Reminder_Priority)(0),                  // 2: memos.api.v1.Reminder.Priority
 	(Reminder_Status)(0),                    // 3: memos.api.v1.Reminder.Status
 	(ListRemindersRequest_View)(0),          // 4: memos.api.v1.ListRemindersRequest.View
-	(*ReminderList)(nil),                    // 5: memos.api.v1.ReminderList
-	(*ReminderRecurrence)(nil),              // 6: memos.api.v1.ReminderRecurrence
-	(*ReminderLocation)(nil),                // 7: memos.api.v1.ReminderLocation
-	(*Reminder)(nil),                        // 8: memos.api.v1.Reminder
-	(*ListReminderListsRequest)(nil),        // 9: memos.api.v1.ListReminderListsRequest
-	(*ListReminderListsResponse)(nil),       // 10: memos.api.v1.ListReminderListsResponse
-	(*CreateReminderListRequest)(nil),       // 11: memos.api.v1.CreateReminderListRequest
-	(*UpdateReminderListRequest)(nil),       // 12: memos.api.v1.UpdateReminderListRequest
-	(*DeleteReminderListRequest)(nil),       // 13: memos.api.v1.DeleteReminderListRequest
-	(*ListRemindersRequest)(nil),            // 14: memos.api.v1.ListRemindersRequest
-	(*ListRemindersResponse)(nil),           // 15: memos.api.v1.ListRemindersResponse
-	(*CreateReminderRequest)(nil),           // 16: memos.api.v1.CreateReminderRequest
-	(*UpdateReminderRequest)(nil),           // 17: memos.api.v1.UpdateReminderRequest
-	(*DeleteReminderRequest)(nil),           // 18: memos.api.v1.DeleteReminderRequest
-	(*CompleteReminderRequest)(nil),         // 19: memos.api.v1.CompleteReminderRequest
-	(*ClearCompletedRemindersRequest)(nil),  // 20: memos.api.v1.ClearCompletedRemindersRequest
-	(*ClearCompletedRemindersResponse)(nil), // 21: memos.api.v1.ClearCompletedRemindersResponse
-	(State)(0),                              // 22: memos.api.v1.State
-	(*timestamppb.Timestamp)(nil),           // 23: google.protobuf.Timestamp
-	(*fieldmaskpb.FieldMask)(nil),           // 24: google.protobuf.FieldMask
-	(*emptypb.Empty)(nil),                   // 25: google.protobuf.Empty
+	(ReminderOccurrence_Status)(0),          // 5: memos.api.v1.ReminderOccurrence.Status
+	(*ReminderList)(nil),                    // 6: memos.api.v1.ReminderList
+	(*ReminderRecurrence)(nil),              // 7: memos.api.v1.ReminderRecurrence
+	(*ReminderLocation)(nil),                // 8: memos.api.v1.ReminderLocation
+	(*Reminder)(nil),                        // 9: memos.api.v1.Reminder
+	(*ListReminderListsRequest)(nil),        // 10: memos.api.v1.ListReminderListsRequest
+	(*ListReminderListsResponse)(nil),       // 11: memos.api.v1.ListReminderListsResponse
+	(*CreateReminderListRequest)(nil),       // 12: memos.api.v1.CreateReminderListRequest
+	(*UpdateReminderListRequest)(nil),       // 13: memos.api.v1.UpdateReminderListRequest
+	(*DeleteReminderListRequest)(nil),       // 14: memos.api.v1.DeleteReminderListRequest
+	(*ListRemindersRequest)(nil),            // 15: memos.api.v1.ListRemindersRequest
+	(*ListRemindersResponse)(nil),           // 16: memos.api.v1.ListRemindersResponse
+	(*ReminderOccurrence)(nil),              // 17: memos.api.v1.ReminderOccurrence
+	(*ListReminderOccurrencesRequest)(nil),  // 18: memos.api.v1.ListReminderOccurrencesRequest
+	(*ListReminderOccurrencesResponse)(nil), // 19: memos.api.v1.ListReminderOccurrencesResponse
+	(*GetReminderStatsRequest)(nil),         // 20: memos.api.v1.GetReminderStatsRequest
+	(*ReminderStats)(nil),                   // 21: memos.api.v1.ReminderStats
+	(*CreateReminderRequest)(nil),           // 22: memos.api.v1.CreateReminderRequest
+	(*UpdateReminderRequest)(nil),           // 23: memos.api.v1.UpdateReminderRequest
+	(*DeleteReminderRequest)(nil),           // 24: memos.api.v1.DeleteReminderRequest
+	(*CompleteReminderRequest)(nil),         // 25: memos.api.v1.CompleteReminderRequest
+	(*ClearCompletedRemindersRequest)(nil),  // 26: memos.api.v1.ClearCompletedRemindersRequest
+	(*ClearCompletedRemindersResponse)(nil), // 27: memos.api.v1.ClearCompletedRemindersResponse
+	(State)(0),                              // 28: memos.api.v1.State
+	(*timestamppb.Timestamp)(nil),           // 29: google.protobuf.Timestamp
+	(*fieldmaskpb.FieldMask)(nil),           // 30: google.protobuf.FieldMask
+	(*emptypb.Empty)(nil),                   // 31: google.protobuf.Empty
 }
 var file_api_v1_reminder_service_proto_depIdxs = []int32{
-	22, // 0: memos.api.v1.ReminderList.state:type_name -> memos.api.v1.State
-	23, // 1: memos.api.v1.ReminderList.create_time:type_name -> google.protobuf.Timestamp
-	23, // 2: memos.api.v1.ReminderList.update_time:type_name -> google.protobuf.Timestamp
+	28, // 0: memos.api.v1.ReminderList.state:type_name -> memos.api.v1.State
+	29, // 1: memos.api.v1.ReminderList.create_time:type_name -> google.protobuf.Timestamp
+	29, // 2: memos.api.v1.ReminderList.update_time:type_name -> google.protobuf.Timestamp
 	0,  // 3: memos.api.v1.ReminderRecurrence.frequency:type_name -> memos.api.v1.ReminderRecurrence.Frequency
 	1,  // 4: memos.api.v1.ReminderLocation.trigger:type_name -> memos.api.v1.ReminderLocation.Trigger
-	23, // 5: memos.api.v1.Reminder.remind_time:type_name -> google.protobuf.Timestamp
-	6,  // 6: memos.api.v1.Reminder.recurrence:type_name -> memos.api.v1.ReminderRecurrence
+	29, // 5: memos.api.v1.Reminder.remind_time:type_name -> google.protobuf.Timestamp
+	7,  // 6: memos.api.v1.Reminder.recurrence:type_name -> memos.api.v1.ReminderRecurrence
 	2,  // 7: memos.api.v1.Reminder.priority:type_name -> memos.api.v1.Reminder.Priority
-	7,  // 8: memos.api.v1.Reminder.location:type_name -> memos.api.v1.ReminderLocation
+	8,  // 8: memos.api.v1.Reminder.location:type_name -> memos.api.v1.ReminderLocation
 	3,  // 9: memos.api.v1.Reminder.status:type_name -> memos.api.v1.Reminder.Status
-	23, // 10: memos.api.v1.Reminder.completion_time:type_name -> google.protobuf.Timestamp
-	22, // 11: memos.api.v1.Reminder.state:type_name -> memos.api.v1.State
-	23, // 12: memos.api.v1.Reminder.create_time:type_name -> google.protobuf.Timestamp
-	23, // 13: memos.api.v1.Reminder.update_time:type_name -> google.protobuf.Timestamp
-	22, // 14: memos.api.v1.ListReminderListsRequest.state:type_name -> memos.api.v1.State
-	5,  // 15: memos.api.v1.ListReminderListsResponse.reminder_lists:type_name -> memos.api.v1.ReminderList
-	5,  // 16: memos.api.v1.CreateReminderListRequest.reminder_list:type_name -> memos.api.v1.ReminderList
-	5,  // 17: memos.api.v1.UpdateReminderListRequest.reminder_list:type_name -> memos.api.v1.ReminderList
-	24, // 18: memos.api.v1.UpdateReminderListRequest.update_mask:type_name -> google.protobuf.FieldMask
+	29, // 10: memos.api.v1.Reminder.completion_time:type_name -> google.protobuf.Timestamp
+	28, // 11: memos.api.v1.Reminder.state:type_name -> memos.api.v1.State
+	29, // 12: memos.api.v1.Reminder.create_time:type_name -> google.protobuf.Timestamp
+	29, // 13: memos.api.v1.Reminder.update_time:type_name -> google.protobuf.Timestamp
+	28, // 14: memos.api.v1.ListReminderListsRequest.state:type_name -> memos.api.v1.State
+	6,  // 15: memos.api.v1.ListReminderListsResponse.reminder_lists:type_name -> memos.api.v1.ReminderList
+	6,  // 16: memos.api.v1.CreateReminderListRequest.reminder_list:type_name -> memos.api.v1.ReminderList
+	6,  // 17: memos.api.v1.UpdateReminderListRequest.reminder_list:type_name -> memos.api.v1.ReminderList
+	30, // 18: memos.api.v1.UpdateReminderListRequest.update_mask:type_name -> google.protobuf.FieldMask
 	4,  // 19: memos.api.v1.ListRemindersRequest.view:type_name -> memos.api.v1.ListRemindersRequest.View
-	22, // 20: memos.api.v1.ListRemindersRequest.state:type_name -> memos.api.v1.State
-	8,  // 21: memos.api.v1.ListRemindersResponse.reminders:type_name -> memos.api.v1.Reminder
-	8,  // 22: memos.api.v1.CreateReminderRequest.reminder:type_name -> memos.api.v1.Reminder
-	8,  // 23: memos.api.v1.UpdateReminderRequest.reminder:type_name -> memos.api.v1.Reminder
-	24, // 24: memos.api.v1.UpdateReminderRequest.update_mask:type_name -> google.protobuf.FieldMask
-	9,  // 25: memos.api.v1.ReminderService.ListReminderLists:input_type -> memos.api.v1.ListReminderListsRequest
-	11, // 26: memos.api.v1.ReminderService.CreateReminderList:input_type -> memos.api.v1.CreateReminderListRequest
-	12, // 27: memos.api.v1.ReminderService.UpdateReminderList:input_type -> memos.api.v1.UpdateReminderListRequest
-	13, // 28: memos.api.v1.ReminderService.DeleteReminderList:input_type -> memos.api.v1.DeleteReminderListRequest
-	14, // 29: memos.api.v1.ReminderService.ListReminders:input_type -> memos.api.v1.ListRemindersRequest
-	16, // 30: memos.api.v1.ReminderService.CreateReminder:input_type -> memos.api.v1.CreateReminderRequest
-	17, // 31: memos.api.v1.ReminderService.UpdateReminder:input_type -> memos.api.v1.UpdateReminderRequest
-	18, // 32: memos.api.v1.ReminderService.DeleteReminder:input_type -> memos.api.v1.DeleteReminderRequest
-	19, // 33: memos.api.v1.ReminderService.CompleteReminder:input_type -> memos.api.v1.CompleteReminderRequest
-	20, // 34: memos.api.v1.ReminderService.ClearCompletedReminders:input_type -> memos.api.v1.ClearCompletedRemindersRequest
-	10, // 35: memos.api.v1.ReminderService.ListReminderLists:output_type -> memos.api.v1.ListReminderListsResponse
-	5,  // 36: memos.api.v1.ReminderService.CreateReminderList:output_type -> memos.api.v1.ReminderList
-	5,  // 37: memos.api.v1.ReminderService.UpdateReminderList:output_type -> memos.api.v1.ReminderList
-	25, // 38: memos.api.v1.ReminderService.DeleteReminderList:output_type -> google.protobuf.Empty
-	15, // 39: memos.api.v1.ReminderService.ListReminders:output_type -> memos.api.v1.ListRemindersResponse
-	8,  // 40: memos.api.v1.ReminderService.CreateReminder:output_type -> memos.api.v1.Reminder
-	8,  // 41: memos.api.v1.ReminderService.UpdateReminder:output_type -> memos.api.v1.Reminder
-	25, // 42: memos.api.v1.ReminderService.DeleteReminder:output_type -> google.protobuf.Empty
-	8,  // 43: memos.api.v1.ReminderService.CompleteReminder:output_type -> memos.api.v1.Reminder
-	21, // 44: memos.api.v1.ReminderService.ClearCompletedReminders:output_type -> memos.api.v1.ClearCompletedRemindersResponse
-	35, // [35:45] is the sub-list for method output_type
-	25, // [25:35] is the sub-list for method input_type
-	25, // [25:25] is the sub-list for extension type_name
-	25, // [25:25] is the sub-list for extension extendee
-	0,  // [0:25] is the sub-list for field type_name
+	28, // 20: memos.api.v1.ListRemindersRequest.state:type_name -> memos.api.v1.State
+	9,  // 21: memos.api.v1.ListRemindersResponse.reminders:type_name -> memos.api.v1.Reminder
+	29, // 22: memos.api.v1.ReminderOccurrence.scheduled_time:type_name -> google.protobuf.Timestamp
+	29, // 23: memos.api.v1.ReminderOccurrence.completion_time:type_name -> google.protobuf.Timestamp
+	5,  // 24: memos.api.v1.ReminderOccurrence.status:type_name -> memos.api.v1.ReminderOccurrence.Status
+	17, // 25: memos.api.v1.ListReminderOccurrencesResponse.reminder_occurrences:type_name -> memos.api.v1.ReminderOccurrence
+	9,  // 26: memos.api.v1.CreateReminderRequest.reminder:type_name -> memos.api.v1.Reminder
+	9,  // 27: memos.api.v1.UpdateReminderRequest.reminder:type_name -> memos.api.v1.Reminder
+	30, // 28: memos.api.v1.UpdateReminderRequest.update_mask:type_name -> google.protobuf.FieldMask
+	10, // 29: memos.api.v1.ReminderService.ListReminderLists:input_type -> memos.api.v1.ListReminderListsRequest
+	12, // 30: memos.api.v1.ReminderService.CreateReminderList:input_type -> memos.api.v1.CreateReminderListRequest
+	13, // 31: memos.api.v1.ReminderService.UpdateReminderList:input_type -> memos.api.v1.UpdateReminderListRequest
+	14, // 32: memos.api.v1.ReminderService.DeleteReminderList:input_type -> memos.api.v1.DeleteReminderListRequest
+	15, // 33: memos.api.v1.ReminderService.ListReminders:input_type -> memos.api.v1.ListRemindersRequest
+	18, // 34: memos.api.v1.ReminderService.ListReminderOccurrences:input_type -> memos.api.v1.ListReminderOccurrencesRequest
+	20, // 35: memos.api.v1.ReminderService.GetReminderStats:input_type -> memos.api.v1.GetReminderStatsRequest
+	22, // 36: memos.api.v1.ReminderService.CreateReminder:input_type -> memos.api.v1.CreateReminderRequest
+	23, // 37: memos.api.v1.ReminderService.UpdateReminder:input_type -> memos.api.v1.UpdateReminderRequest
+	24, // 38: memos.api.v1.ReminderService.DeleteReminder:input_type -> memos.api.v1.DeleteReminderRequest
+	25, // 39: memos.api.v1.ReminderService.CompleteReminder:input_type -> memos.api.v1.CompleteReminderRequest
+	26, // 40: memos.api.v1.ReminderService.ClearCompletedReminders:input_type -> memos.api.v1.ClearCompletedRemindersRequest
+	11, // 41: memos.api.v1.ReminderService.ListReminderLists:output_type -> memos.api.v1.ListReminderListsResponse
+	6,  // 42: memos.api.v1.ReminderService.CreateReminderList:output_type -> memos.api.v1.ReminderList
+	6,  // 43: memos.api.v1.ReminderService.UpdateReminderList:output_type -> memos.api.v1.ReminderList
+	31, // 44: memos.api.v1.ReminderService.DeleteReminderList:output_type -> google.protobuf.Empty
+	16, // 45: memos.api.v1.ReminderService.ListReminders:output_type -> memos.api.v1.ListRemindersResponse
+	19, // 46: memos.api.v1.ReminderService.ListReminderOccurrences:output_type -> memos.api.v1.ListReminderOccurrencesResponse
+	21, // 47: memos.api.v1.ReminderService.GetReminderStats:output_type -> memos.api.v1.ReminderStats
+	9,  // 48: memos.api.v1.ReminderService.CreateReminder:output_type -> memos.api.v1.Reminder
+	9,  // 49: memos.api.v1.ReminderService.UpdateReminder:output_type -> memos.api.v1.Reminder
+	31, // 50: memos.api.v1.ReminderService.DeleteReminder:output_type -> google.protobuf.Empty
+	9,  // 51: memos.api.v1.ReminderService.CompleteReminder:output_type -> memos.api.v1.Reminder
+	27, // 52: memos.api.v1.ReminderService.ClearCompletedReminders:output_type -> memos.api.v1.ClearCompletedRemindersResponse
+	41, // [41:53] is the sub-list for method output_type
+	29, // [29:41] is the sub-list for method input_type
+	29, // [29:29] is the sub-list for extension type_name
+	29, // [29:29] is the sub-list for extension extendee
+	0,  // [0:29] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_reminder_service_proto_init() }
@@ -1676,8 +2184,8 @@ func file_api_v1_reminder_service_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_reminder_service_proto_rawDesc), len(file_api_v1_reminder_service_proto_rawDesc)),
-			NumEnums:      5,
-			NumMessages:   17,
+			NumEnums:      6,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

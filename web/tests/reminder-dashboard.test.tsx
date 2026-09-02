@@ -38,7 +38,7 @@ describe("<ReminderDashboard>", () => {
     render(<ReminderDashboard parent="users/demo" onOpenCenter={vi.fn()} onOpenReminder={vi.fn()} />);
 
     fireEvent.click(screen.getByRole("button", { name: "reminder.complete" }));
-    expect(reminderState.complete).toHaveBeenCalledWith("users/demo/reminders/one");
+    expect(reminderState.complete).toHaveBeenCalledWith({ name: "users/demo/reminders/one" });
     expect(screen.queryByRole("button", { name: "reminder.click-empty-to-create" })).not.toBeInTheDocument();
   });
 });

@@ -15,6 +15,9 @@ export const reminderKeys = {
   lists: (parent: string) => [...reminderKeys.all, "lists", parent] as const,
   items: (parent: string, view: ListRemindersRequest_View, state: State, reminderList: string, query: string, timeZone: string) =>
     [...reminderKeys.all, "items", parent, view, state, reminderList, query, timeZone] as const,
+  occurrences: (parent: string, startDate: string, endDate: string) =>
+    [...reminderKeys.all, "occurrences", parent, startDate, endDate] as const,
+  stats: (parent: string, startDate: string, endDate: string) => [...reminderKeys.all, "stats", parent, startDate, endDate] as const,
 };
 
 export const useReminderLists = (parent?: string) =>
@@ -49,6 +52,21 @@ export const useReminders = (
     refetchInterval: 30_000,
   });
 };
+
+export const useReminderOccurrences = (parent: string | undefined, startDate: string, endDate: string) =>
+  useQuery({
+    queryKey: reminderKeys.occurrences(parent ?? "", startDate, endDate),
+    queryFn: () => reminderServiceClient.listReminderOccurrences({ parent, startDate, endDate }),
+    enabled: !!parent,
+    select: (response) => response.reminderOccurrences,
+  });
+
+export const useReminderStats = (parent: string | undefined, startDate: string, endDate: string) =>
+  useQuery({
+    queryKey: reminderKeys.stats(parent ?? "", startDate, endDate),
+    queryFn: () => reminderServiceClient.getReminderStats({ parent, startDate, endDate }),
+    enabled: !!parent,
+  });
 
 const useInvalidateReminders = () => {
   const queryClient = useQueryClient();
@@ -116,7 +134,8 @@ export const useUpdateReminder = () => {
 export const useCompleteReminder = () => {
   const invalidate = useInvalidateReminders();
   return useMutation({
-    mutationFn: (name: string) => reminderServiceClient.completeReminder({ name }),
+    mutationFn: ({ name, completionDate = "" }: { name: string; completionDate?: string }) =>
+      reminderServiceClient.completeReminder({ name, completionDate }),
     onSuccess: invalidate,
   });
 };

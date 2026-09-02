@@ -252,10 +252,15 @@ CREATE TABLE reminder_occurrence (
   list_uid TEXT NOT NULL,
   list_name TEXT NOT NULL,
   title TEXT NOT NULL,
+  memo_uid TEXT NOT NULL DEFAULT '',
   created_ts BIGINT NOT NULL DEFAULT (strftime('%s', 'now')),
   scheduled_date TEXT NOT NULL DEFAULT '',
   remind_ts BIGINT DEFAULT NULL,
   completed_ts BIGINT NOT NULL,
-  status TEXT NOT NULL DEFAULT 'COMPLETED'
+  completion_date TEXT NOT NULL DEFAULT '',
+  resolved_ts BIGINT NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'COMPLETED_ON_TIME'
 );
 CREATE INDEX idx_reminder_occurrence_creator_completed ON reminder_occurrence(creator_id, completed_ts DESC);
+CREATE UNIQUE INDEX idx_reminder_occurrence_period ON reminder_occurrence(creator_id, reminder_uid, scheduled_date);
+CREATE INDEX idx_reminder_occurrence_creator_schedule ON reminder_occurrence(creator_id, scheduled_date DESC, status);

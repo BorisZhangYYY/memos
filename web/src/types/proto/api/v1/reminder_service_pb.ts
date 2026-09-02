@@ -17,7 +17,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/reminder_service.proto.
  */
 export const file_api_v1_reminder_service: GenFile = /*@__PURE__*/
-  fileDesc("Ch1hcGkvdjEvcmVtaW5kZXJfc2VydmljZS5wcm90bxIMbWVtb3MuYXBpLnYxIpYDCgxSZW1pbmRlckxpc3QSEQoEbmFtZRgBIAEoCUID4EEIEhkKDGRpc3BsYXlfbmFtZRgCIAEoCUID4EECEhIKBWNvbG9yGAMgASgJQgPgQQESEQoEaWNvbhgEIAEoCUID4EEBEhcKCnNvcnRfb3JkZXIYBSABKAVCA+BBARInCgVzdGF0ZRgGIAEoDjITLm1lbW9zLmFwaS52MS5TdGF0ZUID4EEBEjQKC2NyZWF0ZV90aW1lGAcgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEID4EEDEjQKC3VwZGF0ZV90aW1lGAggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEID4EEDEhoKDXBlbmRpbmdfY291bnQYCSABKAVCA+BBAzpn6kFkChltZW1vcy5hcGkudjEvUmVtaW5kZXJMaXN0Eip1c2Vycy97dXNlcn0vcmVtaW5kZXJMaXN0cy97cmVtaW5kZXJfbGlzdH0qDXJlbWluZGVyTGlzdHMyDHJlbWluZGVyTGlzdCKTAgoSUmVtaW5kZXJSZWN1cnJlbmNlEkIKCWZyZXF1ZW5jeRgBIAEoDjIqLm1lbW9zLmFwaS52MS5SZW1pbmRlclJlY3VycmVuY2UuRnJlcXVlbmN5QgPgQQESFQoIaW50ZXJ2YWwYAiABKAVCA+BBARIVCgh3ZWVrZGF5cxgDIAMoBUID4EEBEhUKCGVuZF9kYXRlGAQgASgJQgPgQQESHAoPbWF4X29jY3VycmVuY2VzGAUgASgFQgPgQQEiVgoJRnJlcXVlbmN5EhkKFUZSRVFVRU5DWV9VTlNQRUNJRklFRBAAEgkKBURBSUxZEAESCgoGV0VFS0xZEAISCwoHTU9OVEhMWRADEgoKBllFQVJMWRAEIvQBChBSZW1pbmRlckxvY2F0aW9uEhgKC3BsYWNlaG9sZGVyGAEgASgJQgPgQQESFQoIbGF0aXR1ZGUYAiABKAFCA+BBARIWCglsb25naXR1ZGUYAyABKAFCA+BBARIaCg1yYWRpdXNfbWV0ZXJzGAQgASgBQgPgQQESPAoHdHJpZ2dlchgFIAEoDjImLm1lbW9zLmFwaS52MS5SZW1pbmRlckxvY2F0aW9uLlRyaWdnZXJCA+BBASI9CgdUcmlnZ2VyEhcKE1RSSUdHRVJfVU5TUEVDSUZJRUQQABIMCghBUlJJVklORxABEgsKB0xFQVZJTkcQAiLqBwoIUmVtaW5kZXISEQoEbmFtZRgBIAEoCUID4EEIEhQKB2NyZWF0b3IYAiABKAlCA+BBAxISCgV0aXRsZRgDIAEoCUID4EECEhoKDXJlbWluZGVyX2xpc3QYBCABKAlCA+BBAhIRCgRtZW1vGAUgASgJQgPgQQESFQoIZHVlX2RhdGUYBiABKAlCA+BBARI0CgtyZW1pbmRfdGltZRgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCA+BBARIWCgl0aW1lX3pvbmUYCCABKAlCA+BBARIjChZhZHZhbmNlX25vdGljZV9zZWNvbmRzGAkgASgDQgPgQQESOQoKcmVjdXJyZW5jZRgKIAEoCzIgLm1lbW9zLmFwaS52MS5SZW1pbmRlclJlY3VycmVuY2VCA+BBARIUCgdmbGFnZ2VkGAsgASgIQgPgQQESNgoIcHJpb3JpdHkYDCABKA4yHy5tZW1vcy5hcGkudjEuUmVtaW5kZXIuUHJpb3JpdHlCA+BBARIRCgR0YWdzGA0gAygJQgPgQQESNQoIbG9jYXRpb24YDiABKAsyHi5tZW1vcy5hcGkudjEuUmVtaW5kZXJMb2NhdGlvbkID4EEBEjIKBnN0YXR1cxgPIAEoDjIdLm1lbW9zLmFwaS52MS5SZW1pbmRlci5TdGF0dXNCA+BBAxI4Cg9jb21wbGV0aW9uX3RpbWUYECABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgPgQQMSFwoKc29ydF9vcmRlchgRIAEoBUID4EEBEicKBXN0YXRlGBIgASgOMhMubWVtb3MuYXBpLnYxLlN0YXRlQgPgQQESNAoLY3JlYXRlX3RpbWUYEyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgPgQQMSNAoLdXBkYXRlX3RpbWUYFCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgPgQQMSIgoVY29tcGxldGVkX29jY3VycmVuY2VzGBUgASgFQgPgQQMiQwoIUHJpb3JpdHkSGAoUUFJJT1JJVFlfVU5TUEVDSUZJRUQQABIHCgNMT1cQARIKCgZNRURJVU0QAhIICgRISUdIEAMiPAoGU3RhdHVzEhYKElNUQVRVU19VTlNQRUNJRklFRBAAEgsKB1BFTkRJTkcQARINCglDT01QTEVURUQQAjpS6kFPChVtZW1vcy5hcGkudjEvUmVtaW5kZXISIXVzZXJzL3t1c2VyfS9yZW1pbmRlcnMve3JlbWluZGVyfSoJcmVtaW5kZXJzMghyZW1pbmRlciJYChhMaXN0UmVtaW5kZXJMaXN0c1JlcXVlc3QSEwoGcGFyZW50GAEgASgJQgPgQQISJwoFc3RhdGUYAiABKA4yEy5tZW1vcy5hcGkudjEuU3RhdGVCA+BBASJPChlMaXN0UmVtaW5kZXJMaXN0c1Jlc3BvbnNlEjIKDnJlbWluZGVyX2xpc3RzGAEgAygLMhoubWVtb3MuYXBpLnYxLlJlbWluZGVyTGlzdCKHAQoZQ3JlYXRlUmVtaW5kZXJMaXN0UmVxdWVzdBITCgZwYXJlbnQYASABKAlCA+BBAhI2Cg1yZW1pbmRlcl9saXN0GAIgASgLMhoubWVtb3MuYXBpLnYxLlJlbWluZGVyTGlzdEID4EECEh0KEHJlbWluZGVyX2xpc3RfaWQYAyABKAlCA+BBASKJAQoZVXBkYXRlUmVtaW5kZXJMaXN0UmVxdWVzdBI2Cg1yZW1pbmRlcl9saXN0GAEgASgLMhoubWVtb3MuYXBpLnYxLlJlbWluZGVyTGlzdEID4EECEjQKC3VwZGF0ZV9tYXNrGAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLkZpZWxkTWFza0ID4EECIi4KGURlbGV0ZVJlbWluZGVyTGlzdFJlcXVlc3QSEQoEbmFtZRgBIAEoCUID4EECIrUCChRMaXN0UmVtaW5kZXJzUmVxdWVzdBITCgZwYXJlbnQYASABKAlCA+BBAhI6CgR2aWV3GAIgASgOMicubWVtb3MuYXBpLnYxLkxpc3RSZW1pbmRlcnNSZXF1ZXN0LlZpZXdCA+BBARIaCg1yZW1pbmRlcl9saXN0GAMgASgJQgPgQQESEgoFcXVlcnkYBCABKAlCA+BBARIWCgl0aW1lX3pvbmUYBSABKAlCA+BBARInCgVzdGF0ZRgGIAEoDjITLm1lbW9zLmFwaS52MS5TdGF0ZUID4EEBIlsKBFZpZXcSFAoQVklFV19VTlNQRUNJRklFRBAAEgkKBVRPREFZEAESDQoJU0NIRURVTEVEEAISBwoDQUxMEAMSCwoHRkxBR0dFRBAEEg0KCUNPTVBMRVRFRBAFIkIKFUxpc3RSZW1pbmRlcnNSZXNwb25zZRIpCglyZW1pbmRlcnMYASADKAsyFi5tZW1vcy5hcGkudjEuUmVtaW5kZXIidQoVQ3JlYXRlUmVtaW5kZXJSZXF1ZXN0EhMKBnBhcmVudBgBIAEoCUID4EECEi0KCHJlbWluZGVyGAIgASgLMhYubWVtb3MuYXBpLnYxLlJlbWluZGVyQgPgQQISGAoLcmVtaW5kZXJfaWQYAyABKAlCA+BBASJ8ChVVcGRhdGVSZW1pbmRlclJlcXVlc3QSLQoIcmVtaW5kZXIYASABKAsyFi5tZW1vcy5hcGkudjEuUmVtaW5kZXJCA+BBAhI0Cgt1cGRhdGVfbWFzaxgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5GaWVsZE1hc2tCA+BBAiIqChVEZWxldGVSZW1pbmRlclJlcXVlc3QSEQoEbmFtZRgBIAEoCUID4EECIiwKF0NvbXBsZXRlUmVtaW5kZXJSZXF1ZXN0EhEKBG5hbWUYASABKAlCA+BBAiI1Ch5DbGVhckNvbXBsZXRlZFJlbWluZGVyc1JlcXVlc3QSEwoGcGFyZW50GAEgASgJQgPgQQIiOAofQ2xlYXJDb21wbGV0ZWRSZW1pbmRlcnNSZXNwb25zZRIVCg1jbGVhcmVkX2NvdW50GAEgASgFMtALCg9SZW1pbmRlclNlcnZpY2USlQEKEUxpc3RSZW1pbmRlckxpc3RzEiYubWVtb3MuYXBpLnYxLkxpc3RSZW1pbmRlckxpc3RzUmVxdWVzdBonLm1lbW9zLmFwaS52MS5MaXN0UmVtaW5kZXJMaXN0c1Jlc3BvbnNlIi+C0+STAikSJy9hcGkvdjEve3BhcmVudD11c2Vycy8qfS9yZW1pbmRlci1saXN0cxKZAQoSQ3JlYXRlUmVtaW5kZXJMaXN0EicubWVtb3MuYXBpLnYxLkNyZWF0ZVJlbWluZGVyTGlzdFJlcXVlc3QaGi5tZW1vcy5hcGkudjEuUmVtaW5kZXJMaXN0Ij6C0+STAjg6DXJlbWluZGVyX2xpc3QiJy9hcGkvdjEve3BhcmVudD11c2Vycy8qfS9yZW1pbmRlci1saXN0cxKmAQoSVXBkYXRlUmVtaW5kZXJMaXN0EicubWVtb3MuYXBpLnYxLlVwZGF0ZVJlbWluZGVyTGlzdFJlcXVlc3QaGi5tZW1vcy5hcGkudjEuUmVtaW5kZXJMaXN0IkuC0+STAkU6DXJlbWluZGVyX2xpc3QyNC9hcGkvdjEve3JlbWluZGVyX2xpc3QubmFtZT11c2Vycy8qL3JlbWluZGVyTGlzdHMvKn0ShQEKEkRlbGV0ZVJlbWluZGVyTGlzdBInLm1lbW9zLmFwaS52MS5EZWxldGVSZW1pbmRlckxpc3RSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5Ii6C0+STAigqJi9hcGkvdjEve25hbWU9dXNlcnMvKi9yZW1pbmRlckxpc3RzLyp9EoQBCg1MaXN0UmVtaW5kZXJzEiIubWVtb3MuYXBpLnYxLkxpc3RSZW1pbmRlcnNSZXF1ZXN0GiMubWVtb3MuYXBpLnYxLkxpc3RSZW1pbmRlcnNSZXNwb25zZSIqgtPkkwIkEiIvYXBpL3YxL3twYXJlbnQ9dXNlcnMvKn0vcmVtaW5kZXJzEoMBCg5DcmVhdGVSZW1pbmRlchIjLm1lbW9zLmFwaS52MS5DcmVhdGVSZW1pbmRlclJlcXVlc3QaFi5tZW1vcy5hcGkudjEuUmVtaW5kZXIiNILT5JMCLjoIcmVtaW5kZXIiIi9hcGkvdjEve3BhcmVudD11c2Vycy8qfS9yZW1pbmRlcnMSjAEKDlVwZGF0ZVJlbWluZGVyEiMubWVtb3MuYXBpLnYxLlVwZGF0ZVJlbWluZGVyUmVxdWVzdBoWLm1lbW9zLmFwaS52MS5SZW1pbmRlciI9gtPkkwI3OghyZW1pbmRlcjIrL2FwaS92MS97cmVtaW5kZXIubmFtZT11c2Vycy8qL3JlbWluZGVycy8qfRJ5Cg5EZWxldGVSZW1pbmRlchIjLm1lbW9zLmFwaS52MS5EZWxldGVSZW1pbmRlclJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiKoLT5JMCJCoiL2FwaS92MS97bmFtZT11c2Vycy8qL3JlbWluZGVycy8qfRKJAQoQQ29tcGxldGVSZW1pbmRlchIlLm1lbW9zLmFwaS52MS5Db21wbGV0ZVJlbWluZGVyUmVxdWVzdBoWLm1lbW9zLmFwaS52MS5SZW1pbmRlciI2gtPkkwIwOgEqIisvYXBpL3YxL3tuYW1lPXVzZXJzLyovcmVtaW5kZXJzLyp9OmNvbXBsZXRlErQBChdDbGVhckNvbXBsZXRlZFJlbWluZGVycxIsLm1lbW9zLmFwaS52MS5DbGVhckNvbXBsZXRlZFJlbWluZGVyc1JlcXVlc3QaLS5tZW1vcy5hcGkudjEuQ2xlYXJDb21wbGV0ZWRSZW1pbmRlcnNSZXNwb25zZSI8gtPkkwI2OgEqIjEvYXBpL3YxL3twYXJlbnQ9dXNlcnMvKn0vcmVtaW5kZXJzOmNsZWFyQ29tcGxldGVkQqwBChBjb20ubWVtb3MuYXBpLnYxQhRSZW1pbmRlclNlcnZpY2VQcm90b1ABWjBnaXRodWIuY29tL3VzZW1lbW9zL21lbW9zL3Byb3RvL2dlbi9hcGkvdjE7YXBpdjGiAgNNQViqAgxNZW1vcy5BcGkuVjHKAgxNZW1vc1xBcGlcVjHiAhhNZW1vc1xBcGlcVjFcR1BCTWV0YWRhdGHqAg5NZW1vczo6QXBpOjpWMWIGcHJvdG8z", [file_api_v1_common, file_google_api_annotations, file_google_api_field_behavior, file_google_api_resource, file_google_protobuf_empty, file_google_protobuf_field_mask, file_google_protobuf_timestamp]);
+  fileDesc("Ch1hcGkvdjEvcmVtaW5kZXJfc2VydmljZS5wcm90bxIMbWVtb3MuYXBpLnYxIpYDCgxSZW1pbmRlckxpc3QSEQoEbmFtZRgBIAEoCUID4EEIEhkKDGRpc3BsYXlfbmFtZRgCIAEoCUID4EECEhIKBWNvbG9yGAMgASgJQgPgQQESEQoEaWNvbhgEIAEoCUID4EEBEhcKCnNvcnRfb3JkZXIYBSABKAVCA+BBARInCgVzdGF0ZRgGIAEoDjITLm1lbW9zLmFwaS52MS5TdGF0ZUID4EEBEjQKC2NyZWF0ZV90aW1lGAcgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEID4EEDEjQKC3VwZGF0ZV90aW1lGAggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEID4EEDEhoKDXBlbmRpbmdfY291bnQYCSABKAVCA+BBAzpn6kFkChltZW1vcy5hcGkudjEvUmVtaW5kZXJMaXN0Eip1c2Vycy97dXNlcn0vcmVtaW5kZXJMaXN0cy97cmVtaW5kZXJfbGlzdH0qDXJlbWluZGVyTGlzdHMyDHJlbWluZGVyTGlzdCKTAgoSUmVtaW5kZXJSZWN1cnJlbmNlEkIKCWZyZXF1ZW5jeRgBIAEoDjIqLm1lbW9zLmFwaS52MS5SZW1pbmRlclJlY3VycmVuY2UuRnJlcXVlbmN5QgPgQQESFQoIaW50ZXJ2YWwYAiABKAVCA+BBARIVCgh3ZWVrZGF5cxgDIAMoBUID4EEBEhUKCGVuZF9kYXRlGAQgASgJQgPgQQESHAoPbWF4X29jY3VycmVuY2VzGAUgASgFQgPgQQEiVgoJRnJlcXVlbmN5EhkKFUZSRVFVRU5DWV9VTlNQRUNJRklFRBAAEgkKBURBSUxZEAESCgoGV0VFS0xZEAISCwoHTU9OVEhMWRADEgoKBllFQVJMWRAEIvQBChBSZW1pbmRlckxvY2F0aW9uEhgKC3BsYWNlaG9sZGVyGAEgASgJQgPgQQESFQoIbGF0aXR1ZGUYAiABKAFCA+BBARIWCglsb25naXR1ZGUYAyABKAFCA+BBARIaCg1yYWRpdXNfbWV0ZXJzGAQgASgBQgPgQQESPAoHdHJpZ2dlchgFIAEoDjImLm1lbW9zLmFwaS52MS5SZW1pbmRlckxvY2F0aW9uLlRyaWdnZXJCA+BBASI9CgdUcmlnZ2VyEhcKE1RSSUdHRVJfVU5TUEVDSUZJRUQQABIMCghBUlJJVklORxABEgsKB0xFQVZJTkcQAiLqBwoIUmVtaW5kZXISEQoEbmFtZRgBIAEoCUID4EEIEhQKB2NyZWF0b3IYAiABKAlCA+BBAxISCgV0aXRsZRgDIAEoCUID4EECEhoKDXJlbWluZGVyX2xpc3QYBCABKAlCA+BBAhIRCgRtZW1vGAUgASgJQgPgQQESFQoIZHVlX2RhdGUYBiABKAlCA+BBARI0CgtyZW1pbmRfdGltZRgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCA+BBARIWCgl0aW1lX3pvbmUYCCABKAlCA+BBARIjChZhZHZhbmNlX25vdGljZV9zZWNvbmRzGAkgASgDQgPgQQESOQoKcmVjdXJyZW5jZRgKIAEoCzIgLm1lbW9zLmFwaS52MS5SZW1pbmRlclJlY3VycmVuY2VCA+BBARIUCgdmbGFnZ2VkGAsgASgIQgPgQQESNgoIcHJpb3JpdHkYDCABKA4yHy5tZW1vcy5hcGkudjEuUmVtaW5kZXIuUHJpb3JpdHlCA+BBARIRCgR0YWdzGA0gAygJQgPgQQESNQoIbG9jYXRpb24YDiABKAsyHi5tZW1vcy5hcGkudjEuUmVtaW5kZXJMb2NhdGlvbkID4EEBEjIKBnN0YXR1cxgPIAEoDjIdLm1lbW9zLmFwaS52MS5SZW1pbmRlci5TdGF0dXNCA+BBAxI4Cg9jb21wbGV0aW9uX3RpbWUYECABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgPgQQMSFwoKc29ydF9vcmRlchgRIAEoBUID4EEBEicKBXN0YXRlGBIgASgOMhMubWVtb3MuYXBpLnYxLlN0YXRlQgPgQQESNAoLY3JlYXRlX3RpbWUYEyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgPgQQMSNAoLdXBkYXRlX3RpbWUYFCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgPgQQMSIgoVY29tcGxldGVkX29jY3VycmVuY2VzGBUgASgFQgPgQQMiQwoIUHJpb3JpdHkSGAoUUFJJT1JJVFlfVU5TUEVDSUZJRUQQABIHCgNMT1cQARIKCgZNRURJVU0QAhIICgRISUdIEAMiPAoGU3RhdHVzEhYKElNUQVRVU19VTlNQRUNJRklFRBAAEgsKB1BFTkRJTkcQARINCglDT01QTEVURUQQAjpS6kFPChVtZW1vcy5hcGkudjEvUmVtaW5kZXISIXVzZXJzL3t1c2VyfS9yZW1pbmRlcnMve3JlbWluZGVyfSoJcmVtaW5kZXJzMghyZW1pbmRlciJYChhMaXN0UmVtaW5kZXJMaXN0c1JlcXVlc3QSEwoGcGFyZW50GAEgASgJQgPgQQISJwoFc3RhdGUYAiABKA4yEy5tZW1vcy5hcGkudjEuU3RhdGVCA+BBASJPChlMaXN0UmVtaW5kZXJMaXN0c1Jlc3BvbnNlEjIKDnJlbWluZGVyX2xpc3RzGAEgAygLMhoubWVtb3MuYXBpLnYxLlJlbWluZGVyTGlzdCKHAQoZQ3JlYXRlUmVtaW5kZXJMaXN0UmVxdWVzdBITCgZwYXJlbnQYASABKAlCA+BBAhI2Cg1yZW1pbmRlcl9saXN0GAIgASgLMhoubWVtb3MuYXBpLnYxLlJlbWluZGVyTGlzdEID4EECEh0KEHJlbWluZGVyX2xpc3RfaWQYAyABKAlCA+BBASKJAQoZVXBkYXRlUmVtaW5kZXJMaXN0UmVxdWVzdBI2Cg1yZW1pbmRlcl9saXN0GAEgASgLMhoubWVtb3MuYXBpLnYxLlJlbWluZGVyTGlzdEID4EECEjQKC3VwZGF0ZV9tYXNrGAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLkZpZWxkTWFza0ID4EECIi4KGURlbGV0ZVJlbWluZGVyTGlzdFJlcXVlc3QSEQoEbmFtZRgBIAEoCUID4EECIrUCChRMaXN0UmVtaW5kZXJzUmVxdWVzdBITCgZwYXJlbnQYASABKAlCA+BBAhI6CgR2aWV3GAIgASgOMicubWVtb3MuYXBpLnYxLkxpc3RSZW1pbmRlcnNSZXF1ZXN0LlZpZXdCA+BBARIaCg1yZW1pbmRlcl9saXN0GAMgASgJQgPgQQESEgoFcXVlcnkYBCABKAlCA+BBARIWCgl0aW1lX3pvbmUYBSABKAlCA+BBARInCgVzdGF0ZRgGIAEoDjITLm1lbW9zLmFwaS52MS5TdGF0ZUID4EEBIlsKBFZpZXcSFAoQVklFV19VTlNQRUNJRklFRBAAEgkKBVRPREFZEAESDQoJU0NIRURVTEVEEAISBwoDQUxMEAMSCwoHRkxBR0dFRBAEEg0KCUNPTVBMRVRFRBAFIkIKFUxpc3RSZW1pbmRlcnNSZXNwb25zZRIpCglyZW1pbmRlcnMYASADKAsyFi5tZW1vcy5hcGkudjEuUmVtaW5kZXIiiAQKElJlbWluZGVyT2NjdXJyZW5jZRIRCgRuYW1lGAEgASgJQgPgQQgSFQoIcmVtaW5kZXIYAiABKAlCA+BBAxIaCg1yZW1pbmRlcl9saXN0GAMgASgJQgPgQQMSJwoacmVtaW5kZXJfbGlzdF9kaXNwbGF5X25hbWUYBCABKAlCA+BBAxISCgV0aXRsZRgFIAEoCUID4EEDEhEKBG1lbW8YBiABKAlCA+BBAxIbCg5zY2hlZHVsZWRfZGF0ZRgHIAEoCUID4EEDEjcKDnNjaGVkdWxlZF90aW1lGAggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEID4EEDEhwKD2NvbXBsZXRpb25fZGF0ZRgJIAEoCUID4EEDEjgKD2NvbXBsZXRpb25fdGltZRgKIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCA+BBAxI8CgZzdGF0dXMYCyABKA4yJy5tZW1vcy5hcGkudjEuUmVtaW5kZXJPY2N1cnJlbmNlLlN0YXR1c0ID4EEDEhYKCWxhdGVfZGF5cxgMIAEoBUID4EEDIlgKBlN0YXR1cxIWChJTVEFUVVNfVU5TUEVDSUZJRUQQABIVChFDT01QTEVURURfT05fVElNRRABEhIKDkNPTVBMRVRFRF9MQVRFEAISCwoHU0tJUFBFRBADImUKHkxpc3RSZW1pbmRlck9jY3VycmVuY2VzUmVxdWVzdBITCgZwYXJlbnQYASABKAlCA+BBAhIXCgpzdGFydF9kYXRlGAIgASgJQgPgQQESFQoIZW5kX2RhdGUYAyABKAlCA+BBASJhCh9MaXN0UmVtaW5kZXJPY2N1cnJlbmNlc1Jlc3BvbnNlEj4KFHJlbWluZGVyX29jY3VycmVuY2VzGAEgAygLMiAubWVtb3MuYXBpLnYxLlJlbWluZGVyT2NjdXJyZW5jZSJeChdHZXRSZW1pbmRlclN0YXRzUmVxdWVzdBITCgZwYXJlbnQYASABKAlCA+BBAhIXCgpzdGFydF9kYXRlGAIgASgJQgPgQQESFQoIZW5kX2RhdGUYAyABKAlCA+BBASLFAQoNUmVtaW5kZXJTdGF0cxITCgt0b3RhbF9jb3VudBgBIAEoBRIfChdjb21wbGV0ZWRfb25fdGltZV9jb3VudBgCIAEoBRIcChRjb21wbGV0ZWRfbGF0ZV9jb3VudBgDIAEoBRIVCg1za2lwcGVkX2NvdW50GAQgASgFEhQKDG9uX3RpbWVfcmF0ZRgFIAEoARIdChVmaW5hbF9jb21wbGV0aW9uX3JhdGUYBiABKAESFAoMc2tpcHBlZF9yYXRlGAcgASgBInUKFUNyZWF0ZVJlbWluZGVyUmVxdWVzdBITCgZwYXJlbnQYASABKAlCA+BBAhItCghyZW1pbmRlchgCIAEoCzIWLm1lbW9zLmFwaS52MS5SZW1pbmRlckID4EECEhgKC3JlbWluZGVyX2lkGAMgASgJQgPgQQEifAoVVXBkYXRlUmVtaW5kZXJSZXF1ZXN0Ei0KCHJlbWluZGVyGAEgASgLMhYubWVtb3MuYXBpLnYxLlJlbWluZGVyQgPgQQISNAoLdXBkYXRlX21hc2sYAiABKAsyGi5nb29nbGUucHJvdG9idWYuRmllbGRNYXNrQgPgQQIiKgoVRGVsZXRlUmVtaW5kZXJSZXF1ZXN0EhEKBG5hbWUYASABKAlCA+BBAiJKChdDb21wbGV0ZVJlbWluZGVyUmVxdWVzdBIRCgRuYW1lGAEgASgJQgPgQQISHAoPY29tcGxldGlvbl9kYXRlGAIgASgJQgPgQQEiNQoeQ2xlYXJDb21wbGV0ZWRSZW1pbmRlcnNSZXF1ZXN0EhMKBnBhcmVudBgBIAEoCUID4EECIjgKH0NsZWFyQ29tcGxldGVkUmVtaW5kZXJzUmVzcG9uc2USFQoNY2xlYXJlZF9jb3VudBgBIAEoBTKKDgoPUmVtaW5kZXJTZXJ2aWNlEpUBChFMaXN0UmVtaW5kZXJMaXN0cxImLm1lbW9zLmFwaS52MS5MaXN0UmVtaW5kZXJMaXN0c1JlcXVlc3QaJy5tZW1vcy5hcGkudjEuTGlzdFJlbWluZGVyTGlzdHNSZXNwb25zZSIvgtPkkwIpEicvYXBpL3YxL3twYXJlbnQ9dXNlcnMvKn0vcmVtaW5kZXItbGlzdHMSmQEKEkNyZWF0ZVJlbWluZGVyTGlzdBInLm1lbW9zLmFwaS52MS5DcmVhdGVSZW1pbmRlckxpc3RSZXF1ZXN0GhoubWVtb3MuYXBpLnYxLlJlbWluZGVyTGlzdCI+gtPkkwI4Og1yZW1pbmRlcl9saXN0IicvYXBpL3YxL3twYXJlbnQ9dXNlcnMvKn0vcmVtaW5kZXItbGlzdHMSpgEKElVwZGF0ZVJlbWluZGVyTGlzdBInLm1lbW9zLmFwaS52MS5VcGRhdGVSZW1pbmRlckxpc3RSZXF1ZXN0GhoubWVtb3MuYXBpLnYxLlJlbWluZGVyTGlzdCJLgtPkkwJFOg1yZW1pbmRlcl9saXN0MjQvYXBpL3YxL3tyZW1pbmRlcl9saXN0Lm5hbWU9dXNlcnMvKi9yZW1pbmRlckxpc3RzLyp9EoUBChJEZWxldGVSZW1pbmRlckxpc3QSJy5tZW1vcy5hcGkudjEuRGVsZXRlUmVtaW5kZXJMaXN0UmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIugtPkkwIoKiYvYXBpL3YxL3tuYW1lPXVzZXJzLyovcmVtaW5kZXJMaXN0cy8qfRKEAQoNTGlzdFJlbWluZGVycxIiLm1lbW9zLmFwaS52MS5MaXN0UmVtaW5kZXJzUmVxdWVzdBojLm1lbW9zLmFwaS52MS5MaXN0UmVtaW5kZXJzUmVzcG9uc2UiKoLT5JMCJBIiL2FwaS92MS97cGFyZW50PXVzZXJzLyp9L3JlbWluZGVycxKtAQoXTGlzdFJlbWluZGVyT2NjdXJyZW5jZXMSLC5tZW1vcy5hcGkudjEuTGlzdFJlbWluZGVyT2NjdXJyZW5jZXNSZXF1ZXN0Gi0ubWVtb3MuYXBpLnYxLkxpc3RSZW1pbmRlck9jY3VycmVuY2VzUmVzcG9uc2UiNYLT5JMCLxItL2FwaS92MS97cGFyZW50PXVzZXJzLyp9L3JlbWluZGVyLW9jY3VycmVuY2VzEocBChBHZXRSZW1pbmRlclN0YXRzEiUubWVtb3MuYXBpLnYxLkdldFJlbWluZGVyU3RhdHNSZXF1ZXN0GhsubWVtb3MuYXBpLnYxLlJlbWluZGVyU3RhdHMiL4LT5JMCKRInL2FwaS92MS97cGFyZW50PXVzZXJzLyp9L3JlbWluZGVyLXN0YXRzEoMBCg5DcmVhdGVSZW1pbmRlchIjLm1lbW9zLmFwaS52MS5DcmVhdGVSZW1pbmRlclJlcXVlc3QaFi5tZW1vcy5hcGkudjEuUmVtaW5kZXIiNILT5JMCLjoIcmVtaW5kZXIiIi9hcGkvdjEve3BhcmVudD11c2Vycy8qfS9yZW1pbmRlcnMSjAEKDlVwZGF0ZVJlbWluZGVyEiMubWVtb3MuYXBpLnYxLlVwZGF0ZVJlbWluZGVyUmVxdWVzdBoWLm1lbW9zLmFwaS52MS5SZW1pbmRlciI9gtPkkwI3OghyZW1pbmRlcjIrL2FwaS92MS97cmVtaW5kZXIubmFtZT11c2Vycy8qL3JlbWluZGVycy8qfRJ5Cg5EZWxldGVSZW1pbmRlchIjLm1lbW9zLmFwaS52MS5EZWxldGVSZW1pbmRlclJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiKoLT5JMCJCoiL2FwaS92MS97bmFtZT11c2Vycy8qL3JlbWluZGVycy8qfRKJAQoQQ29tcGxldGVSZW1pbmRlchIlLm1lbW9zLmFwaS52MS5Db21wbGV0ZVJlbWluZGVyUmVxdWVzdBoWLm1lbW9zLmFwaS52MS5SZW1pbmRlciI2gtPkkwIwOgEqIisvYXBpL3YxL3tuYW1lPXVzZXJzLyovcmVtaW5kZXJzLyp9OmNvbXBsZXRlErQBChdDbGVhckNvbXBsZXRlZFJlbWluZGVycxIsLm1lbW9zLmFwaS52MS5DbGVhckNvbXBsZXRlZFJlbWluZGVyc1JlcXVlc3QaLS5tZW1vcy5hcGkudjEuQ2xlYXJDb21wbGV0ZWRSZW1pbmRlcnNSZXNwb25zZSI8gtPkkwI2OgEqIjEvYXBpL3YxL3twYXJlbnQ9dXNlcnMvKn0vcmVtaW5kZXJzOmNsZWFyQ29tcGxldGVkQqwBChBjb20ubWVtb3MuYXBpLnYxQhRSZW1pbmRlclNlcnZpY2VQcm90b1ABWjBnaXRodWIuY29tL3VzZW1lbW9zL21lbW9zL3Byb3RvL2dlbi9hcGkvdjE7YXBpdjGiAgNNQViqAgxNZW1vcy5BcGkuVjHKAgxNZW1vc1xBcGlcVjHiAhhNZW1vc1xBcGlcVjFcR1BCTWV0YWRhdGHqAg5NZW1vczo6QXBpOjpWMWIGcHJvdG8z", [file_api_v1_common, file_google_api_annotations, file_google_api_field_behavior, file_google_api_resource, file_google_protobuf_empty, file_google_protobuf_field_mask, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message memos.api.v1.ReminderList
@@ -602,6 +602,227 @@ export const ListRemindersResponseSchema: GenMessage<ListRemindersResponse> = /*
   messageDesc(file_api_v1_reminder_service, 10);
 
 /**
+ * @generated from message memos.api.v1.ReminderOccurrence
+ */
+export type ReminderOccurrence = Message<"memos.api.v1.ReminderOccurrence"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string reminder = 2;
+   */
+  reminder: string;
+
+  /**
+   * @generated from field: string reminder_list = 3;
+   */
+  reminderList: string;
+
+  /**
+   * @generated from field: string reminder_list_display_name = 4;
+   */
+  reminderListDisplayName: string;
+
+  /**
+   * @generated from field: string title = 5;
+   */
+  title: string;
+
+  /**
+   * @generated from field: string memo = 6;
+   */
+  memo: string;
+
+  /**
+   * @generated from field: string scheduled_date = 7;
+   */
+  scheduledDate: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp scheduled_time = 8;
+   */
+  scheduledTime?: Timestamp | undefined;
+
+  /**
+   * @generated from field: string completion_date = 9;
+   */
+  completionDate: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp completion_time = 10;
+   */
+  completionTime?: Timestamp | undefined;
+
+  /**
+   * @generated from field: memos.api.v1.ReminderOccurrence.Status status = 11;
+   */
+  status: ReminderOccurrence_Status;
+
+  /**
+   * @generated from field: int32 late_days = 12;
+   */
+  lateDays: number;
+};
+
+/**
+ * Describes the message memos.api.v1.ReminderOccurrence.
+ * Use `create(ReminderOccurrenceSchema)` to create a new message.
+ */
+export const ReminderOccurrenceSchema: GenMessage<ReminderOccurrence> = /*@__PURE__*/
+  messageDesc(file_api_v1_reminder_service, 11);
+
+/**
+ * @generated from enum memos.api.v1.ReminderOccurrence.Status
+ */
+export enum ReminderOccurrence_Status {
+  /**
+   * @generated from enum value: STATUS_UNSPECIFIED = 0;
+   */
+  STATUS_UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: COMPLETED_ON_TIME = 1;
+   */
+  COMPLETED_ON_TIME = 1,
+
+  /**
+   * @generated from enum value: COMPLETED_LATE = 2;
+   */
+  COMPLETED_LATE = 2,
+
+  /**
+   * @generated from enum value: SKIPPED = 3;
+   */
+  SKIPPED = 3,
+}
+
+/**
+ * Describes the enum memos.api.v1.ReminderOccurrence.Status.
+ */
+export const ReminderOccurrence_StatusSchema: GenEnum<ReminderOccurrence_Status> = /*@__PURE__*/
+  enumDesc(file_api_v1_reminder_service, 11, 0);
+
+/**
+ * @generated from message memos.api.v1.ListReminderOccurrencesRequest
+ */
+export type ListReminderOccurrencesRequest = Message<"memos.api.v1.ListReminderOccurrencesRequest"> & {
+  /**
+   * @generated from field: string parent = 1;
+   */
+  parent: string;
+
+  /**
+   * @generated from field: string start_date = 2;
+   */
+  startDate: string;
+
+  /**
+   * @generated from field: string end_date = 3;
+   */
+  endDate: string;
+};
+
+/**
+ * Describes the message memos.api.v1.ListReminderOccurrencesRequest.
+ * Use `create(ListReminderOccurrencesRequestSchema)` to create a new message.
+ */
+export const ListReminderOccurrencesRequestSchema: GenMessage<ListReminderOccurrencesRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_reminder_service, 12);
+
+/**
+ * @generated from message memos.api.v1.ListReminderOccurrencesResponse
+ */
+export type ListReminderOccurrencesResponse = Message<"memos.api.v1.ListReminderOccurrencesResponse"> & {
+  /**
+   * @generated from field: repeated memos.api.v1.ReminderOccurrence reminder_occurrences = 1;
+   */
+  reminderOccurrences: ReminderOccurrence[];
+};
+
+/**
+ * Describes the message memos.api.v1.ListReminderOccurrencesResponse.
+ * Use `create(ListReminderOccurrencesResponseSchema)` to create a new message.
+ */
+export const ListReminderOccurrencesResponseSchema: GenMessage<ListReminderOccurrencesResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_reminder_service, 13);
+
+/**
+ * @generated from message memos.api.v1.GetReminderStatsRequest
+ */
+export type GetReminderStatsRequest = Message<"memos.api.v1.GetReminderStatsRequest"> & {
+  /**
+   * @generated from field: string parent = 1;
+   */
+  parent: string;
+
+  /**
+   * @generated from field: string start_date = 2;
+   */
+  startDate: string;
+
+  /**
+   * @generated from field: string end_date = 3;
+   */
+  endDate: string;
+};
+
+/**
+ * Describes the message memos.api.v1.GetReminderStatsRequest.
+ * Use `create(GetReminderStatsRequestSchema)` to create a new message.
+ */
+export const GetReminderStatsRequestSchema: GenMessage<GetReminderStatsRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_reminder_service, 14);
+
+/**
+ * @generated from message memos.api.v1.ReminderStats
+ */
+export type ReminderStats = Message<"memos.api.v1.ReminderStats"> & {
+  /**
+   * @generated from field: int32 total_count = 1;
+   */
+  totalCount: number;
+
+  /**
+   * @generated from field: int32 completed_on_time_count = 2;
+   */
+  completedOnTimeCount: number;
+
+  /**
+   * @generated from field: int32 completed_late_count = 3;
+   */
+  completedLateCount: number;
+
+  /**
+   * @generated from field: int32 skipped_count = 4;
+   */
+  skippedCount: number;
+
+  /**
+   * @generated from field: double on_time_rate = 5;
+   */
+  onTimeRate: number;
+
+  /**
+   * @generated from field: double final_completion_rate = 6;
+   */
+  finalCompletionRate: number;
+
+  /**
+   * @generated from field: double skipped_rate = 7;
+   */
+  skippedRate: number;
+};
+
+/**
+ * Describes the message memos.api.v1.ReminderStats.
+ * Use `create(ReminderStatsSchema)` to create a new message.
+ */
+export const ReminderStatsSchema: GenMessage<ReminderStats> = /*@__PURE__*/
+  messageDesc(file_api_v1_reminder_service, 15);
+
+/**
  * @generated from message memos.api.v1.CreateReminderRequest
  */
 export type CreateReminderRequest = Message<"memos.api.v1.CreateReminderRequest"> & {
@@ -626,7 +847,7 @@ export type CreateReminderRequest = Message<"memos.api.v1.CreateReminderRequest"
  * Use `create(CreateReminderRequestSchema)` to create a new message.
  */
 export const CreateReminderRequestSchema: GenMessage<CreateReminderRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_reminder_service, 11);
+  messageDesc(file_api_v1_reminder_service, 16);
 
 /**
  * @generated from message memos.api.v1.UpdateReminderRequest
@@ -648,7 +869,7 @@ export type UpdateReminderRequest = Message<"memos.api.v1.UpdateReminderRequest"
  * Use `create(UpdateReminderRequestSchema)` to create a new message.
  */
 export const UpdateReminderRequestSchema: GenMessage<UpdateReminderRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_reminder_service, 12);
+  messageDesc(file_api_v1_reminder_service, 17);
 
 /**
  * @generated from message memos.api.v1.DeleteReminderRequest
@@ -665,7 +886,7 @@ export type DeleteReminderRequest = Message<"memos.api.v1.DeleteReminderRequest"
  * Use `create(DeleteReminderRequestSchema)` to create a new message.
  */
 export const DeleteReminderRequestSchema: GenMessage<DeleteReminderRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_reminder_service, 13);
+  messageDesc(file_api_v1_reminder_service, 18);
 
 /**
  * @generated from message memos.api.v1.CompleteReminderRequest
@@ -675,6 +896,14 @@ export type CompleteReminderRequest = Message<"memos.api.v1.CompleteReminderRequ
    * @generated from field: string name = 1;
    */
   name: string;
+
+  /**
+   * Optional calendar date on which the user completed the reminder. The
+   * completion belongs to the latest scheduled period on or before that date.
+   *
+   * @generated from field: string completion_date = 2;
+   */
+  completionDate: string;
 };
 
 /**
@@ -682,7 +911,7 @@ export type CompleteReminderRequest = Message<"memos.api.v1.CompleteReminderRequ
  * Use `create(CompleteReminderRequestSchema)` to create a new message.
  */
 export const CompleteReminderRequestSchema: GenMessage<CompleteReminderRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_reminder_service, 14);
+  messageDesc(file_api_v1_reminder_service, 19);
 
 /**
  * @generated from message memos.api.v1.ClearCompletedRemindersRequest
@@ -699,7 +928,7 @@ export type ClearCompletedRemindersRequest = Message<"memos.api.v1.ClearComplete
  * Use `create(ClearCompletedRemindersRequestSchema)` to create a new message.
  */
 export const ClearCompletedRemindersRequestSchema: GenMessage<ClearCompletedRemindersRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_reminder_service, 15);
+  messageDesc(file_api_v1_reminder_service, 20);
 
 /**
  * @generated from message memos.api.v1.ClearCompletedRemindersResponse
@@ -718,7 +947,7 @@ export type ClearCompletedRemindersResponse = Message<"memos.api.v1.ClearComplet
  * Use `create(ClearCompletedRemindersResponseSchema)` to create a new message.
  */
 export const ClearCompletedRemindersResponseSchema: GenMessage<ClearCompletedRemindersResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_reminder_service, 16);
+  messageDesc(file_api_v1_reminder_service, 21);
 
 /**
  * ReminderService manages a user's private reminder lists and reminder items.
@@ -775,6 +1004,26 @@ export const ReminderService: GenService<{
     methodKind: "unary";
     input: typeof ListRemindersRequestSchema;
     output: typeof ListRemindersResponseSchema;
+  },
+  /**
+   * Lists immutable outcomes for scheduled reminder periods.
+   *
+   * @generated from rpc memos.api.v1.ReminderService.ListReminderOccurrences
+   */
+  listReminderOccurrences: {
+    methodKind: "unary";
+    input: typeof ListReminderOccurrencesRequestSchema;
+    output: typeof ListReminderOccurrencesResponseSchema;
+  },
+  /**
+   * Returns completion and skipped-period totals for the selected date range.
+   *
+   * @generated from rpc memos.api.v1.ReminderService.GetReminderStats
+   */
+  getReminderStats: {
+    methodKind: "unary";
+    input: typeof GetReminderStatsRequestSchema;
+    output: typeof ReminderStatsSchema;
   },
   /**
    * Creates a reminder with an exact remind_time or a date-only due_date; there is no details field.

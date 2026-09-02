@@ -85,7 +85,7 @@ const ReminderDashboard = ({ parent, onOpenCenter, onOpenReminder }: Props) => {
               <div key={reminder.name} className="group flex items-start gap-2 px-3 py-1.5">
                 <button
                   type="button"
-                  onClick={() => completeReminder.mutate(reminder.name)}
+                  onClick={() => completeReminder.mutate({ name: reminder.name })}
                   className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border-2 border-muted-foreground/30 hover:border-primary"
                   aria-label={t("reminder.complete")}
                 >

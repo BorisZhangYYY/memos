@@ -2312,6 +2312,74 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/v1/users/{user}/reminder-occurrences:
+        get:
+            tags:
+                - ReminderService
+            description: Lists immutable outcomes for scheduled reminder periods.
+            operationId: ReminderService_ListReminderOccurrences
+            parameters:
+                - name: user
+                  in: path
+                  description: The user id.
+                  required: true
+                  schema:
+                    type: string
+                - name: startDate
+                  in: query
+                  schema:
+                    type: string
+                - name: endDate
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListReminderOccurrencesResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v1/users/{user}/reminder-stats:
+        get:
+            tags:
+                - ReminderService
+            description: Returns completion and skipped-period totals for the selected date range.
+            operationId: ReminderService_GetReminderStats
+            parameters:
+                - name: user
+                  in: path
+                  description: The user id.
+                  required: true
+                  schema:
+                    type: string
+                - name: startDate
+                  in: query
+                  schema:
+                    type: string
+                - name: endDate
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ReminderStats'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/v1/users/{user}/reminderLists/{reminderList}:
         delete:
             tags:
@@ -3609,6 +3677,11 @@ components:
             properties:
                 name:
                     type: string
+                completionDate:
+                    type: string
+                    description: |-
+                        Optional calendar date on which the user completed the reminder. The
+                         completion belongs to the latest scheduled period on or before that date.
         CreateLinkedIdentityRequest:
             required:
                 - parent
@@ -4337,6 +4410,13 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/ReminderList'
+        ListReminderOccurrencesResponse:
+            type: object
+            properties:
+                reminderOccurrences:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/ReminderOccurrence'
         ListRemindersResponse:
             type: object
             properties:
@@ -4887,6 +4967,53 @@ components:
                         - LEAVING
                     type: string
                     format: enum
+        ReminderOccurrence:
+            type: object
+            properties:
+                name:
+                    type: string
+                reminder:
+                    readOnly: true
+                    type: string
+                reminderList:
+                    readOnly: true
+                    type: string
+                reminderListDisplayName:
+                    readOnly: true
+                    type: string
+                title:
+                    readOnly: true
+                    type: string
+                memo:
+                    readOnly: true
+                    type: string
+                scheduledDate:
+                    readOnly: true
+                    type: string
+                scheduledTime:
+                    readOnly: true
+                    type: string
+                    format: date-time
+                completionDate:
+                    readOnly: true
+                    type: string
+                completionTime:
+                    readOnly: true
+                    type: string
+                    format: date-time
+                status:
+                    readOnly: true
+                    enum:
+                        - STATUS_UNSPECIFIED
+                        - COMPLETED_ON_TIME
+                        - COMPLETED_LATE
+                        - SKIPPED
+                    type: string
+                    format: enum
+                lateDays:
+                    readOnly: true
+                    type: integer
+                    format: int32
         ReminderRecurrence:
             type: object
             properties:
@@ -4913,6 +5040,30 @@ components:
                 maxOccurrences:
                     type: integer
                     format: int32
+        ReminderStats:
+            type: object
+            properties:
+                totalCount:
+                    type: integer
+                    format: int32
+                completedOnTimeCount:
+                    type: integer
+                    format: int32
+                completedLateCount:
+                    type: integer
+                    format: int32
+                skippedCount:
+                    type: integer
+                    format: int32
+                onTimeRate:
+                    type: number
+                    format: double
+                finalCompletionRate:
+                    type: number
+                    format: double
+                skippedRate:
+                    type: number
+                    format: double
         SetMemoAttachmentsRequest:
             required:
                 - name

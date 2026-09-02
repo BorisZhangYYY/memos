@@ -37,6 +37,12 @@ func (d *DB) CreateReminderOccurrence(ctx context.Context, v *store.ReminderOccu
 func (d *DB) ListReminderOccurrences(ctx context.Context, v *store.FindReminderOccurrence) ([]*store.ReminderOccurrence, error) {
 	return d.reminder().ListOccurrences(ctx, v)
 }
+func (d *DB) DeleteReminderOccurrences(ctx context.Context, v *store.DeleteReminderOccurrences) error {
+	return d.reminder().DeleteOccurrences(ctx, v)
+}
+func (d *DB) UpdateReminderOccurrence(ctx context.Context, v *store.UpdateReminderOccurrence) error {
+	return d.reminder().UpdateOccurrence(ctx, v)
+}
 func (d *DB) ListDueReminderNotifications(ctx context.Context, now int64) ([]*store.ReminderNotification, error) {
 	return d.reminder().ListDueNotifications(ctx, now)
 }

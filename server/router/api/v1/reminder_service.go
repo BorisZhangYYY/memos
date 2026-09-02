@@ -28,6 +28,9 @@ func reminderListName(username, uid string) string {
 	return BuildUserName(username) + "/reminderLists/" + uid
 }
 func reminderName(username, uid string) string { return BuildUserName(username) + "/reminders/" + uid }
+func reminderOccurrenceName(username, uid string) string {
+	return BuildUserName(username) + "/reminderOccurrences/" + uid
+}
 
 func parseReminderResourceName(name, collection string) (string, string, error) {
 	parts := strings.Split(name, "/")
@@ -412,6 +415,134 @@ func (s *APIV1Service) ListReminders(ctx context.Context, request *v1pb.ListRemi
 	return response, nil
 }
 
+func validateOccurrenceDateRange(startDate, endDate string) error {
+	for _, value := range []string{startDate, endDate} {
+		if value != "" {
+			if _, err := time.Parse(time.DateOnly, value); err != nil {
+				return status.Errorf(codes.InvalidArgument, "invalid occurrence date range")
+			}
+		}
+	}
+	if startDate != "" && endDate != "" && startDate > endDate {
+		return status.Errorf(codes.InvalidArgument, "start_date must not be after end_date")
+	}
+	return nil
+}
+
+func (s *APIV1Service) materializeSkippedReminderOccurrences(ctx context.Context, user *store.User) error {
+	pending, normal := store.ReminderPending, store.Normal
+	reminders, err := s.Store.ListReminders(ctx, &store.FindReminder{CreatorID: &user.ID, RowStatus: &normal, Status: &pending})
+	if err != nil {
+		return err
+	}
+	lists, memoUIDs, err := s.reminderConversionData(ctx, reminders)
+	if err != nil {
+		return err
+	}
+	existing, err := s.Store.ListReminderOccurrences(ctx, &store.FindReminderOccurrence{CreatorID: &user.ID})
+	if err != nil {
+		return err
+	}
+	seen := map[string]struct{}{}
+	for _, occurrence := range existing {
+		seen[occurrence.ReminderUID+"\x00"+occurrence.ScheduledDate] = struct{}{}
+	}
+	now := time.Now()
+	for _, reminder := range reminders {
+		if reminder.RecurrenceType == store.ReminderRecurrenceNone || reminder.DueDate == "" {
+			continue
+		}
+		location, locationErr := time.LoadLocation(reminder.TimeZone)
+		if locationErr != nil {
+			location = time.UTC
+		}
+		today := now.In(location).Format(time.DateOnly)
+		dates, _, datesErr := recurringDatesThrough(reminder, today)
+		if datesErr != nil || len(dates) < 2 {
+			continue
+		}
+		list := lists[reminder.ListID]
+		if list == nil {
+			continue
+		}
+		memoUID := ""
+		if reminder.MemoID != nil {
+			memoUID = memoUIDs[*reminder.MemoID]
+		}
+		for _, scheduledDate := range dates[:len(dates)-1] {
+			key := reminder.UID + "\x00" + scheduledDate
+			if _, ok := seen[key]; ok {
+				continue
+			}
+			if _, err := s.Store.CreateReminderOccurrence(ctx, &store.ReminderOccurrence{
+				UID: uuid.NewString(), CreatorID: user.ID, ReminderUID: reminder.UID, ListUID: list.UID, ListName: list.Name,
+				Title: reminder.Title, MemoUID: memoUID, ScheduledDate: scheduledDate, RemindTs: shiftReminderTime(reminder, scheduledDate),
+				ResolvedTs: now.Unix(), Status: store.ReminderOccurrenceSkipped,
+			}); err != nil {
+				return err
+			}
+			seen[key] = struct{}{}
+		}
+	}
+	return nil
+}
+
+func (s *APIV1Service) ListReminderOccurrences(ctx context.Context, request *v1pb.ListReminderOccurrencesRequest) (*v1pb.ListReminderOccurrencesResponse, error) {
+	user, err := s.authorizeReminderParent(ctx, request.Parent)
+	if err != nil {
+		return nil, err
+	}
+	if err := validateOccurrenceDateRange(request.StartDate, request.EndDate); err != nil {
+		return nil, err
+	}
+	if err := s.materializeSkippedReminderOccurrences(ctx, user); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to resolve skipped reminder periods")
+	}
+	find := &store.FindReminderOccurrence{CreatorID: &user.ID}
+	if request.StartDate != "" {
+		find.ScheduledAfter = &request.StartDate
+	}
+	if request.EndDate != "" {
+		find.ScheduledBefore = &request.EndDate
+	}
+	values, err := s.Store.ListReminderOccurrences(ctx, find)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to list reminder occurrences")
+	}
+	response := &v1pb.ListReminderOccurrencesResponse{}
+	for _, value := range values {
+		response.ReminderOccurrences = append(response.ReminderOccurrences, convertReminderOccurrence(user, value))
+	}
+	return response, nil
+}
+
+func (s *APIV1Service) GetReminderStats(ctx context.Context, request *v1pb.GetReminderStatsRequest) (*v1pb.ReminderStats, error) {
+	listed, err := s.ListReminderOccurrences(ctx, &v1pb.ListReminderOccurrencesRequest{
+		Parent: request.Parent, StartDate: request.StartDate, EndDate: request.EndDate,
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := &v1pb.ReminderStats{TotalCount: int32(len(listed.ReminderOccurrences))}
+	for _, value := range listed.ReminderOccurrences {
+		switch value.Status {
+		case v1pb.ReminderOccurrence_COMPLETED_ON_TIME:
+			result.CompletedOnTimeCount++
+		case v1pb.ReminderOccurrence_COMPLETED_LATE:
+			result.CompletedLateCount++
+		case v1pb.ReminderOccurrence_SKIPPED:
+			result.SkippedCount++
+		}
+	}
+	if result.TotalCount > 0 {
+		total := float64(result.TotalCount)
+		result.OnTimeRate = float64(result.CompletedOnTimeCount) / total
+		result.FinalCompletionRate = float64(result.CompletedOnTimeCount+result.CompletedLateCount) / total
+		result.SkippedRate = float64(result.SkippedCount) / total
+	}
+	return result, nil
+}
+
 func (s *APIV1Service) resolveReminderListID(ctx context.Context, user *store.User, name string) (int32, error) {
 	if name == "" {
 		list, err := s.ensureDefaultReminderList(ctx, user)
@@ -673,6 +804,25 @@ func (s *APIV1Service) DeleteReminder(ctx context.Context, request *v1pb.DeleteR
 	if err != nil {
 		return nil, err
 	}
+	if err := s.materializeSkippedReminderOccurrences(ctx, user); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to resolve reminder history")
+	}
+	occurrences, err := s.Store.ListReminderOccurrences(ctx, &store.FindReminderOccurrence{CreatorID: &user.ID, ReminderUID: &value.UID})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to load reminder history")
+	}
+	hasCompletion := false
+	for _, occurrence := range occurrences {
+		if occurrence.Status == store.ReminderOccurrenceCompletedOnTime || occurrence.Status == store.ReminderOccurrenceCompletedLate {
+			hasCompletion = true
+			break
+		}
+	}
+	if !hasCompletion {
+		if err := s.Store.DeleteReminderOccurrences(ctx, &store.DeleteReminderOccurrences{CreatorID: user.ID, ReminderUID: value.UID}); err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to discard unfinished reminder history")
+		}
+	}
 	if err := s.Store.DeleteReminder(ctx, &store.DeleteReminder{ID: value.ID, CreatorID: user.ID}); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to delete reminder")
 	}
@@ -746,13 +896,23 @@ func nextReminderDate(value *store.Reminder) (string, error) {
 		}
 		allowed := map[time.Weekday]bool{}
 		for _, weekday := range value.RecurrenceWeekdays {
-			allowed[time.Weekday(weekday)] = true
+			if weekday >= 0 && weekday <= 6 {
+				allowed[time.Weekday(weekday)] = true
+			}
 		}
-		for day := 1; day <= 7*interval; day++ {
+		if len(allowed) == 0 {
+			return "", status.Errorf(codes.FailedPrecondition, "weekly reminder has no valid weekdays")
+		}
+		for day := 1; day < 7; day++ {
 			candidate := current.AddDate(0, 0, day)
-			weekIndex := (day - 1) / 7
-			if weekIndex%interval == 0 && allowed[candidate.Weekday()] {
-				current = candidate
+			if candidate.Weekday() > current.Weekday() && allowed[candidate.Weekday()] {
+				return candidate.Format(time.DateOnly), nil
+			}
+		}
+		weekStart := current.AddDate(0, 0, -int(current.Weekday()))
+		for weekday := time.Sunday; weekday <= time.Saturday; weekday++ {
+			if allowed[weekday] {
+				current = weekStart.AddDate(0, 0, 7*interval+int(weekday))
 				break
 			}
 		}
@@ -764,6 +924,107 @@ func nextReminderDate(value *store.Reminder) (string, error) {
 		return "", status.Errorf(codes.FailedPrecondition, "reminder does not repeat")
 	}
 	return current.Format(time.DateOnly), nil
+}
+
+// recurringCompletionDates returns the most recent scheduled occurrence on or
+// before throughDate and the first following occurrence. Missed occurrences are
+// skipped so one completion never leaves a recurring reminder in the past.
+func recurringCompletionDates(value *store.Reminder, throughDate string) (string, string, error) {
+	if _, err := time.Parse(time.DateOnly, throughDate); err != nil {
+		return "", "", err
+	}
+	current := *value
+	completionDate := current.DueDate
+	for {
+		nextDate, err := nextReminderDate(&current)
+		if err != nil {
+			return "", "", err
+		}
+		if nextDate <= current.DueDate {
+			return "", "", status.Errorf(codes.Internal, "recurring reminder did not advance")
+		}
+		if value.RecurrenceEndDate != "" && nextDate > value.RecurrenceEndDate {
+			return completionDate, "", nil
+		}
+		if nextDate > throughDate {
+			return completionDate, nextDate, nil
+		}
+		completionDate = nextDate
+		current.DueDate = nextDate
+	}
+}
+
+// recurringDatesThrough returns every scheduled period through the selected
+// date and the first following period.
+func recurringDatesThrough(value *store.Reminder, throughDate string) ([]string, string, error) {
+	if _, err := time.Parse(time.DateOnly, throughDate); err != nil {
+		return nil, "", err
+	}
+	current := *value
+	dates := []string{}
+	for current.DueDate != "" && current.DueDate <= throughDate {
+		if value.RecurrenceEndDate != "" && current.DueDate > value.RecurrenceEndDate {
+			return dates, "", nil
+		}
+		dates = append(dates, current.DueDate)
+		nextDate, err := nextReminderDate(&current)
+		if err != nil {
+			return nil, "", err
+		}
+		if nextDate <= current.DueDate {
+			return nil, "", status.Errorf(codes.Internal, "recurring reminder did not advance")
+		}
+		if value.RecurrenceEndDate != "" && nextDate > value.RecurrenceEndDate {
+			return dates, "", nil
+		}
+		current.DueDate = nextDate
+	}
+	return dates, current.DueDate, nil
+}
+
+func occurrenceStatus(completionDate, scheduledDate string) store.ReminderOccurrenceStatus {
+	if completionDate <= scheduledDate {
+		return store.ReminderOccurrenceCompletedOnTime
+	}
+	return store.ReminderOccurrenceCompletedLate
+}
+
+func reminderOccurrenceLateDays(value *store.ReminderOccurrence) int32 {
+	if value.Status != store.ReminderOccurrenceCompletedLate {
+		return 0
+	}
+	scheduled, scheduledErr := time.Parse(time.DateOnly, value.ScheduledDate)
+	completed, completedErr := time.Parse(time.DateOnly, value.CompletionDate)
+	if scheduledErr != nil || completedErr != nil || !completed.After(scheduled) {
+		return 0
+	}
+	return int32(completed.Sub(scheduled).Hours() / 24)
+}
+
+func convertReminderOccurrence(user *store.User, value *store.ReminderOccurrence) *v1pb.ReminderOccurrence {
+	result := &v1pb.ReminderOccurrence{
+		Name: reminderOccurrenceName(user.Username, value.UID), Reminder: reminderName(user.Username, value.ReminderUID),
+		ReminderList: reminderListName(user.Username, value.ListUID), ReminderListDisplayName: value.ListName, Title: value.Title,
+		ScheduledDate: value.ScheduledDate, CompletionDate: value.CompletionDate, LateDays: reminderOccurrenceLateDays(value),
+	}
+	if value.MemoUID != "" {
+		result.Memo = "memos/" + value.MemoUID
+	}
+	if value.RemindTs != nil {
+		result.ScheduledTime = timestamppb.New(time.Unix(*value.RemindTs, 0))
+	}
+	if value.CompletedTs > 0 {
+		result.CompletionTime = timestamppb.New(time.Unix(value.CompletedTs, 0))
+	}
+	switch value.Status {
+	case store.ReminderOccurrenceCompletedOnTime:
+		result.Status = v1pb.ReminderOccurrence_COMPLETED_ON_TIME
+	case store.ReminderOccurrenceCompletedLate:
+		result.Status = v1pb.ReminderOccurrence_COMPLETED_LATE
+	case store.ReminderOccurrenceSkipped:
+		result.Status = v1pb.ReminderOccurrence_SKIPPED
+	}
+	return result
 }
 
 func addMonthsClamped(value time.Time, months int) time.Time {
@@ -812,25 +1073,105 @@ func (s *APIV1Service) CompleteReminder(ctx context.Context, request *v1pb.Compl
 		lists, memos, _ := s.reminderConversionData(ctx, []*store.Reminder{value})
 		return convertReminder(user, value, lists, memos), nil
 	}
-	nowSec := time.Now().Unix()
+	now := time.Now()
+	nowSec := now.Unix()
 	listRows, err := s.Store.ListReminderLists(ctx, &store.FindReminderList{ID: &value.ListID, CreatorID: &user.ID})
 	if err != nil || len(listRows) == 0 {
 		return nil, status.Errorf(codes.Internal, "failed to load reminder list")
 	}
 	list := listRows[0]
-	if _, err := s.Store.CreateReminderOccurrence(ctx, &store.ReminderOccurrence{
-		UID: uuid.NewString(), CreatorID: user.ID, ReminderUID: value.UID, ListUID: list.UID, ListName: list.Name, Title: value.Title,
-		ScheduledDate: value.DueDate, RemindTs: value.RemindTs, CompletedTs: nowSec, Status: store.ReminderCompleted,
-	}); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to record reminder completion")
+	location, locationErr := time.LoadLocation(value.TimeZone)
+	if locationErr != nil {
+		location = time.UTC
+	}
+	today := now.In(location).Format(time.DateOnly)
+	completionDate := today
+	if request.CompletionDate != "" {
+		if _, err := time.Parse(time.DateOnly, request.CompletionDate); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid completion date")
+		}
+		if request.CompletionDate > today {
+			return nil, status.Errorf(codes.InvalidArgument, "completion date cannot be in the future")
+		}
+		completionDate = request.CompletionDate
+	}
+	nextDate := ""
+	scheduledDates := []string{value.DueDate}
+	if value.RecurrenceType != store.ReminderRecurrenceNone {
+		var datesErr error
+		scheduledDates, nextDate, datesErr = recurringDatesThrough(value, today)
+		if datesErr != nil || len(scheduledDates) == 0 {
+			return nil, status.Errorf(codes.FailedPrecondition, "failed to resolve recurring reminder periods")
+		}
+	} else if request.CompletionDate != "" {
+		return nil, status.Errorf(codes.InvalidArgument, "completion date is only supported for recurring reminders")
+	}
+	targetDate := ""
+	if value.RecurrenceType == store.ReminderRecurrenceNone {
+		targetDate = value.DueDate
+		if targetDate == "" {
+			targetDate = completionDate
+			scheduledDates = []string{targetDate}
+		}
+	} else {
+		for _, scheduledDate := range scheduledDates {
+			if scheduledDate <= completionDate {
+				targetDate = scheduledDate
+			}
+		}
+	}
+	if targetDate == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "completion date is before the first reminder period")
+	}
+	memoUID := ""
+	if value.MemoID != nil {
+		memo, memoErr := s.Store.GetMemo(ctx, &store.FindMemo{ID: value.MemoID})
+		if memoErr == nil && memo != nil {
+			memoUID = memo.UID
+		}
+	}
+	existing, err := s.Store.ListReminderOccurrences(ctx, &store.FindReminderOccurrence{CreatorID: &user.ID, ReminderUID: &value.UID})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to load reminder history")
+	}
+	existingByDate := map[string]*store.ReminderOccurrence{}
+	for _, occurrence := range existing {
+		existingByDate[occurrence.ScheduledDate] = occurrence
+	}
+	for _, scheduledDate := range scheduledDates {
+		outcome := store.ReminderOccurrenceSkipped
+		resolvedCompletionDate := ""
+		completedTs := int64(0)
+		if scheduledDate == targetDate {
+			outcome = occurrenceStatus(completionDate, scheduledDate)
+			resolvedCompletionDate = completionDate
+			completedTs = nowSec
+		}
+		if prior := existingByDate[scheduledDate]; prior != nil {
+			if scheduledDate == targetDate && prior.Status == store.ReminderOccurrenceSkipped {
+				if err := s.Store.UpdateReminderOccurrence(ctx, &store.UpdateReminderOccurrence{
+					CreatorID: user.ID, ReminderUID: value.UID, ScheduledDate: scheduledDate, CompletedTs: completedTs,
+					CompletionDate: resolvedCompletionDate, ResolvedTs: nowSec, Status: outcome,
+				}); err != nil {
+					return nil, status.Errorf(codes.Internal, "failed to update reminder completion history")
+				}
+			}
+			continue
+		}
+		if _, err := s.Store.CreateReminderOccurrence(ctx, &store.ReminderOccurrence{
+			UID: uuid.NewString(), CreatorID: user.ID, ReminderUID: value.UID, ListUID: list.UID, ListName: list.Name, Title: value.Title,
+			MemoUID: memoUID, ScheduledDate: scheduledDate, RemindTs: shiftReminderTime(value, scheduledDate), CompletedTs: completedTs,
+			CompletionDate: resolvedCompletionDate, ResolvedTs: nowSec, Status: outcome,
+		}); err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to record reminder occurrence")
+		}
 	}
 	count := value.CompletedOccurrences + 1
 	statusValue := store.ReminderCompleted
 	completedTs := &nowSec
 	update := &store.UpdateReminder{ID: value.ID, CreatorID: user.ID, CompletedOccurrences: &count}
 	if value.RecurrenceType != store.ReminderRecurrenceNone {
-		nextDate, nextErr := nextReminderDate(value)
-		finished := nextErr != nil || (value.RecurrenceMaxOccurrences > 0 && count >= value.RecurrenceMaxOccurrences) || (value.RecurrenceEndDate != "" && nextDate > value.RecurrenceEndDate)
+		finished := nextDate == "" || (value.RecurrenceMaxOccurrences > 0 && count >= value.RecurrenceMaxOccurrences)
 		if !finished {
 			statusValue = store.ReminderPending
 			completedTs = nil

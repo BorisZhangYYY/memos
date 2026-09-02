@@ -383,9 +383,10 @@ func scanReminder(row scanner) (*store.Reminder, error) {
 func (a Adapter) CreateOccurrence(ctx context.Context, value *store.ReminderOccurrence) (*store.ReminderOccurrence, error) {
 	nowSec := time.Now().Unix()
 	id, err := a.insertID(ctx, `INSERT INTO reminder_occurrence
-		(uid, creator_id, reminder_uid, list_uid, list_name, title, created_ts, scheduled_date, remind_ts, completed_ts, status)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, value.UID, value.CreatorID, value.ReminderUID, value.ListUID, value.ListName,
-		value.Title, nowSec, value.ScheduledDate, value.RemindTs, value.CompletedTs, value.Status)
+		(uid, creator_id, reminder_uid, list_uid, list_name, title, memo_uid, created_ts, scheduled_date, remind_ts,
+		 completed_ts, completion_date, resolved_ts, status)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, value.UID, value.CreatorID, value.ReminderUID, value.ListUID, value.ListName,
+		value.Title, value.MemoUID, nowSec, value.ScheduledDate, value.RemindTs, value.CompletedTs, value.CompletionDate, value.ResolvedTs, value.Status)
 	if err != nil {
 		return nil, err
 	}
@@ -398,6 +399,18 @@ func (a Adapter) ListOccurrences(ctx context.Context, find *store.FindReminderOc
 	if find.CreatorID != nil {
 		where, args = append(where, "creator_id = ?"), append(args, *find.CreatorID)
 	}
+	if find.ReminderUID != nil {
+		where, args = append(where, "reminder_uid = ?"), append(args, *find.ReminderUID)
+	}
+	if find.ScheduledAfter != nil {
+		where, args = append(where, "scheduled_date >= ?"), append(args, *find.ScheduledAfter)
+	}
+	if find.ScheduledBefore != nil {
+		where, args = append(where, "scheduled_date <= ?"), append(args, *find.ScheduledBefore)
+	}
+	if find.Status != nil {
+		where, args = append(where, "status = ?"), append(args, *find.Status)
+	}
 	if find.CompletedAfter != nil {
 		where, args = append(where, "completed_ts >= ?"), append(args, *find.CompletedAfter)
 	}
@@ -405,9 +418,9 @@ func (a Adapter) ListOccurrences(ctx context.Context, find *store.FindReminderOc
 		where, args = append(where, "completed_ts < ?"), append(args, *find.CompletedBefore)
 	}
 	rows, err := a.DB.QueryContext(ctx, a.bind(`
-		SELECT id, uid, creator_id, reminder_uid, list_uid, list_name, title, created_ts,
-			scheduled_date, remind_ts, completed_ts, status
-		FROM reminder_occurrence WHERE `+strings.Join(where, " AND ")+` ORDER BY completed_ts DESC, id DESC`), args...)
+		SELECT id, uid, creator_id, reminder_uid, list_uid, list_name, title, memo_uid, created_ts,
+			scheduled_date, remind_ts, completed_ts, completion_date, resolved_ts, status
+		FROM reminder_occurrence WHERE `+strings.Join(where, " AND ")+` ORDER BY scheduled_date DESC, id DESC`), args...)
 	if err != nil {
 		return nil, err
 	}
@@ -417,7 +430,8 @@ func (a Adapter) ListOccurrences(ctx context.Context, find *store.FindReminderOc
 		value := &store.ReminderOccurrence{}
 		var remindTs sql.NullInt64
 		if err := rows.Scan(&value.ID, &value.UID, &value.CreatorID, &value.ReminderUID, &value.ListUID, &value.ListName,
-			&value.Title, &value.CreatedTs, &value.ScheduledDate, &remindTs, &value.CompletedTs, &value.Status); err != nil {
+			&value.Title, &value.MemoUID, &value.CreatedTs, &value.ScheduledDate, &remindTs, &value.CompletedTs,
+			&value.CompletionDate, &value.ResolvedTs, &value.Status); err != nil {
 			return nil, err
 		}
 		if remindTs.Valid {
@@ -427,6 +441,19 @@ func (a Adapter) ListOccurrences(ctx context.Context, find *store.FindReminderOc
 		values = append(values, value)
 	}
 	return values, rows.Err()
+}
+
+func (a Adapter) DeleteOccurrences(ctx context.Context, value *store.DeleteReminderOccurrences) error {
+	_, err := a.DB.ExecContext(ctx, a.bind("DELETE FROM reminder_occurrence WHERE creator_id = ? AND reminder_uid = ?"), value.CreatorID, value.ReminderUID)
+	return err
+}
+
+func (a Adapter) UpdateOccurrence(ctx context.Context, value *store.UpdateReminderOccurrence) error {
+	_, err := a.DB.ExecContext(ctx, a.bind(`UPDATE reminder_occurrence
+		SET completed_ts = ?, completion_date = ?, resolved_ts = ?, status = ?
+		WHERE creator_id = ? AND reminder_uid = ? AND scheduled_date = ?`), value.CompletedTs, value.CompletionDate,
+		value.ResolvedTs, value.Status, value.CreatorID, value.ReminderUID, value.ScheduledDate)
+	return err
 }
 
 func (a Adapter) ListDueNotifications(ctx context.Context, now int64) ([]*store.ReminderNotification, error) {

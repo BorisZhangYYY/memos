@@ -1,6 +1,8 @@
 import {
   AlarmClockIcon,
   ArchiveIcon,
+  BarChart3Icon,
+  CalendarClockIcon,
   CalendarDaysIcon,
   CheckIcon,
   CircleIcon,
@@ -18,11 +20,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { Link, useLocation } from "react-router-dom";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import ReminderCompletionDialog from "@/components/Reminder/ReminderCompletionDialog";
 import { ReminderDatePicker } from "@/components/Reminder/ReminderDateTimePicker";
 import ReminderDetailDialog, { type ReminderDraft } from "@/components/Reminder/ReminderDetailDialog";
 import ReminderListDialog, { type ReminderListDialogValue } from "@/components/Reminder/ReminderListDialog";
 import ReminderListIcon, { isDefaultReminderList } from "@/components/Reminder/ReminderListIcon";
 import ReminderMetadata from "@/components/Reminder/ReminderMetadata";
+import ReminderStatistics from "@/components/Reminder/ReminderStatistics";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -47,17 +51,20 @@ import {
   Reminder_Priority,
   Reminder_Status,
   type ReminderList,
+  ReminderRecurrence_Frequency,
 } from "@/types/proto/api/v1/reminder_service_pb";
 import { useTranslate } from "@/utils/i18n";
 import { readRememberedReminderList, rememberReminderList, resolveReminderListSelection } from "@/utils/reminder-list-selection";
+import { isReminderOverdue } from "@/utils/reminder-overdue";
 
-type SmartView = "today" | "scheduled" | "all" | "flagged" | "completed" | "archived";
+type SmartView = "today" | "scheduled" | "all" | "flagged" | "statistics" | "completed" | "archived";
 
 const VIEW_BY_ID: Record<SmartView, ListRemindersRequest_View> = {
   today: ListRemindersRequest_View.TODAY,
   scheduled: ListRemindersRequest_View.SCHEDULED,
   all: ListRemindersRequest_View.ALL,
   flagged: ListRemindersRequest_View.FLAGGED,
+  statistics: ListRemindersRequest_View.ALL,
   completed: ListRemindersRequest_View.COMPLETED,
   archived: ListRemindersRequest_View.ALL,
 };
@@ -79,6 +86,7 @@ const ReminderRow = ({
   onComplete,
   onArchive,
   onDelete,
+  onChooseCompletionDate,
   onOpen,
   returnLocation,
 }: {
@@ -88,11 +96,18 @@ const ReminderRow = ({
   onComplete: () => void;
   onArchive: () => void;
   onDelete: () => void;
+  onChooseCompletionDate: () => void;
   onOpen: () => void;
   returnLocation: string;
 }) => {
   const t = useTranslate();
   const completed = reminder.status === Reminder_Status.COMPLETED;
+  const canChooseCompletionDate =
+    !completed &&
+    !archived &&
+    isReminderOverdue(reminder) &&
+    !!reminder.recurrence &&
+    reminder.recurrence?.frequency !== ReminderRecurrence_Frequency.FREQUENCY_UNSPECIFIED;
   return (
     <div data-reminder-row className="group flex min-h-14 items-start gap-3 border-b border-border/70 px-1 py-3 last:border-b-0">
       <button
@@ -145,6 +160,20 @@ const ReminderRow = ({
         >
           <FileTextIcon className="size-4" />
         </Button>
+      )}
+      {canChooseCompletionDate && (
+        <button
+          type="button"
+          className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full text-destructive transition-colors hover:bg-destructive/10"
+          onClick={(event) => {
+            event.stopPropagation();
+            onChooseCompletionDate();
+          }}
+          aria-label={t("reminder.complete-on-date")}
+          title={t("reminder.complete-on-date")}
+        >
+          <CalendarClockIcon className="size-4" />
+        </button>
       )}
       {completed && !archived && (
         <button
@@ -208,6 +237,7 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
   const [editingList, setEditingList] = useState<ReminderList>();
   const [selectedReminder, setSelectedReminder] = useState<Reminder>();
   const [deleteCandidate, setDeleteCandidate] = useState<Reminder>();
+  const [completionCandidate, setCompletionCandidate] = useState<Reminder>();
   const [deleteListCandidate, setDeleteListCandidate] = useState<ReminderList>();
   const [detailDraft, setDetailDraft] = useState<ReminderDraft>();
   const draftRef = useRef<HTMLInputElement>(null);
@@ -228,6 +258,7 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
     reminderList: activeList,
     query,
     timeZone,
+    enabled: activeView !== "statistics",
   });
   const createReminder = useCreateReminder();
   const completeReminder = useCompleteReminder();
@@ -371,7 +402,7 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
   };
 
   const smartViews: Array<{
-    id: Exclude<SmartView, "completed" | "archived">;
+    id: "today" | "scheduled" | "all" | "flagged";
     label: string;
     icon: typeof CalendarDaysIcon;
     color: string;
@@ -395,9 +426,11 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
           ? t("reminder.flagged")
           : activeView === "completed"
             ? t("reminder.completed")
-            : activeView === "archived"
-              ? t("common.archived")
-              : t("common.all");
+            : activeView === "statistics"
+              ? t("reminder.statistics")
+              : activeView === "archived"
+                ? t("common.archived")
+                : t("common.all");
 
   const grouped = useMemo(() => {
     if (activeList) return [{ list: lists.find((item) => item.name === activeList), reminders }];
@@ -556,9 +589,19 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
         </div>
         <button
           type="button"
-          onClick={() => selectView("completed")}
+          onClick={() => selectView("statistics")}
           className={cn(
             "mt-auto flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-muted-foreground hover:bg-background/70",
+            activeView === "statistics" && !activeList && "bg-background text-foreground",
+          )}
+        >
+          <BarChart3Icon className="size-4" /> {t("reminder.statistics")}
+        </button>
+        <button
+          type="button"
+          onClick={() => selectView("completed")}
+          className={cn(
+            "mt-1 flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-muted-foreground hover:bg-background/70",
             activeView === "completed" && !activeList && "bg-background text-foreground",
           )}
         >
@@ -594,15 +637,17 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
               </Button>
             )}
           </div>
-          <div className="relative mt-4">
-            <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              className="rounded-full bg-muted/50 pl-9"
-              placeholder={t("reminder.search")}
-            />
-          </div>
+          {activeView !== "statistics" && (
+            <div className="relative mt-4">
+              <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                className="rounded-full bg-muted/50 pl-9"
+                placeholder={t("reminder.search")}
+              />
+            </div>
+          )}
           <div className="mt-3 flex gap-2 overflow-x-auto sm:hidden">
             {smartViews.map(({ id, label }) => (
               <Button key={id} size="sm" variant={activeView === id && !activeList ? "default" : "outline"} onClick={() => selectView(id)}>
@@ -611,6 +656,9 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
             ))}
             <Button size="sm" variant={activeView === "completed" ? "default" : "outline"} onClick={() => selectView("completed")}>
               {t("reminder.completed")}
+            </Button>
+            <Button size="sm" variant={activeView === "statistics" ? "default" : "outline"} onClick={() => selectView("statistics")}>
+              {t("reminder.statistics")}
             </Button>
             <Button size="sm" variant={activeView === "archived" ? "default" : "outline"} onClick={() => selectView("archived")}>
               {t("common.archived")}
@@ -628,71 +676,76 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
             }
             const target = event.target as HTMLElement;
             if (target.closest("button, input, [data-reminder-row], [data-reminder-draft], h2")) return;
-            if (activeView !== "completed" && activeView !== "archived") {
+            if (activeView !== "completed" && activeView !== "archived" && activeView !== "statistics") {
               if (draftVisible) void commitDraft();
               else setDraftVisible(true);
             }
           }}
         >
-          <div className="flex min-h-full flex-col">
-            {isLoading ? (
-              <p className="py-12 text-center text-sm text-muted-foreground">{t("reminder.loading")}</p>
-            ) : grouped.length === 0 && !draftVisible ? (
-              <button
-                type="button"
-                className="flex min-h-40 w-full flex-1 items-center justify-center text-sm text-muted-foreground"
-                onClick={() => activeView !== "completed" && activeView !== "archived" && !draftVisible && setDraftVisible(true)}
-              >
-                {activeView === "completed"
-                  ? t("reminder.no-completed")
-                  : activeView === "archived"
-                    ? t("reminder.no-archived")
-                    : t("reminder.click-empty-to-create")}
-              </button>
-            ) : (
-              groupsWithDraft.map((group) => (
-                <section key={group.list?.name ?? "unknown"}>
-                  {!activeList && group.list && (
-                    <h2 className="border-b pb-2 pt-3 text-lg font-bold" style={{ color: group.list.color || "#0A84FF" }}>
-                      {listDisplayName(group.list, t("common.reminders"))}
-                    </h2>
-                  )}
-                  {group.reminders.map((reminder) => (
-                    <ReminderRow
-                      key={reminder.name}
-                      reminder={reminder}
-                      list={group.list}
-                      archived={activeView === "archived"}
-                      onComplete={() => completeReminder.mutate(reminder.name)}
-                      onArchive={async () => {
-                        await updateReminder.mutateAsync({
-                          reminder: { name: reminder.name, state: State.ARCHIVED },
-                          updateMask: ["state"],
-                        });
-                        toast.success(t("reminder.archived"));
-                      }}
-                      onDelete={() => setDeleteCandidate(reminder)}
-                      onOpen={() => (onOpenReminder ? onOpenReminder(reminder.name) : setSelectedReminder(reminder))}
-                      returnLocation={returnLocation}
-                    />
-                  ))}
-                  {draftVisible && group.list?.name === draftGroupName && renderDraft(group.reminders.length > 0)}
-                </section>
-              ))
-            )}
-            {grouped.length > 0 && !draftVisible && activeView !== "completed" && activeView !== "archived" && (
-              <button
-                type="button"
-                className="min-h-20 w-full flex-1 cursor-text"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  setDraftVisible(true);
-                }}
-                aria-label={t("reminder.click-empty-to-create")}
-              />
-            )}
-            {draftVisible && !groupsWithDraft.some((group) => group.list?.name === draftGroupName) && renderDraft(grouped.length > 0)}
-          </div>
+          {activeView === "statistics" && !activeList ? (
+            <ReminderStatistics parent={parent} />
+          ) : (
+            <div className="flex min-h-full flex-col">
+              {isLoading ? (
+                <p className="py-12 text-center text-sm text-muted-foreground">{t("reminder.loading")}</p>
+              ) : grouped.length === 0 && !draftVisible ? (
+                <button
+                  type="button"
+                  className="flex min-h-40 w-full flex-1 items-center justify-center text-sm text-muted-foreground"
+                  onClick={() => activeView !== "completed" && activeView !== "archived" && !draftVisible && setDraftVisible(true)}
+                >
+                  {activeView === "completed"
+                    ? t("reminder.no-completed")
+                    : activeView === "archived"
+                      ? t("reminder.no-archived")
+                      : t("reminder.click-empty-to-create")}
+                </button>
+              ) : (
+                groupsWithDraft.map((group) => (
+                  <section key={group.list?.name ?? "unknown"}>
+                    {!activeList && group.list && (
+                      <h2 className="border-b pb-2 pt-3 text-lg font-bold" style={{ color: group.list.color || "#0A84FF" }}>
+                        {listDisplayName(group.list, t("common.reminders"))}
+                      </h2>
+                    )}
+                    {group.reminders.map((reminder) => (
+                      <ReminderRow
+                        key={reminder.name}
+                        reminder={reminder}
+                        list={group.list}
+                        archived={activeView === "archived"}
+                        onComplete={() => completeReminder.mutate({ name: reminder.name })}
+                        onArchive={async () => {
+                          await updateReminder.mutateAsync({
+                            reminder: { name: reminder.name, state: State.ARCHIVED },
+                            updateMask: ["state"],
+                          });
+                          toast.success(t("reminder.archived"));
+                        }}
+                        onDelete={() => setDeleteCandidate(reminder)}
+                        onChooseCompletionDate={() => setCompletionCandidate(reminder)}
+                        onOpen={() => (onOpenReminder ? onOpenReminder(reminder.name) : setSelectedReminder(reminder))}
+                        returnLocation={returnLocation}
+                      />
+                    ))}
+                    {draftVisible && group.list?.name === draftGroupName && renderDraft(group.reminders.length > 0)}
+                  </section>
+                ))
+              )}
+              {grouped.length > 0 && !draftVisible && activeView !== "completed" && activeView !== "archived" && (
+                <button
+                  type="button"
+                  className="min-h-20 w-full flex-1 cursor-text"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setDraftVisible(true);
+                  }}
+                  aria-label={t("reminder.click-empty-to-create")}
+                />
+              )}
+              {draftVisible && !groupsWithDraft.some((group) => group.list?.name === draftGroupName) && renderDraft(grouped.length > 0)}
+            </div>
+          )}
         </div>
       </main>
 
@@ -710,6 +763,15 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
           }}
         />
       )}
+      <ReminderCompletionDialog
+        reminder={completionCandidate}
+        pending={completeReminder.isPending}
+        onOpenChange={(open) => !open && setCompletionCandidate(undefined)}
+        onConfirm={async (completionDate) => {
+          if (!completionCandidate) return;
+          await completeReminder.mutateAsync({ name: completionCandidate.name, completionDate });
+        }}
+      />
       <ReminderListDialog
         open={listDialogOpen}
         list={editingList}

@@ -47,6 +47,8 @@ type Driver interface {
 	DeleteReminder(ctx context.Context, delete *DeleteReminder) error
 	CreateReminderOccurrence(ctx context.Context, create *ReminderOccurrence) (*ReminderOccurrence, error)
 	ListReminderOccurrences(ctx context.Context, find *FindReminderOccurrence) ([]*ReminderOccurrence, error)
+	DeleteReminderOccurrences(ctx context.Context, delete *DeleteReminderOccurrences) error
+	UpdateReminderOccurrence(ctx context.Context, update *UpdateReminderOccurrence) error
 	ListDueReminderNotifications(ctx context.Context, now int64) ([]*ReminderNotification, error)
 	MarkReminderNotificationDelivered(ctx context.Context, reminderID int32, early bool, remindTs, deliveredTs int64) error
 
