@@ -1,11 +1,56 @@
-ALTER TABLE reminder_occurrence ADD COLUMN memo_uid TEXT NOT NULL DEFAULT '';
-ALTER TABLE reminder_occurrence ADD COLUMN completion_date TEXT NOT NULL DEFAULT '';
-ALTER TABLE reminder_occurrence ADD COLUMN resolved_ts BIGINT NOT NULL DEFAULT 0;
+-- Early fork builds stored only reminder_id in completion occurrences. Rebuild
+-- the table into an independent snapshot so reminder and memo deletion cannot
+-- erase reporting history.
+ALTER TABLE reminder_occurrence RENAME TO reminder_occurrence_legacy;
 
-UPDATE reminder_occurrence
-SET status = 'COMPLETED_ON_TIME', completion_date = scheduled_date, resolved_ts = completed_ts
-WHERE status = 'COMPLETED';
+CREATE TABLE reminder_occurrence (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  uid TEXT NOT NULL UNIQUE,
+  creator_id INTEGER NOT NULL,
+  reminder_uid TEXT NOT NULL,
+  list_uid TEXT NOT NULL,
+  list_name TEXT NOT NULL,
+  title TEXT NOT NULL,
+  memo_uid TEXT NOT NULL DEFAULT '',
+  created_ts BIGINT NOT NULL DEFAULT (strftime('%s', 'now')),
+  scheduled_date TEXT NOT NULL DEFAULT '',
+  remind_ts BIGINT DEFAULT NULL,
+  completed_ts BIGINT NOT NULL,
+  completion_date TEXT NOT NULL DEFAULT '',
+  resolved_ts BIGINT NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'COMPLETED_ON_TIME'
+);
 
+INSERT INTO reminder_occurrence (
+  id, uid, creator_id, reminder_uid, list_uid, list_name, title, memo_uid,
+  created_ts, scheduled_date, remind_ts, completed_ts, completion_date, resolved_ts, status
+)
+SELECT
+  occurrence.id,
+  occurrence.uid,
+  reminder.creator_id,
+  reminder.uid,
+  reminder_list.uid,
+  reminder_list.name,
+  reminder.title,
+  COALESCE(memo.uid, ''),
+  occurrence.created_ts,
+  occurrence.scheduled_date,
+  occurrence.remind_ts,
+  occurrence.completed_ts,
+  occurrence.scheduled_date,
+  occurrence.completed_ts,
+  'COMPLETED_ON_TIME'
+FROM reminder_occurrence_legacy AS occurrence
+JOIN reminder ON reminder.id = occurrence.reminder_id
+JOIN reminder_list ON reminder_list.id = reminder.list_id
+LEFT JOIN memo ON memo.id = reminder.memo_id;
+
+DROP TABLE reminder_occurrence_legacy;
+DROP INDEX IF EXISTS idx_reminder_occurrence_reminder;
+
+CREATE INDEX idx_reminder_occurrence_creator_completed
+  ON reminder_occurrence(creator_id, completed_ts DESC);
 CREATE UNIQUE INDEX idx_reminder_occurrence_period
   ON reminder_occurrence(creator_id, reminder_uid, scheduled_date);
 CREATE INDEX idx_reminder_occurrence_creator_schedule
