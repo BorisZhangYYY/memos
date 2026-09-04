@@ -926,6 +926,9 @@
     "failed-to-load": "Failed to load inbox item",
     "memo-comment": "{{user}} has a comment on your {{memo}}.",
     "no-archived": "No archived notifications",
+    "space-invitation": "invited you to join a space",
+    "space-invitation-accepted": "You joined this space.",
+    "space-invitation-open": "Open space",
     "unread": "Unread",
     "no-unread": "No unread notifications"
   },

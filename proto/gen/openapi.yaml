@@ -6463,6 +6463,7 @@ components:
                         - MEMO_COMMENT
                         - MEMO_MENTION
                         - REMINDER
+                        - SPACE_INVITATION
                     type: string
                     description: The type of the notification.
                     format: enum
@@ -6478,6 +6479,10 @@ components:
                     readOnly: true
                     allOf:
                         - $ref: '#/components/schemas/UserNotification_ReminderPayload'
+                spaceInvitation:
+                    readOnly: true
+                    allOf:
+                        - $ref: '#/components/schemas/UserNotification_SpaceInvitationPayload'
         UserNotification_MemoCommentPayload:
             type: object
             properties:
@@ -6529,6 +6534,34 @@ components:
                     format: date-time
                 early:
                     type: boolean
+        UserNotification_SpaceInvitationPayload:
+            type: object
+            properties:
+                spaceInvitation:
+                    type: string
+                    description: |-
+                        The invitation resource.
+                         Format: spaces/{space}/invitations/{username}
+                space:
+                    allOf:
+                        - $ref: '#/components/schemas/Space'
+                    description: The read-only Space summary carried by the invitation.
+                role:
+                    enum:
+                        - ROLE_UNSPECIFIED
+                        - ADMIN
+                        - USER
+                    type: string
+                    description: The role the invitation offers.
+                    format: enum
+                state:
+                    enum:
+                        - STATE_UNSPECIFIED
+                        - PENDING
+                        - ACCEPTED
+                    type: string
+                    description: The current state of the invitation for the receiver.
+                    format: enum
         UserSetting:
             type: object
             properties:
