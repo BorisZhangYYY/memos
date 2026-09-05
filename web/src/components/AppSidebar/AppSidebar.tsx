@@ -42,7 +42,7 @@ import { type AttachmentSection, type InboxFilter, useAppSidebar } from "@/conte
 import { useAuth } from "@/contexts/AuthContext";
 import { useGlobalMemoEditor } from "@/contexts/GlobalMemoEditorContext";
 import { useInstance } from "@/contexts/InstanceContext";
-import { stringifyFilters, useMemoFilterContext } from "@/contexts/MemoFilterContext";
+import { getFilterSearch, useMemoFilterContext } from "@/contexts/MemoFilterContext";
 import { useSpaceContext } from "@/contexts/SpaceContext";
 import { useAttachmentLibraryStats } from "@/hooks/useAttachmentLibrary";
 import useCurrentUser from "@/hooks/useCurrentUser";
@@ -523,9 +523,8 @@ const GlobalNavigation = () => {
   const ActiveScopeIcon = activeScopeItem.icon;
 
   const navigateToScope = (scope: PrimaryMemoScope) => {
-    const filterQuery = stringifyFilters(filters);
     setMemoScope(scope);
-    navigate({ pathname: getMemoScopePath(scope), search: filterQuery ? `?filter=${filterQuery}` : "" });
+    navigate({ pathname: getMemoScopePath(scope), search: getFilterSearch(filters) });
     setMobileOpen(false);
   };
 

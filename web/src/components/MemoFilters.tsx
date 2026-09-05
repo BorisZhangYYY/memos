@@ -45,6 +45,10 @@ const FILTER_CONFIGS: Record<FilterFactor, FilterConfig> = {
     icon: SearchIcon,
     getLabel: (value) => value,
   },
+  celSearch: {
+    icon: SearchIcon,
+    getLabel: (value) => value,
+  },
   displayTime: {
     icon: CalendarIcon,
     getLabel: (value) => value,
