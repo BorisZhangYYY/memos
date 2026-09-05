@@ -4,6 +4,7 @@ import {
   ArchiveIcon,
   ArrowRightIcon,
   BellIcon,
+  CalendarDaysIcon,
   ChevronDownIcon,
   EarthIcon,
   FileAudioIcon,
@@ -55,7 +56,7 @@ import {
   BUILTIN_TASKS_VIEW_ID,
   getMemoScopePath,
   getMemoViewId,
-  isMemoScopeRoute,
+  isMemoCollectionRoute,
   type PrimaryMemoScope,
   resolveMemoScope,
 } from "@/lib/memo-views";
@@ -118,7 +119,7 @@ const ViewsSection = ({ manageActive = false }: { manageActive?: boolean }) => {
 
   const handleView = (viewId: string) => {
     setMemoView(selectedMemoView === viewId ? undefined : viewId);
-    if (!isMemoScopeRoute(location.pathname)) navigate(ROUTES.HOME);
+    if (!isMemoCollectionRoute(location.pathname)) navigate(ROUTES.HOME);
     setMobileOpen(false);
   };
 
@@ -274,7 +275,7 @@ const CollectionSidebarContent = ({ context }: { context: MemoStatsContext }) =>
 
   // Off the collection routes (the library shown as fallback content), calendar and tag
   // clicks must land somewhere that renders the filtered feed.
-  const onCollectionRoute = isMemoScopeRoute(location.pathname) || !!profileMatch;
+  const onCollectionRoute = isMemoCollectionRoute(location.pathname) || !!profileMatch;
   const filterTarget = onCollectionRoute ? undefined : context === "explore" ? ROUTES.EXPLORE : ROUTES.HOME;
   const tagStateScope = isUserLevelCollection
     ? (statsUserName ?? context)
@@ -437,8 +438,8 @@ const MemoDetailSidebarContent = () => {
 const RouteSidebarContent = () => {
   const location = useLocation();
   const kind = getSidebarRouteKind(location.pathname);
-  if (kind === "home" || kind === "archived" || kind === "explore" || kind === "profile") {
-    return <CollectionSidebarContent context={kind} />;
+  if (kind === "home" || kind === "archived" || kind === "explore" || kind === "profile" || kind === "calendar") {
+    return <CollectionSidebarContent context={kind === "calendar" ? "home" : kind} />;
   }
   if (kind === "views") return <ViewsSection manageActive />;
   if (kind === "attachments") return <AttachmentsSidebarContent />;
@@ -530,6 +531,14 @@ const GlobalNavigation = () => {
 
   const items: GlobalNavItem[] = currentUser
     ? [
+        {
+          id: "calendar",
+          label: t("common.calendar"),
+          path: ROUTES.CALENDAR,
+          icon: CalendarDaysIcon,
+          active: routeKind === "calendar",
+          alwaysExpanded: true,
+        },
         {
           id: "attachments",
           label: t("common.attachments"),

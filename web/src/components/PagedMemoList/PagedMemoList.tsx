@@ -49,6 +49,12 @@ interface Props {
   enabled?: boolean;
   /** Route-owned content rendered before the list and inside column one in grid mode. */
   renderLeading?: (options: { useGrid: boolean }) => ReactNode;
+  /** Route-owned content spanning the full list width above every column (e.g. a page identity block). */
+  renderHeader?: (options: { useGrid: boolean }) => ReactNode;
+  /** Replaces the generic empty-state message when the route knows why the list is empty. */
+  emptyMessage?: string;
+  /** Off when the host already shows the active filter chips elsewhere. */
+  showFilters?: boolean;
 }
 
 function useAutoFetchWhenNotScrollable({
@@ -202,6 +208,7 @@ const PagedMemoList = (props: Props) => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [canPaginate, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+  const showFilters = props.showFilters ?? true;
   const leadingContent = props.renderLeading?.({ useGrid });
 
   // A freshly created memo is hoisted to the front; pin it to the top of column one so it
@@ -249,12 +256,12 @@ const PagedMemoList = (props: Props) => {
   // empty state follows them. The newest memo also lands directly beneath them (priorityKey
   // above). Every vertical seam inside the stack uses GRID_GAP so y-spacing matches the
   // grid's x-spacing exactly.
-  const hasFilters = filters.length > 0;
+  const hasFilters = showFilters && filters.length > 0;
   const gridLeading =
     leadingContent || hasFilters || initialLoader || emptyPlaceholder || initialError ? (
       <div className="flex w-full flex-col" style={{ gap: GRID_GAP }}>
         {leadingContent}
-        <MemoFilters />
+        {showFilters && <MemoFilters />}
         {initialLoader}
         {initialError}
         {emptyPlaceholder}
@@ -295,7 +302,7 @@ const PagedMemoList = (props: Props) => {
           ) : (
             <>
               {leadingContent}
-              <MemoFilters className="mb-2" />
+              {showFilters && <MemoFilters className="mb-2" />}
               {initialLoader}
               {initialError}
               {displayMemoList.map((memo) => props.renderer(memo, { compact: effectiveCompact }))}
