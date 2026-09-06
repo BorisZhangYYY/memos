@@ -53,8 +53,6 @@ interface Props {
   renderHeader?: (options: { useGrid: boolean }) => ReactNode;
   /** Replaces the generic empty-state message when the route knows why the list is empty. */
   emptyMessage?: string;
-  /** Off when the host already shows the active filter chips elsewhere. */
-  showFilters?: boolean;
 }
 
 function useAutoFetchWhenNotScrollable({
@@ -208,7 +206,6 @@ const PagedMemoList = (props: Props) => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [canPaginate, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const showFilters = props.showFilters ?? true;
   const leadingContent = props.renderLeading?.({ useGrid });
 
   // A freshly created memo is hoisted to the front; pin it to the top of column one so it
@@ -256,12 +253,12 @@ const PagedMemoList = (props: Props) => {
   // empty state follows them. The newest memo also lands directly beneath them (priorityKey
   // above). Every vertical seam inside the stack uses GRID_GAP so y-spacing matches the
   // grid's x-spacing exactly.
-  const hasFilters = showFilters && filters.length > 0;
+  const hasFilters = filters.length > 0;
   const gridLeading =
     leadingContent || hasFilters || initialLoader || emptyPlaceholder || initialError ? (
       <div className="flex w-full flex-col" style={{ gap: GRID_GAP }}>
         {leadingContent}
-        {showFilters && <MemoFilters />}
+        <MemoFilters />
         {initialLoader}
         {initialError}
         {emptyPlaceholder}
@@ -273,11 +270,7 @@ const PagedMemoList = (props: Props) => {
     <>
       {pageError}
       {isFetchingNextPage && <Loader />}
-      {!isFetchingNextPage && (hasNextPage || displayMemoList.length > 0) && (
-        <div className="w-full opacity-70 flex flex-row justify-center items-center my-4">
-          <BackToTop />
-        </div>
-      )}
+      {!isFetchingNextPage && (hasNextPage || displayMemoList.length > 0) && <BackToTop />}
     </>
   );
 
@@ -302,7 +295,7 @@ const PagedMemoList = (props: Props) => {
           ) : (
             <>
               {leadingContent}
-              {showFilters && <MemoFilters className="mb-2" />}
+              <MemoFilters className="mb-2" />
               {initialLoader}
               {initialError}
               {displayMemoList.map((memo) => props.renderer(memo, { compact: effectiveCompact }))}
@@ -339,16 +332,18 @@ const BackToTop = () => {
     });
   };
 
-  // Don't render if not visible
+  // Render nothing at all while hidden, so the list's end carries no phantom spacing.
   if (!isVisible) {
     return null;
   }
 
   return (
-    <Button variant="ghost" onClick={scrollToTop}>
-      {t("router.back-to-top")}
-      <ArrowUpIcon className="ml-1 w-4 h-auto" />
-    </Button>
+    <div className="my-4 flex w-full flex-row items-center justify-center opacity-70">
+      <Button variant="ghost" onClick={scrollToTop}>
+        {t("router.back-to-top")}
+        <ArrowUpIcon className="ml-1 w-4 h-auto" />
+      </Button>
+    </div>
   );
 };
 
