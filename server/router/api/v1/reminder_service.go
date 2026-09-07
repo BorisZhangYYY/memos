@@ -1098,10 +1098,21 @@ func (s *APIV1Service) CompleteReminder(ctx context.Context, request *v1pb.Compl
 	nextDate := ""
 	scheduledDates := []string{value.DueDate}
 	if value.RecurrenceType != store.ReminderRecurrenceNone {
-		var datesErr error
-		scheduledDates, nextDate, datesErr = recurringDatesThrough(value, today)
-		if datesErr != nil || len(scheduledDates) == 0 {
-			return nil, status.Errorf(codes.FailedPrecondition, "failed to resolve recurring reminder periods")
+		if value.DueDate > today {
+			var datesErr error
+			nextDate, datesErr = nextReminderDate(value)
+			if datesErr != nil {
+				return nil, status.Errorf(codes.FailedPrecondition, "failed to resolve recurring reminder periods")
+			}
+			if value.RecurrenceEndDate != "" && nextDate > value.RecurrenceEndDate {
+				nextDate = ""
+			}
+		} else {
+			var datesErr error
+			scheduledDates, nextDate, datesErr = recurringDatesThrough(value, today)
+			if datesErr != nil || len(scheduledDates) == 0 {
+				return nil, status.Errorf(codes.FailedPrecondition, "failed to resolve recurring reminder periods")
+			}
 		}
 	} else if request.CompletionDate != "" {
 		return nil, status.Errorf(codes.InvalidArgument, "completion date is only supported for recurring reminders")
@@ -1113,6 +1124,8 @@ func (s *APIV1Service) CompleteReminder(ctx context.Context, request *v1pb.Compl
 			targetDate = completionDate
 			scheduledDates = []string{targetDate}
 		}
+	} else if completionDate < value.DueDate {
+		targetDate = value.DueDate
 	} else {
 		for _, scheduledDate := range scheduledDates {
 			if scheduledDate <= completionDate {

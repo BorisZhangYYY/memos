@@ -197,6 +197,43 @@ func TestCompletingBacklogAdvancesPastToday(t *testing.T) {
 	require.Equal(t, codes.InvalidArgument, status.Code(err))
 }
 
+func TestCompletingRecurringReminderBeforeDueDate(t *testing.T) {
+	ctx := context.Background()
+	service := newIntegrationService(t)
+	user, err := service.Store.CreateUser(ctx, &store.User{Username: "reminder-early-completion", Role: store.RoleUser})
+	require.NoError(t, err)
+	userContext := userCtx(ctx, user.ID)
+	lists, err := service.ListReminderLists(userContext, &v1pb.ListReminderListsRequest{Parent: "users/reminder-early-completion"})
+	require.NoError(t, err)
+
+	location, err := time.LoadLocation("Asia/Shanghai")
+	require.NoError(t, err)
+	today := time.Now().In(location)
+	dueDate := today.AddDate(0, 0, 1).Format(time.DateOnly)
+	reminder, err := service.CreateReminder(userContext, &v1pb.CreateReminderRequest{
+		Parent: "users/reminder-early-completion",
+		Reminder: &v1pb.Reminder{
+			Title: "Tomorrow routine", ReminderList: lists.ReminderLists[0].Name, DueDate: dueDate, TimeZone: "Asia/Shanghai",
+			Recurrence: &v1pb.ReminderRecurrence{Frequency: v1pb.ReminderRecurrence_DAILY, Interval: 1},
+		},
+	})
+	require.NoError(t, err)
+
+	advanced, err := service.CompleteReminder(userContext, &v1pb.CompleteReminderRequest{Name: reminder.Name})
+	require.NoError(t, err)
+	require.Equal(t, v1pb.Reminder_PENDING, advanced.Status)
+	require.Equal(t, today.AddDate(0, 0, 2).Format(time.DateOnly), advanced.DueDate)
+
+	listed, err := service.ListReminderOccurrences(userContext, &v1pb.ListReminderOccurrencesRequest{
+		Parent: "users/reminder-early-completion",
+	})
+	require.NoError(t, err)
+	require.Len(t, listed.ReminderOccurrences, 1)
+	require.Equal(t, dueDate, listed.ReminderOccurrences[0].ScheduledDate)
+	require.Equal(t, today.Format(time.DateOnly), listed.ReminderOccurrences[0].CompletionDate)
+	require.Equal(t, v1pb.ReminderOccurrence_COMPLETED_ON_TIME, listed.ReminderOccurrences[0].Status)
+}
+
 func TestWeeklyLateCompletionAndReminderStats(t *testing.T) {
 	ctx := context.Background()
 	service := newIntegrationService(t)

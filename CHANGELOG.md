@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.33.6](https://github.com/BorisZhangYYY/memos/compare/v0.33.5...v0.33.6) (2026-09-07)
+
+### Summary
+
+This patch release adds durable outcome history and statistics for reminders,
+including skipped recurring periods, late completion timing, and completion
+snapshots that remain meaningful after their source reminder is deleted.
+
+### Features
+
+* **Reminder outcome statistics:** records on-time, late, and skipped recurring
+  outcomes and presents 7-day, 30-day, and year/month history views with
+  concrete reminder entries.
+* **Durable completion snapshots:** keeps completed reminder titles, completion
+  dates, list names, and Memo references for historical reporting after the
+  source reminder is deleted, while removing history for reminders deleted
+  before any completion.
+
+### Bug Fixes
+
+* **Recurring completion semantics:** assigns missed periods to skipped history
+  and the completion to the latest eligible period, including the number of
+  late days.
+* **Early recurring completion:** allows the next scheduled occurrence to be
+  completed before its due date, records it as on time, and advances the
+  reminder to the following occurrence.
+* **Occurrence migration compatibility:** upgrades legacy reminder history and
+  supports both compatible occurrence schema layouts during migration.
+
 ## [0.33.5](https://github.com/BorisZhangYYY/memos/compare/v0.33.4...v0.33.5) (2026-08-25)
 
 ### Summary
