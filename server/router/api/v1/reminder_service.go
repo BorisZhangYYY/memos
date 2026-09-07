@@ -532,6 +532,8 @@ func (s *APIV1Service) GetReminderStats(ctx context.Context, request *v1pb.GetRe
 			result.CompletedLateCount++
 		case v1pb.ReminderOccurrence_SKIPPED:
 			result.SkippedCount++
+		default:
+			continue
 		}
 	}
 	if result.TotalCount > 0 {
@@ -1023,6 +1025,8 @@ func convertReminderOccurrence(user *store.User, value *store.ReminderOccurrence
 		result.Status = v1pb.ReminderOccurrence_COMPLETED_LATE
 	case store.ReminderOccurrenceSkipped:
 		result.Status = v1pb.ReminderOccurrence_SKIPPED
+	default:
+		result.Status = v1pb.ReminderOccurrence_STATUS_UNSPECIFIED
 	}
 	return result
 }

@@ -138,6 +138,8 @@ func nextDate(value *store.Reminder) (string, error) {
 		current = addMonthsClamped(current, interval)
 	case store.ReminderRecurrenceYearly:
 		current = addYearsClamped(current, interval)
+	default:
+		return "", errors.New("reminder does not repeat")
 	}
 	return current.Format(time.DateOnly), nil
 }
@@ -167,7 +169,8 @@ func addMonthsClamped(value time.Time, months int) time.Time {
 
 func addYearsClamped(value time.Time, years int) time.Time {
 	targetYear, day := value.Year()+years, value.Day()
-	if value.Month() == time.February && day == 29 && time.Date(targetYear, time.March, 0, 0, 0, 0, 0, time.UTC).Day() != 29 {
+	lastFebruaryDay := time.Date(targetYear, time.March, 1, 0, 0, 0, 0, time.UTC).AddDate(0, 0, -1).Day()
+	if value.Month() == time.February && day == 29 && lastFebruaryDay != 29 {
 		day = 28
 	}
 	return time.Date(targetYear, value.Month(), day, 0, 0, 0, 0, time.UTC)
