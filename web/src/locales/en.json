@@ -504,6 +504,8 @@
       "week-start-day-description": "Controls the first day shown in calendar-style views."
     },
     "account": {
+      "attachment-storage": "Attachment storage",
+      "storage-usage-error": "Your attachment storage is unavailable.",
       "danger-area-description": "Irreversible account actions live here. Review them carefully before continuing.",
       "update-information": "Update Information",
       "openapi-reset": "Reset OpenAPI Key",

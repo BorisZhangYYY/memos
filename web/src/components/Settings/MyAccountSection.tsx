@@ -19,6 +19,7 @@ import UserAvatar from "../UserAvatar";
 import LinkedIdentitySection from "./LinkedIdentitySection";
 import SettingGroup from "./SettingGroup";
 import SettingSection from "./SettingSection";
+import UserStatsSection from "./UserStatsSection";
 
 const MyAccountSection = () => {
   const t = useTranslate();
@@ -97,6 +98,7 @@ const MyAccountSection = () => {
       <SettingGroup showSeparator>
         <PersonaCard persona={userPersonaSetting} onEdit={personaDialog.open} onExport={handleExportPersona} />
       </SettingGroup>
+      <UserStatsSection />
 
       <LinkedIdentitySection />
 
