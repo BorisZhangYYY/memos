@@ -4,16 +4,20 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"connectrpc.com/connect"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/labstack/echo/v5"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/semaphore"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/usememos/memos/internal/httpgetter"
 	"github.com/usememos/memos/internal/markdown"
 	"github.com/usememos/memos/internal/profile"
+	"github.com/usememos/memos/internal/ratelimit"
 	v1pb "github.com/usememos/memos/proto/gen/api/v1"
 	"github.com/usememos/memos/server/auth"
 	"github.com/usememos/memos/server/notification"
@@ -28,8 +32,8 @@ const MaxAPIRequestBytes = 256 << 20
 // requestBodyLimit returns the request body cap for a procedure. Chunked
 // uploads carry at most one chunk per call, so they get a much lower cap.
 func requestBodyLimit(procedure string) int64 {
-	if procedure == attachmentUploadProcedure {
-		return attachmentUploadRequestLimit
+	if procedure == attachmentUploadProcedure || procedure == importMemosProcedure {
+		return uploadRequestLimit
 	}
 	return MaxAPIRequestBytes
 }
@@ -64,6 +68,8 @@ type APIV1Service struct {
 
 	linkMetadataFetcher linkMetadataFetcher
 	attachmentUploads   attachmentUploads
+	memoImports         memoImports
+	memoArchiveLimiter  ratelimit.Limiter
 }
 
 // NewAPIV1Service creates an API v1 service with its shared dependencies.
@@ -81,9 +87,21 @@ func NewAPIV1Service(secret string, profile *profile.Profile, store *store.Store
 		NotificationEmailSender:  nil,
 		thumbnailSemaphore:       semaphore.NewWeighted(3), // Limit to 3 concurrent thumbnail generations
 		imageProcessingSemaphore: semaphore.NewWeighted(2),
+		memoArchiveLimiter:       ratelimit.NewMemoryLimiter(ratelimit.DefaultPolicy()),
 	}
 	service.linkMetadataFetcher = httpgetter.NewHTMLMetaFetcher()
 	return service
+}
+
+func (s *APIV1Service) checkMemoArchiveRateLimit(userID int32) error {
+	if s.memoArchiveLimiter == nil {
+		return nil
+	}
+	decision := s.memoArchiveLimiter.Consume(ratelimit.ScopeArchiveUser, strconv.FormatInt(int64(userID), 10), 1)
+	if !decision.Allowed {
+		return status.Errorf(codes.ResourceExhausted, "memo archive limit reached; retry after %s", decision.RetryAfter)
+	}
+	return nil
 }
 
 // newGatewayMarshaler mirrors grpc-gateway's default JSON marshaler with one
