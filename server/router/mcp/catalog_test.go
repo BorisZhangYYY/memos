@@ -17,7 +17,7 @@ func requireJSONSchema(t *testing.T, value any) jsonSchema {
 }
 
 func TestCuratedOperationIDsStayPersonalDataFocused(t *testing.T) {
-	require.Len(t, curatedOperationIDs, 49)
+	require.Len(t, curatedOperationIDs, 52)
 	allowedUserOperations := map[string]bool{
 		"UserService_GetUserStats":      true,
 		"UserService_GetUserSetting":    true,
@@ -255,7 +255,6 @@ func TestBuildToolFromOperationTailorsRequestBodySchemas(t *testing.T) {
 				"memo": "memos/abc123",
 				"body": map[string]any{
 					"reaction": map[string]any{
-						"contentId":    "memos/abc123",
 						"reactionType": "👍",
 					},
 				},
@@ -581,8 +580,8 @@ func TestBuildToolFromOperationInfersCurrentUserForListShortcuts(t *testing.T) {
 	registry, err := buildOperationRegistry(spec)
 	require.NoError(t, err)
 
-	tool, operation := buildToolFromOperation(registry["ShortcutService_ListShortcuts"])
-	require.Equal(t, "shortcut_list_shortcuts", tool.Name)
+	tool, operation := buildToolFromOperation(registry["MemoViewService_ListMemoViews"])
+	require.Equal(t, "memo_view_list_memo_views", tool.Name)
 	require.Equal(t, "GET", operation.Method)
 	require.True(t, tool.Annotations.ReadOnlyHint)
 

@@ -2,6 +2,8 @@
 
 This file tracks follow-up work for fork-specific life-platform features that is intentionally outside the current implementation scope.
 
+- Explore Space-scoped team reminders with assignees, shared task status, and a workboard view while keeping existing personal reminders private and global.
+
 ## Unified personal dashboard
 
 - Design a top-level dashboard that summarizes the user's Memos activity, reminders, mood, and finance data under one shared date range.

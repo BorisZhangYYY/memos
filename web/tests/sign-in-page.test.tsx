@@ -16,8 +16,7 @@ const state = vi.hoisted(() => ({
 vi.mock("@/contexts/InstanceContext", () => ({
   useInstance: () => ({
     generalSetting: state.generalSetting,
-    memoRelatedSetting: { allowedVisibilities: [] },
-    profile: { instanceUrl: "" },
+    profile: { accessMode: 1 },
   }),
 }));
 

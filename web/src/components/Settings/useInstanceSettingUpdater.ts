@@ -9,7 +9,7 @@ interface SaveInstanceSettingOptions {
   key: InstanceSetting_Key;
   setting: InstanceSetting;
   errorContext: string;
-  showSuccess?: boolean;
+  showSuccessToast?: boolean;
 }
 
 export const buildInstanceSettingName = (key: InstanceSetting_Key) => `instance/settings/${InstanceSetting_Key[key]}`;
@@ -19,11 +19,15 @@ const useInstanceSettingUpdater = () => {
   const { updateSetting, fetchSetting } = useInstance();
 
   return useCallback(
-    async ({ key, setting, errorContext, showSuccess = true }: SaveInstanceSettingOptions) => {
+    async ({ key, setting, errorContext, showSuccessToast = true }: SaveInstanceSettingOptions) => {
       try {
         await updateSetting(setting);
-        await fetchSetting(key);
-        if (showSuccess) {
+        // ACCESS is updated in the React Query cache from the mutation response.
+        // Refetching it here would duplicate the request after every save.
+        if (key !== InstanceSetting_Key.ACCESS) {
+          await fetchSetting(key);
+        }
+        if (showSuccessToast) {
           toast.success(t("message.update-succeed"));
         }
         return true;

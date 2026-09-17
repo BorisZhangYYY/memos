@@ -11,6 +11,7 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
 	v1pb "github.com/usememos/memos/proto/gen/api/v1"
+	storepb "github.com/usememos/memos/proto/gen/store"
 	"github.com/usememos/memos/store"
 )
 
@@ -116,13 +117,15 @@ func TestSetMemoMood(t *testing.T) {
 func TestMemoMoodLevelVisibleOnlyToCreator(t *testing.T) {
 	ctx := context.Background()
 	svc := newIntegrationService(t)
+	_, accessErr := svc.Store.UpsertInstanceSetting(ctx, &storepb.InstanceSetting{Key: storepb.InstanceSettingKey_ACCESS, Value: &storepb.InstanceSetting_AccessSetting{AccessSetting: &storepb.InstanceAccessSetting{AccessMode: storepb.InstanceAccessMode_INSTANCE_ACCESS_MODE_PUBLIC}}})
+	require.NoError(t, accessErr)
 
 	author, err := svc.Store.CreateUser(ctx, &store.User{
-		Username: "author", Role: store.RoleAdmin, Email: "author@example.com",
+		Username: "author", Role: store.RoleUser, Email: "author@example.com",
 	})
 	require.NoError(t, err)
 	viewer, err := svc.Store.CreateUser(ctx, &store.User{
-		Username: "viewer", Role: store.RoleUser, Email: "viewer@example.com",
+		Username: "viewer", Role: store.RoleAdmin, Email: "viewer@example.com",
 	})
 	require.NoError(t, err)
 
@@ -145,11 +148,29 @@ func TestMemoMoodLevelVisibleOnlyToCreator(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, memo.Content, publicView.Content)
 	assert.Zero(t, publicView.MoodLevel)
+	// Neither instance administration nor Space administration grants access to mood.
+	space, err := svc.Store.CreateSpace(ctx, &store.Space{UID: "private-mood-space", Title: "Team"}, author.ID)
+	require.NoError(t, err)
+	_, err = svc.Store.CreateSpaceInvitation(ctx, &store.SpaceInvitation{SpaceID: space.ID, UserID: viewer.ID, Role: store.SpaceMemberRoleAdmin}, author.ID)
+	require.NoError(t, err)
+	_, err = svc.Store.AcceptSpaceInvitation(ctx, &store.AcceptSpaceInvitation{SpaceID: space.ID, UserID: viewer.ID}, viewer.ID)
+	require.NoError(t, err)
+	spaceName := "spaces/" + space.UID
+	moved, err := svc.UpdateMemo(userCtx(ctx, author.ID), &v1pb.UpdateMemoRequest{Memo: &v1pb.Memo{Name: memo.Name, Space: &spaceName, Visibility: v1pb.Visibility_SPACE}, UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"space", "visibility"}}})
+	require.NoError(t, err)
+	require.Equal(t, int32(6), moved.MoodLevel)
+	spaceView, err := svc.GetMemo(userCtx(ctx, viewer.ID), &v1pb.GetMemoRequest{Name: memo.Name})
+	require.NoError(t, err)
+	require.Zero(t, spaceView.MoodLevel)
+	_, err = svc.SetMemoMood(userCtx(ctx, viewer.ID), &v1pb.SetMemoMoodRequest{Name: memo.Name, MoodLevel: 1})
+	require.Equal(t, codes.PermissionDenied, status.Code(err))
 }
 
 func TestMoodFilterRestrictedToCurrentUser(t *testing.T) {
 	ctx := context.Background()
 	svc := newIntegrationService(t)
+	_, accessErr := svc.Store.UpsertInstanceSetting(ctx, &storepb.InstanceSetting{Key: storepb.InstanceSettingKey_ACCESS, Value: &storepb.InstanceSetting_AccessSetting{AccessSetting: &storepb.InstanceAccessSetting{AccessMode: storepb.InstanceAccessMode_INSTANCE_ACCESS_MODE_PUBLIC}}})
+	require.NoError(t, accessErr)
 
 	author, err := svc.Store.CreateUser(ctx, &store.User{
 		Username: "author", Role: store.RoleAdmin, Email: "author@example.com",

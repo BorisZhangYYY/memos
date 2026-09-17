@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import {
-  readRememberedReminderList,
-  rememberReminderList,
-  resolveReminderListSelection,
-} from "@/utils/reminder-list-selection";
+import { readRememberedReminderList, rememberReminderList, resolveReminderListSelection } from "@/utils/reminder-list-selection";
 
 const defaultList = { name: "users/demo/reminderLists/default" };
 const workList = { name: "users/demo/reminderLists/work" };

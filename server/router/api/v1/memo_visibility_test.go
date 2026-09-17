@@ -81,12 +81,9 @@ func TestCreateMemo_VisibilityAllowedByDefault(t *testing.T) {
 	assert.Equal(t, v1pb.Visibility_PUBLIC, memo.Visibility)
 }
 
-// TestCreateMemoComment_VisibilityInheritedFromParent verifies that comments on
-// an existing memo are not subject to the allowed visibilities check: their
-// visibility is inherited from the parent memo rather than user-chosen, so
-// creating and updating a comment keeps working even when the parent's
-// visibility is no longer in the allowed list.
-func TestCreateMemoComment_VisibilityInheritedFromParent(t *testing.T) {
+// TestCreateMemoComment_IndependentVisibility verifies that comments default to
+// private even when their parent is public and public creation is disabled.
+func TestCreateMemoComment_IndependentVisibility(t *testing.T) {
 	ctx := context.Background()
 	svc := newIntegrationService(t)
 
@@ -119,17 +116,17 @@ func TestCreateMemoComment_VisibilityInheritedFromParent(t *testing.T) {
 	require.Error(t, err)
 	assert.Equal(t, codes.InvalidArgument, status.Code(err))
 
-	// Creating a comment on the existing PUBLIC memo succeeds and inherits its visibility.
+	// The comment has its own visibility and defaults to PRIVATE.
 	comment, err := svc.CreateMemoComment(authorCtx, &v1pb.CreateMemoCommentRequest{
 		Name:    parent.Name,
 		Comment: &v1pb.Memo{Content: "a comment"},
 	})
 	require.NoError(t, err)
-	assert.Equal(t, v1pb.Visibility_PUBLIC, comment.Visibility)
+	assert.Equal(t, v1pb.Visibility_PRIVATE, comment.Visibility)
 
 	// Updating the comment, including its visibility path, also succeeds.
 	_, err = svc.UpdateMemo(authorCtx, &v1pb.UpdateMemoRequest{
-		Memo:       &v1pb.Memo{Name: comment.Name, Content: "updated comment", Visibility: v1pb.Visibility_PUBLIC},
+		Memo:       &v1pb.Memo{Name: comment.Name, Content: "updated comment", Visibility: v1pb.Visibility_PRIVATE},
 		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"content", "visibility"}},
 	})
 	require.NoError(t, err)

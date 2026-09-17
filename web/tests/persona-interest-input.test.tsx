@@ -6,14 +6,7 @@ import { normalizePersonaInterestTags } from "@/lib/persona";
 
 const TestInput = ({ initialValue = [] }: { initialValue?: string[] }) => {
   const [value, setValue] = useState(initialValue);
-  return (
-    <PersonaInterestInput
-      value={value}
-      onChange={setValue}
-      placeholder="Add interest"
-      removeLabel={(tag) => `Remove ${tag}`}
-    />
-  );
+  return <PersonaInterestInput value={value} onChange={setValue} placeholder="Add interest" removeLabel={(tag) => `Remove ${tag}`} />;
 };
 
 describe("PersonaInterestInput", () => {

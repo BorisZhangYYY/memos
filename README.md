@@ -51,6 +51,8 @@ Open `http://localhost:5230` and start writing.
 
 ### Native Binary
 
+Native macOS binaries require macOS 13 Ventura or later.
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/usememos/memos/main/scripts/install.sh | sh
 ```
@@ -81,6 +83,7 @@ Contributions of all kinds are welcome, including bug reports, feature suggestio
 
 - [**CodeRabbit** — Cut code review time and bugs in half](https://coderabbit.link/usememos)
 - [**SSD Nodes** — Affordable VPS hosting for self-hosters](https://ssdnodes.com/?utm_source=memos&utm_medium=sponsor)
+- [**TestMu AI** — The world’s first full-stack Agentic AI Quality Engineering platform](https://www.testmuai.com/?utm_medium=sponsor&utm_source=memos)
 
 Love Memos? [Sponsor us on GitHub](https://github.com/sponsors/usememos) to help keep the project growing!
 
@@ -90,4 +93,17 @@ Memos is open-source software licensed under the [MIT License](LICENSE). See our
 
 ---
 
-**[Website](https://usememos.com)** • **[Documentation](https://usememos.com/docs)** • **[Demo](https://demo.usememos.com/)** • **[Discord](https://discord.gg/tfPJa4UmAv)** • **[X/Twitter](https://x.com/usememos)**
+[Website](https://usememos.com) • [Documentation](https://usememos.com/docs) • [Demo](https://demo.usememos.com/) • [Discord](https://discord.gg/tfPJa4UmAv) • [X/Twitter](https://x.com/usememos)
+
+<p>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=usememos/memos&type=rank&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=usememos/memos&type=rank" />
+    <img alt="Star History Rank" src="https://api.star-history.com/badge?repo=usememos/memos&type=rank" />
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=usememos/memos&type=trending&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=usememos/memos&type=trending" />
+    <img alt="GitHub Trending Repository of the Day" src="https://api.star-history.com/badge?repo=usememos/memos&type=trending" />
+  </picture>
+</p>

@@ -12,10 +12,7 @@ const makeStats = (dates: Date[], levels: number[]) =>
 
 describe("dailyMoodStatsFromLevels", () => {
   it("averages mood levels per browser-local day, skipping non-mooded memos", () => {
-    const stats = makeStats(
-      [new Date(2026, 7, 7, 23, 59), new Date(2026, 7, 7, 0, 1), new Date(2026, 7, 7, 12, 0)],
-      [3, 5, 0],
-    );
+    const stats = makeStats([new Date(2026, 7, 7, 23, 59), new Date(2026, 7, 7, 0, 1), new Date(2026, 7, 7, 12, 0)], [3, 5, 0]);
     expect(dailyMoodStatsFromLevels(stats)).toEqual({ "2026-08-07": 4 });
   });
 

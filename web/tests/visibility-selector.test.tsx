@@ -1,53 +1,62 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import VisibilitySelector from "@/components/MemoEditor/Toolbar/VisibilitySelector";
 import { Visibility } from "@/types/proto/api/v1/memo_service_pb";
 
-const instance = vi.hoisted(() => ({ allowedVisibilities: [] as string[] }));
+vi.mock("@/utils/i18n", () => ({ useTranslate: () => (key: string) => key }));
 
-vi.mock("@/contexts/InstanceContext", () => ({
-  useInstance: () => ({ memoRelatedSetting: instance }),
-}));
+// Base UI menus reach for layout/pointer APIs jsdom doesn't implement.
+beforeAll(() => {
+  Element.prototype.scrollIntoView = vi.fn();
+  Element.prototype.hasPointerCapture = vi.fn(() => false);
+  Element.prototype.setPointerCapture = vi.fn();
+  Element.prototype.releasePointerCapture = vi.fn();
+});
 
-vi.mock("@/utils/i18n", () => ({
-  useTranslate: () => (key: string, params?: Record<string, unknown>) => (params?.visibility ? `${key}:${params.visibility}` : key),
-}));
+const openMenu = async (value: Visibility, onChange = vi.fn(), space?: string) => {
+  render(<VisibilitySelector value={value} space={space} onChange={onChange} />);
+  fireEvent.click(screen.getByRole("button"));
+  await screen.findByRole("menu");
+  return onChange;
+};
 
-describe("<VisibilitySelector>", () => {
-  beforeEach(() => {
-    instance.allowedVisibilities = [];
+describe("VisibilitySelector", () => {
+  it("omits the Space audience when the edited memo has no Space placement", async () => {
+    await openMenu(Visibility.PRIVATE);
+
+    expect(screen.getAllByRole("menuitem").map((item) => item.textContent)).toEqual([
+      "memo.visibility.privatememo.visibility.private-description",
+      "memo.visibility.protectedmemo.visibility.protected-description",
+      "memo.visibility.publicmemo.visibility.public-description",
+    ]);
   });
 
-  it("shows the current visibility normally while it remains allowed", () => {
-    render(<VisibilitySelector value={Visibility.PUBLIC} onChange={vi.fn()} />);
+  it("offers the Space audience with its own description when the edited memo belongs to a Space", async () => {
+    await openMenu(Visibility.PRIVATE, vi.fn(), "spaces/product");
 
-    expect(screen.getByRole("button")).toHaveTextContent("memo.visibility.public");
-    expect(screen.queryByRole("note")).not.toBeInTheDocument();
+    const spaceItem = screen.getByRole("menuitem", { name: /memo\.visibility\.space/ });
+    expect(spaceItem).toHaveTextContent("memo.visibility.space-description");
   });
 
-  it("explains a legacy visibility that the instance has disabled", async () => {
-    instance.allowedVisibilities = ["PRIVATE"];
-    render(<VisibilitySelector value={Visibility.PUBLIC} onChange={vi.fn()} />);
+  it("names the current Space audience even when placement is unavailable", () => {
+    render(<VisibilitySelector value={Visibility.SPACE} onChange={vi.fn()} />);
 
-    const trigger = screen.getByRole("button");
-    expect(trigger).toHaveTextContent("memo.visibility.public");
-    expect(trigger).toHaveAttribute("title", "memo.visibility.disabled-current-title:memo.visibility.public");
-
-    fireEvent.click(trigger);
-
-    expect(await screen.findByRole("note")).toHaveTextContent("memo.visibility.disabled-current-description:memo.visibility.public");
-    expect(screen.getByRole("menuitem", { name: /memo\.visibility\.public/ })).toHaveAttribute("data-disabled");
-    expect(screen.getByRole("menuitem", { name: /memo\.visibility\.protected/ })).toBeInTheDocument();
+    expect(screen.getByRole("button")).toHaveTextContent("memo.visibility.space");
   });
 
-  it("still lets the user downgrade to an allowed visibility", async () => {
-    instance.allowedVisibilities = ["PRIVATE"];
-    const onChange = vi.fn();
-    render(<VisibilitySelector value={Visibility.PUBLIC} onChange={onChange} />);
+  it("keeps the current Space audience selectable when placement is unavailable", async () => {
+    await openMenu(Visibility.SPACE);
 
-    fireEvent.click(screen.getByRole("button"));
-    fireEvent.click(await screen.findByRole("menuitem", { name: /memo\.visibility\.private/ }));
+    expect(screen.getByRole("menuitem", { name: /memo\.visibility\.space/ })).toBeInTheDocument();
+  });
 
-    expect(onChange).toHaveBeenCalledWith(Visibility.PRIVATE);
+  it("reports the picked audience", async () => {
+    const onChange = await openMenu(Visibility.PRIVATE);
+
+    fireEvent.click(screen.getByRole("menuitem", { name: /memo\.visibility\.public/ }));
+
+    expect(onChange).toHaveBeenCalledWith(Visibility.PUBLIC);
   });
 });
+
+vi.mock("@/contexts/InstanceContext", () => ({ useInstance: () => ({ memoRelatedSetting: { allowedVisibilities: [] } }) }));

@@ -29,7 +29,7 @@ INSERT INTO user (id,username,role,nickname,description,password_hash) VALUES(4,
 INSERT INTO memo (id,uid,creator_id,created_ts,updated_ts,content,visibility,pinned,payload) VALUES(1,'welcome0000001',1,strftime('%s','now','-2 days'),strftime('%s','now','-2 days'),replace('# Welcome to Memos 👋\n\nHi, I''m Steven — I build Memos. You''ve found the public demo: a real, living instance where you can poke at every feature before self-hosting your own.\n\nMemos is an open-source, self-hosted home for short-form thoughts. Capture quickly, organize lightly, own everything.\n\n> Most apps treat notes like documents. Memos treats them like thoughts — small, timestamped, searchable.\n\n## Make yourself at home\n\n- [ ] Scroll this Explore feed — everything here was written with Memos\n- [ ] React to a memo you like (🎉 works great on this one)\n- [ ] **Sign in** (top right) — SSO takes ten seconds and gives you your own space\n- [ ] Write your first memo. One sentence is plenty. That''s the point.\n- [ ] Like it? Star [the repo](https://github.com/usememos/memos) ⭐\n\n🔒 *Psst — a few memos on this instance are hidden until you sign in. Members only.*\n\n## What Memos can do\n\n| Feature | Where to see it |\n|---------|-----------------|\n| **Markdown** | Everywhere — tables, `code`, task lists, quotes |\n| **Tags** | `#dev/git` — nested tags grow a tree in the sidebar |\n| **Comments & reactions** | Right under this memo 👇 |\n| **Memo references** | Johnny''s weekly review links back to his week |\n| **Attachments** | Bob''s golden-hour art from the coastal trail |\n| **Locations** | Look for the 📍 pins |\n| **Visibility** | Public, protected, or private — chosen per memo |\n\n## Take it home\n\n```bash\ndocker run -d -p 5230:5230 -v ~/.memos:/var/opt/memos neosmemo/memos:stable\n```\n\nYour data lives in one SQLite file, on your machine. #welcome #getting-started','\n',char(10)),'PUBLIC',1,'{"tags":["welcome","getting-started"],"property":{"hasLink":true,"hasCode":true,"hasTaskList":true,"hasIncompleteTasks":true}}');
 
 -- 2. Sponsors (steven, pinned) — sits below Welcome (older created_ts)
-INSERT INTO memo (id,uid,creator_id,created_ts,updated_ts,content,visibility,pinned,payload) VALUES(2,'sponsors000001',1,strftime('%s','now','-6 days'),strftime('%s','now','-6 days'),replace('Memos is free and open source, kept independent by its sponsors — no ads, no telemetry, no paywalls. 🙏 If you build with Memos, please consider supporting them in return.\n\n## ⭐ Sponsors\n\n<a href="https://coderabbit.link/usememos" target="_blank" rel="noopener"><img src="https://victorious-bubble-f69a016683.media.strapiapp.com/Orange_Typemark_43bf516c9d.svg" alt="CodeRabbit" height="44" /></a>\n\nCut code review time & bugs in half, instantly. [coderabbit.link/usememos →](https://coderabbit.link/usememos)\n\n---\n\n**SSD Nodes** — Affordable VPS hosting for self-hosters. [ssdnodes.com →](https://ssdnodes.com/?utm_source=memos&utm_medium=sponsor)\n\n---\n\nWant to see your company here? Reach out via [GitHub Sponsors](https://github.com/sponsors/usememos).\n\n#sponsors','\n',char(10)),'PUBLIC',1,'{"tags":["sponsors"],"property":{"hasLink":true}}');
+INSERT INTO memo (id,uid,creator_id,created_ts,updated_ts,content,visibility,pinned,payload) VALUES(2,'sponsors000001',1,strftime('%s','now','-6 days'),strftime('%s','now','-6 days'),replace('Memos is free and open source, kept independent by its sponsors — no ads, no telemetry, no paywalls. 🙏 If you build with Memos, please consider supporting them in return.\n\n## ⭐ Sponsors\n\n<a href="https://coderabbit.link/usememos" target="_blank" rel="noopener"><img src="https://victorious-bubble-f69a016683.media.strapiapp.com/Orange_Typemark_43bf516c9d.svg" alt="CodeRabbit" height="44" /></a>\n\nCut code review time & bugs in half, instantly. [coderabbit.link/usememos →](https://coderabbit.link/usememos)\n\n---\n\n**SSD Nodes** — Affordable VPS hosting for self-hosters. [ssdnodes.com →](https://ssdnodes.com/?utm_source=memos&utm_medium=sponsor)\n\n---\n\n**TestMu AI** — The world’s first full-stack Agentic AI Quality Engineering platform. [testmuai.com →](https://www.testmuai.com/?utm_medium=sponsor&utm_source=memos)\n\n---\n\nWant to see your company here? Reach out via [GitHub Sponsors](https://github.com/sponsors/usememos).\n\n#sponsors','\n',char(10)),'PUBLIC',1,'{"tags":["sponsors"],"property":{"hasLink":true}}');
 
 -- ============================================================================
 -- Public timeline — mixed lengths, four voices, dense in the last 48 hours
@@ -152,41 +152,41 @@ INSERT INTO memo_relation VALUES(5,15,'REFERENCE');  -- weekly review → Deep W
 -- Reactions (types must come from the MEMO_RELATED reactions list below)
 -- ============================================================================
 
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(1,2,'memos/welcome0000001','🎉');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(2,3,'memos/welcome0000001','🎉');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(3,4,'memos/welcome0000001','👍');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(4,2,'memos/sponsors000001','🚀');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(5,3,'memos/sponsors000001','👍');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(6,2,'memos/goldenhour0001','🔥');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(7,4,'memos/goldenhour0001','💛');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(8,1,'memos/goldenhour0001','👏');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(9,2,'memos/samquote000001','💛');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(10,3,'memos/samquote000001','👀');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(11,1,'memos/johnnyweekly001','👏');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(12,4,'memos/johnnyweekly001','💡');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(13,1,'memos/johnnyshipped01','🚀');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(14,4,'memos/johnnyshipped01','🎉');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(15,3,'memos/johnnyshipped01','🔥');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(16,3,'memos/johnnytilgit001','💡');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(17,4,'memos/johnnytilgit001','+1');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(18,3,'memos/samramen000001','👌');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(19,2,'memos/samramen000001','💛');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(20,1,'memos/sammovies00001','👍');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(21,4,'memos/bobnighttrain1','💛');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(22,3,'memos/johnnygitcheat1','🔥');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(23,4,'memos/johnnygitcheat1','💡');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(24,4,'memos/webclipper0001','💡');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(25,1,'memos/tagtipmemo0001','👍');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(26,2,'memos/protectedintro','👀');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(27,3,'memos/protectedintro','✅');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(28,4,'memos/bobpacklist001','😂');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(29,3,'memos/sambookpile001','😂');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(30,2,'memos/v030changelog1','🎉');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(31,4,'memos/v030changelog1','🚀');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(32,3,'memos/v030changelog1','🔥');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(33,1,'memos/johnnybookmark1','👀');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(34,2,'memos/rendertest0001','😂');
-INSERT INTO reaction (id,creator_id,content_id,reaction_type) VALUES(35,4,'memos/rendertest0001','💡');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(1,2,1,'🎉');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(2,3,1,'🎉');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(3,4,1,'👍');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(4,2,2,'🚀');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(5,3,2,'👍');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(6,2,3,'🔥');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(7,4,3,'💛');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(8,1,3,'👏');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(9,2,4,'💛');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(10,3,4,'👀');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(11,1,5,'👏');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(12,4,5,'💡');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(13,1,7,'🚀');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(14,4,7,'🎉');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(15,3,7,'🔥');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(16,3,8,'💡');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(17,4,8,'+1');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(18,3,9,'👌');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(19,2,9,'💛');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(20,1,11,'👍');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(21,4,12,'💛');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(22,3,14,'🔥');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(23,4,14,'💡');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(24,4,10,'💡');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(25,1,6,'👍');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(26,2,16,'👀');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(27,3,16,'✅');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(28,4,18,'😂');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(29,3,19,'😂');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(30,2,27,'🎉');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(31,4,27,'🚀');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(32,3,27,'🔥');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(33,1,29,'👀');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(34,2,30,'😂');
+INSERT INTO reaction (id,creator_id,memo_id,reaction_type) VALUES(35,4,30,'💡');
 
 -- ============================================================================
 -- Attachment: Bob's golden-hour art (stored in the database blob column;

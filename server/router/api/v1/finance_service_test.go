@@ -20,7 +20,7 @@ func TestFinanceServicePrivateLedgerAndSummary(t *testing.T) {
 	service := newIntegrationService(t)
 	alice, err := service.Store.CreateUser(ctx, &store.User{Username: "finance-alice", Role: store.RoleUser})
 	require.NoError(t, err)
-	bob, err := service.Store.CreateUser(ctx, &store.User{Username: "finance-bob", Role: store.RoleUser})
+	bob, err := service.Store.CreateUser(ctx, &store.User{Username: "finance-bob", Role: store.RoleAdmin})
 	require.NoError(t, err)
 	aliceCtx := userCtx(ctx, alice.ID)
 

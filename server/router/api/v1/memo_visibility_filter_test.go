@@ -232,8 +232,8 @@ func TestListMemos_DisabledPublicAnonymous(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	// Anonymous ListMemos returns nothing.
-	anonymousList, err := svc.ListMemos(ctx, &v1pb.ListMemosRequest{})
-	require.NoError(t, err)
-	assert.Len(t, anonymousList.Memos, 0)
+	// Anonymous callers cannot list when public access is disabled.
+	_, err = svc.ListMemos(ctx, &v1pb.ListMemosRequest{})
+	require.Error(t, err)
+	assert.Equal(t, codes.Unauthenticated, status.Code(err))
 }

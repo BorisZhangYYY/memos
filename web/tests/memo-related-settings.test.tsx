@@ -1,79 +1,90 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { create } from "@bufbuild/protobuf";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import MemoRelatedSettings from "@/components/Settings/MemoRelatedSettings";
-import { InstanceSetting_Key } from "@/types/proto/api/v1/instance_service_pb";
+import {
+  type InstanceSetting,
+  InstanceSetting_Key,
+  InstanceSetting_MemoRelatedSettingSchema,
+} from "@/types/proto/api/v1/instance_service_pb";
 
-const DEFAULT_MOOD_EMOJIS = ["😫", "😟", "😔", "😐", "😌", "☺️", "😆"];
-
-const { saveInstanceSettingMock } = vi.hoisted(() => ({ saveInstanceSettingMock: vi.fn() }));
-
-const mockInstance = {
-  memoRelatedSetting: {
-    reactions: ["👍"],
+const mocks = vi.hoisted(() => ({
+  instance: {
+    memoRelatedSetting: {},
+    updateSetting: vi.fn(),
+    fetchSetting: vi.fn(),
   },
-};
+  toastError: vi.fn(),
+  toastSuccess: vi.fn(),
+}));
 
 vi.mock("@/contexts/InstanceContext", () => ({
-  useInstance: () => mockInstance,
+  useInstance: () => mocks.instance,
 }));
 
 vi.mock("@/utils/i18n", () => ({
   useTranslate: () => (key: string) => key,
 }));
 
-vi.mock("@/components/Settings/useInstanceSettingUpdater", () => ({
-  default: () => saveInstanceSettingMock,
-  buildInstanceSettingName: (key: InstanceSetting_Key) => `instance/settings/${key}`,
+vi.mock("react-hot-toast", () => ({
+  toast: {
+    error: mocks.toastError,
+    success: mocks.toastSuccess,
+  },
 }));
 
-const renderSettings = () => render(<MemoRelatedSettings />);
-
-const moodInputs = (): HTMLInputElement[] => {
-  const textboxes = screen.getAllByRole("textbox");
-  return textboxes.slice(1) as HTMLInputElement[];
-};
-
-const savedMoodEmojis = (): string[] => {
-  const call = saveInstanceSettingMock.mock.calls[0][0];
-  return call.setting.value.value.moodEmojis as string[];
-};
-
-describe("<MemoRelatedSettings> mood emojis", () => {
+describe("<MemoRelatedSettings> content length limit", () => {
   beforeEach(() => {
-    saveInstanceSettingMock.mockReset();
+    mocks.instance.memoRelatedSetting = create(InstanceSetting_MemoRelatedSettingSchema, {
+      contentLengthLimit: 32_768,
+      enableDoubleClickEdit: false,
+      reactions: ["thumbs-up"],
+    });
+    mocks.instance.updateSetting.mockReset().mockResolvedValue(undefined);
+    mocks.instance.fetchSetting.mockReset().mockResolvedValue(undefined);
+    mocks.toastError.mockReset();
+    mocks.toastSuccess.mockReset();
   });
 
-  it("shows the 7 default emojis when the setting has no moodEmojis", () => {
-    mockInstance.memoRelatedSetting = { reactions: ["👍"] };
-    renderSettings();
+  it.each([8_192, 16_384])("saves a valid %i-byte limit in the memo-related setting", async (contentLengthLimit) => {
+    render(<MemoRelatedSettings />);
 
-    expect(moodInputs()).toHaveLength(7);
-    expect(moodInputs().map((input) => input.value)).toEqual(DEFAULT_MOOD_EMOJIS);
-    expect(screen.queryByText("setting.memo.visibility-policy")).not.toBeInTheDocument();
-  });
+    const input = screen.getByRole("spinbutton", { name: "setting.memo.content-length-limit" });
+    expect(input).toHaveAttribute("min", "8192");
+    expect(input).toHaveAttribute("max", "2147483647");
+    expect(input).toHaveAttribute("step", "1");
+    expect(screen.getByText("setting.memo.content-length-limit-minimum")).toBeVisible();
 
-  it("restores the default emoji when a mood emoji is cleared before saving", () => {
-    mockInstance.memoRelatedSetting = { reactions: ["👍"], moodEmojis: DEFAULT_MOOD_EMOJIS };
-    renderSettings();
-
-    fireEvent.change(moodInputs()[2], { target: { value: "" } });
+    fireEvent.change(input, { target: { value: String(contentLengthLimit) } });
     fireEvent.click(screen.getByRole("button", { name: "common.save" }));
 
-    expect(saveInstanceSettingMock).toHaveBeenCalledTimes(1);
-    expect(savedMoodEmojis()[2]).toBe("😔");
-    expect(savedMoodEmojis()).toEqual(DEFAULT_MOOD_EMOJIS);
+    await waitFor(() => expect(mocks.instance.updateSetting).toHaveBeenCalledTimes(1));
+    const setting = mocks.instance.updateSetting.mock.calls[0][0] as InstanceSetting;
+    expect(setting.name).toBe("instance/settings/MEMO_RELATED");
+    expect(setting.value.case).toBe("memoRelatedSetting");
+    if (setting.value.case !== "memoRelatedSetting") {
+      throw new Error("Expected memo-related setting payload");
+    }
+    expect(setting.value.value.contentLengthLimit).toBe(contentLengthLimit);
+    expect(setting.value.value.reactions).toEqual(["thumbs-up"]);
+    expect(mocks.instance.fetchSetting).toHaveBeenCalledWith(InstanceSetting_Key.MEMO_RELATED);
+    expect(mocks.toastError).not.toHaveBeenCalled();
   });
 
-  it("keeps custom non-empty mood emojis when saving", () => {
-    const custom = ["💀", "😡", "😕", "😐", "🙂", "😊", "🤩"];
-    mockInstance.memoRelatedSetting = { reactions: ["👍"], moodEmojis: custom };
-    renderSettings();
+  it.each([
+    ["an empty value", ""],
+    ["a value below the minimum", "8191"],
+    ["a fractional value", "8192.5"],
+    ["a value above int32", "2147483648"],
+  ])("blocks %s before calling the update API", (_scenario, value) => {
+    render(<MemoRelatedSettings />);
 
-    // Dirty the form via the content length field so saving does not short-circuit on the unchanged state.
-    fireEvent.change(screen.getByRole("spinbutton"), { target: { value: "42" } });
+    const input = screen.getByRole("spinbutton", { name: "setting.memo.content-length-limit" });
+    fireEvent.change(input, { target: { value } });
     fireEvent.click(screen.getByRole("button", { name: "common.save" }));
 
-    expect(saveInstanceSettingMock).toHaveBeenCalledTimes(1);
-    expect(savedMoodEmojis()).toEqual(custom);
+    expect(mocks.instance.updateSetting).not.toHaveBeenCalled();
+    expect(mocks.instance.fetchSetting).not.toHaveBeenCalled();
+    expect(mocks.toastError).toHaveBeenCalledWith("setting.memo.content-length-limit-error");
   });
 });

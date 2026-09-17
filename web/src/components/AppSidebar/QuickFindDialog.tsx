@@ -5,13 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useAppSidebar } from "@/contexts/AppSidebarContext";
-import { useAuth } from "@/contexts/AuthContext";
 import { type MemoFilter, replaceFiltersByFactor, stringifyFilters, useMemoFilterContext } from "@/contexts/MemoFilterContext";
-import { BUILTIN_TASKS_VIEW_ID, getShortcutId, isMemoScopeRoute } from "@/lib/memo-views";
-import { ROUTES } from "@/router/routes";
+import { useSpaceContext } from "@/contexts/SpaceContext";
+import useCurrentUser from "@/hooks/useCurrentUser";
+import { useMemoViews } from "@/hooks/useUserQueries";
+import { BUILTIN_TASKS_VIEW_ID, getMemoViewId, isMemoScopeRoute } from "@/lib/memo-views";
+import { extractSpaceUidFromName, formatSpaceUidForDisplay } from "@/lib/space-display";
 import { useTranslate } from "@/utils/i18n";
-
-export const isQuickFindCollectionRoute = (pathname: string) => isMemoScopeRoute(pathname) || pathname.startsWith("/u/");
+import { getRouteActionPolicy, getSidebarRouteKind } from "./routes";
 
 export const buildQuickFindFilters = (query: string, currentFilters: MemoFilter[], preserveCurrentScope: boolean): MemoFilter[] => {
   const words = Array.from(new Set(query.trim().split(/\s+/).filter(Boolean)));
@@ -19,10 +20,32 @@ export const buildQuickFindFilters = (query: string, currentFilters: MemoFilter[
   return preserveCurrentScope ? replaceFiltersByFactor(currentFilters, "contentSearch", contentFilters) : contentFilters;
 };
 
+export interface QuickFindSubmission {
+  filters: MemoFilter[];
+  destination?: string;
+  switchToAll: boolean;
+}
+
+export const resolveQuickFindSubmission = (pathname: string, query: string, currentFilters: MemoFilter[]): QuickFindSubmission => {
+  const routePolicy = getRouteActionPolicy(pathname);
+  const filters = buildQuickFindFilters(query, currentFilters, routePolicy.searchScope !== "all");
+  const filterQuery = stringifyFilters(filters);
+  return {
+    filters,
+    destination: routePolicy.searchDestination
+      ? filterQuery
+        ? `${routePolicy.searchDestination}?filter=${filterQuery}`
+        : routePolicy.searchDestination
+      : undefined,
+    switchToAll: routePolicy.searchScope === "all",
+  };
+};
+
 const getScopeLabel = (pathname: string, t: ReturnType<typeof useTranslate>) => {
-  if (pathname === ROUTES.ARCHIVED) return t("common.archived");
-  if (pathname === ROUTES.EXPLORE) return t("common.explore");
-  if (pathname.startsWith("/u/")) return t("common.profile");
+  const routeKind = getSidebarRouteKind(pathname);
+  if (routeKind === "archived") return t("common.archived");
+  if (routeKind === "explore") return t("common.explore");
+  if (routeKind === "profile") return t("common.profile");
   return t("common.memos");
 };
 
@@ -30,27 +53,30 @@ const QuickFindDialog = () => {
   const t = useTranslate();
   const location = useLocation();
   const navigate = useNavigate();
-  const { shortcuts } = useAuth();
-  const { filters, setFilters, setShortcut, shortcut } = useMemoFilterContext();
+  const currentUser = useCurrentUser();
+  const { data: memoViews = [] } = useMemoViews(currentUser?.name);
+  const { filters, setFilters, setMemoView, memoView } = useMemoFilterContext();
+  const { clearSelectedSpace, duplicateSpaceTitles, selectedSpace, selectedSpaceName } = useSpaceContext();
   const { quickFindOpen, setQuickFindOpen } = useAppSidebar();
   const [query, setQuery] = useState("");
-  const collectionRoute = isQuickFindCollectionRoute(location.pathname);
   const viewApplies = isMemoScopeRoute(location.pathname);
-  const selectedShortcut = viewApplies ? shortcuts.find((item) => getShortcutId(item.name) === shortcut) : undefined;
+  const selectedMemoView = viewApplies ? memoViews.find((item) => getMemoViewId(item.name) === memoView) : undefined;
+  const lensLabel =
+    viewApplies && memoView === BUILTIN_TASKS_VIEW_ID ? t("common.tasks") : selectedMemoView?.title || getScopeLabel(location.pathname, t);
+  const routePolicy = getRouteActionPolicy(location.pathname);
+  const selectedSpaceUid = selectedSpaceName ? extractSpaceUidFromName(selectedSpaceName) : "";
+  const selectedSpaceUidDisplay = selectedSpaceName ? formatSpaceUidForDisplay(selectedSpaceName) : "";
+  const showSelectedSpaceUid = selectedSpace ? duplicateSpaceTitles.has(selectedSpace.title) : Boolean(selectedSpaceName);
+  const selectedSpaceLabel = `${selectedSpace?.title || t("space.current")}${
+    showSelectedSpaceUid && selectedSpaceUid ? ` (${selectedSpaceUid})` : ""
+  }`;
+  const compactSelectedSpaceLabel = `${selectedSpace?.title || t("space.current")}${
+    showSelectedSpaceUid && selectedSpaceUidDisplay ? ` (${selectedSpaceUidDisplay})` : ""
+  }`;
   const scopeLabel =
-    viewApplies && shortcut === BUILTIN_TASKS_VIEW_ID ? t("common.tasks") : selectedShortcut?.title || getScopeLabel(location.pathname, t);
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault();
-        setQuickFindOpen(true);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [setQuickFindOpen]);
+    routePolicy.searchScope === "remembered-collection" && selectedSpaceName ? `${selectedSpaceLabel} · ${lensLabel}` : lensLabel;
+  const compactScopeLabel =
+    routePolicy.searchScope === "remembered-collection" && selectedSpaceName ? `${compactSelectedSpaceLabel} · ${lensLabel}` : lensLabel;
 
   useEffect(() => {
     if (!quickFindOpen) return;
@@ -63,15 +89,19 @@ const QuickFindDialog = () => {
   }, [filters, quickFindOpen]);
 
   const submitQuery = () => {
-    const nextFilters = buildQuickFindFilters(query, filters, collectionRoute);
+    const submission = resolveQuickFindSubmission(location.pathname, query, filters);
 
-    if (collectionRoute) {
-      setFilters(nextFilters);
-    } else {
-      const filterQuery = stringifyFilters(nextFilters);
-      setFilters(nextFilters);
-      setShortcut(undefined);
-      navigate(filterQuery ? `${ROUTES.HOME}?filter=${filterQuery}` : ROUTES.HOME);
+    if (submission.switchToAll) {
+      // This is an explicit cross-Space action, so switch the collection state
+      // to All without inserting an intermediate Home history entry.
+      clearSelectedSpace();
+    }
+
+    setFilters(submission.filters);
+
+    if (submission.destination) {
+      setMemoView(undefined);
+      navigate(submission.destination);
     }
 
     setQuickFindOpen(false);
@@ -105,7 +135,7 @@ const QuickFindDialog = () => {
               submitQuery();
             }}
             className="h-10 border-0 bg-transparent px-0 !text-[14px] shadow-none focus-visible:ring-0"
-            placeholder={`${t("common.search")} ${scopeLabel}`}
+            placeholder={`${t("common.search")} ${compactScopeLabel}`}
             aria-label={`${t("common.search")} ${scopeLabel}`}
           />
           <Button

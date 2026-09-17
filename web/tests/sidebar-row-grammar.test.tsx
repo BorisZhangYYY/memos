@@ -1,6 +1,8 @@
 import { render, screen } from "@testing-library/react";
+import { HashIcon } from "lucide-react";
 import { describe, expect, it, vi } from "vitest";
 import SidebarRow, { SIDEBAR_ROW_BOX_CLASSES } from "@/components/AppSidebar/SidebarRow";
+import SidebarSection, { SIDEBAR_SECTION_CONTENT_CLASSES } from "@/components/AppSidebar/SidebarSection";
 import TagTree from "@/components/TagTree";
 
 vi.mock("@/utils/i18n", () => ({ useTranslate: () => (key: string) => key }));
@@ -13,8 +15,19 @@ vi.mock("@/utils/i18n", () => ({ useTranslate: () => (key: string) => key }));
 const boxClasses = SIDEBAR_ROW_BOX_CLASSES.split(" ");
 
 describe("sidebar row grammar", () => {
+  it("gives every content section the same title and row rhythm", () => {
+    render(
+      <SidebarSection label="Statistics">
+        <SidebarRow label="August 2026" />
+      </SidebarSection>,
+    );
+
+    expect(screen.getByRole("heading", { name: "Statistics", level: 2 })).toHaveClass("text-2xs", "font-normal");
+    expect(screen.getByRole("button", { name: "August 2026" }).parentElement).toHaveClass(...SIDEBAR_SECTION_CONTENT_CLASSES.split(" "));
+  });
+
   it("gives a nav row the shared row box", () => {
-    render(<SidebarRow icon={() => null} label="Tasks" />);
+    render(<SidebarRow icon={HashIcon} label="Tasks" />);
 
     expect(screen.getByRole("button", { name: "Tasks" })).toHaveClass(...boxClasses);
   });
@@ -26,6 +39,7 @@ describe("sidebar row grammar", () => {
           ["a", 2],
           ["a/b", 1],
         ]}
+        scope="home"
         onTagClick={vi.fn()}
       />,
     );
@@ -42,6 +56,9 @@ describe("sidebar row grammar", () => {
           ["a", 2],
           ["a/b", 1],
         ]}
+        // The active tag keeps the nested row expanded into view.
+        activeTag="a/b"
+        scope="home"
         onTagClick={vi.fn()}
       />,
     );

@@ -4,9 +4,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import LocationPicker from "@/components/map/LocationPicker";
 
 const setView = vi.fn();
-const locate = vi.fn();
 const zoomIn = vi.fn();
 const zoomOut = vi.fn();
+const locate = vi.fn();
 const eventMap = { setView, locate };
 const controlMap = { locate, zoomIn, zoomOut };
 interface MockMapEvent {
@@ -64,7 +64,8 @@ vi.mock("react-leaflet", () => ({
 
 vi.mock("@/components/map/map-utils", () => ({
   defaultMarkerIcon: {},
-  ThemedTileLayer: () => <div data-testid="tile-layer" />,
+  MinimalAttributionControl: () => <div data-testid="attribution" />,
+  ThemedTileLayer: () => <div data-testid="map-layer" />,
 }));
 
 vi.mock("@/utils/i18n", () => ({

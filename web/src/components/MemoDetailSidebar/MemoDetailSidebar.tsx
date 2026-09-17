@@ -4,9 +4,11 @@ import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
 import SidebarRow, { SIDEBAR_ROW_CLASSES, SIDEBAR_ROW_ICON_CLASSES } from "@/components/AppSidebar/SidebarRow";
-import SidebarSectionHeader from "@/components/AppSidebar/SidebarSectionHeader";
+import SidebarSection, { SIDEBAR_SECTION_STACK_CLASSES } from "@/components/AppSidebar/SidebarSection";
+import { extractHeadings } from "@/components/MemoContent/pipeline";
 import { getRelationBuckets, getRelationMemo } from "@/components/MemoMetadata/Relation/relationHelpers";
 import { useResolvedRelationMemos } from "@/components/MemoMetadata/Relation/useResolvedRelationMemos";
+import { createMemoNavigationState, type MemoOriginScope } from "@/components/MemoView/navigation";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useInstance } from "@/contexts/InstanceContext";
 import { useOverflowTitle } from "@/hooks";
@@ -16,26 +18,30 @@ import { cn } from "@/lib/utils";
 import { State } from "@/types/proto/api/v1/common_pb";
 import { Memo, type MemoRelation } from "@/types/proto/api/v1/memo_service_pb";
 import { useTranslate } from "@/utils/i18n";
-import { extractHeadings } from "@/utils/markdown-manipulation";
 import { isSuperUser } from "@/utils/user";
 import MemoOutline from "./MemoOutline";
 import MemoSharePanel from "./MemoSharePanel";
 
 interface Props {
   memo: Memo;
+  parentPage?: string;
+  parentScope?: MemoOriginScope;
   className?: string;
   onShareImageOpen?: () => void;
   forceReadonly?: boolean;
 }
 
-const Section = ({ label, children }: { label: string; children: React.ReactNode }) => (
-  <section className="w-full">
-    <SidebarSectionHeader>{label}</SidebarSectionHeader>
-    <div className="space-y-0.5">{children}</div>
-  </section>
-);
-
-const BacklinkRow = ({ relation, snippet }: { relation: MemoRelation; snippet: string }) => {
+const BacklinkRow = ({
+  relation,
+  snippet,
+  parentPage,
+  parentScope,
+}: {
+  relation: MemoRelation;
+  snippet: string;
+  parentPage?: string;
+  parentScope?: MemoOriginScope;
+}) => {
   const { ref, title } = useOverflowTitle<HTMLSpanElement>(snippet);
   const relatedMemo = getRelationMemo(relation, "referenced");
   if (!relatedMemo) {
@@ -46,6 +52,7 @@ const BacklinkRow = ({ relation, snippet }: { relation: MemoRelation; snippet: s
     <Link
       className={cn(SIDEBAR_ROW_CLASSES, "text-muted-foreground hover:bg-sidebar-accent/65 hover:text-foreground")}
       to={`/${relatedMemo.name}`}
+      state={parentPage && parentScope ? createMemoNavigationState(parentPage, parentScope) : undefined}
       title={title}
       viewTransition
     >
@@ -57,7 +64,7 @@ const BacklinkRow = ({ relation, snippet }: { relation: MemoRelation; snippet: s
   );
 };
 
-const MemoDetailSidebar = ({ memo, className, onShareImageOpen, forceReadonly = false }: Props) => {
+const MemoDetailSidebar = ({ memo, parentPage, parentScope, className, onShareImageOpen, forceReadonly = false }: Props) => {
   const t = useTranslate();
   const currentUser = useCurrentUser();
   const { profile } = useInstance();
@@ -101,8 +108,8 @@ const MemoDetailSidebar = ({ memo, className, onShareImageOpen, forceReadonly = 
   };
 
   return (
-    <div className={cn("relative flex w-full select-none flex-col gap-3.5", className)}>
-      <Section label={t("common.actions")}>
+    <div className={cn("relative w-full select-none", SIDEBAR_SECTION_STACK_CLASSES, className)}>
+      <SidebarSection label={t("common.actions")}>
         {canPin && (
           <SidebarRow
             icon={memo.pinned ? BookmarkCheckIcon : BookmarkIcon}
@@ -141,21 +148,29 @@ const MemoDetailSidebar = ({ memo, className, onShareImageOpen, forceReadonly = 
             )}
           </DropdownMenuContent>
         </DropdownMenu>
-      </Section>
+      </SidebarSection>
 
       {headings.length > 1 && (
-        <Section label={t("memo.outline")}>
-          <MemoOutline headings={headings} />
-        </Section>
+        <SidebarSection label={t("memo.outline")}>
+          <MemoOutline headings={headings} memoName={memo.name} />
+        </SidebarSection>
       )}
 
       {!forceReadonly && referenced.length > 0 && (
-        <Section label={t("common.referenced-by")}>
+        <SidebarSection label={t("common.referenced-by")}>
           {referenced.map((relation) => {
             const relatedMemo = getRelationMemo(relation, "referenced");
-            return <BacklinkRow key={`referenced-${relatedMemo?.name}`} relation={relation} snippet={backlinkSnippet(relation)} />;
+            return (
+              <BacklinkRow
+                key={`referenced-${relatedMemo?.name}`}
+                relation={relation}
+                snippet={backlinkSnippet(relation)}
+                parentPage={parentPage}
+                parentScope={parentScope}
+              />
+            );
           })}
-        </Section>
+        </SidebarSection>
       )}
 
       {sharePanelOpen && <MemoSharePanel memoName={memo.name} open={sharePanelOpen} onClose={() => setSharePanelOpen(false)} />}

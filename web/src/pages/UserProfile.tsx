@@ -64,7 +64,7 @@ const UserProfile = () => {
 
   const memoFilter = useMemoFilters({
     creatorName: user?.name,
-    includeShortcuts: false,
+    includeMemoViews: false,
     includePinned: true,
   });
 
@@ -123,7 +123,7 @@ const UserProfile = () => {
               {activeTab === "memos" ? (
                 <PagedMemoList
                   renderer={(memo: Memo, { compact }) => (
-                    <MemoView key={getMemoKey(memo)} memo={memo} showVisibility showPinned compact={compact} />
+                    <MemoView key={getMemoKey(memo)} memo={memo} showVisibility showPinned showSpace compact={compact} />
                   )}
                   listSort={listSort}
                   orderBy={orderBy}

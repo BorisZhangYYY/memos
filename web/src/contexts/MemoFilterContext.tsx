@@ -11,7 +11,8 @@ export type FilterFactor =
   | "property.hasLink"
   | "property.hasTaskList"
   | "property.hasCode"
-  | "moodLevel";
+  | "moodLevel"
+  | "property.hasLocation";
 
 export interface MemoFilter {
   factor: FilterFactor;
@@ -48,7 +49,7 @@ export const replaceFiltersByFactor = (filters: MemoFilter[], factor: FilterFact
 
 interface MemoFilterContextValue {
   filters: MemoFilter[];
-  shortcut: string | undefined;
+  memoView: string | undefined;
   hasActiveFilters: boolean;
   getFiltersByFactor: (factor: FilterFactor) => MemoFilter[];
   setFilters: (filters: MemoFilter[]) => void;
@@ -56,7 +57,7 @@ interface MemoFilterContextValue {
   removeFilter: (predicate: (f: MemoFilter) => boolean) => void;
   removeFiltersByFactor: (factor: FilterFactor) => void;
   clearAllFilters: () => void;
-  setShortcut: (shortcut?: string) => void;
+  setMemoView: (memoView?: string) => void;
   hasFilter: (filter: MemoFilter) => boolean;
 }
 
@@ -71,7 +72,7 @@ export function MemoFilterProvider({ children }: { children: ReactNode }) {
   const [filters, setFiltersState] = useState<MemoFilter[]>(() => {
     return parseFilterQuery(searchParams.get("filter"));
   });
-  const [shortcut, setShortcutState] = useState<string | undefined>(undefined);
+  const [memoView, setMemoViewState] = useState<string | undefined>(undefined);
 
   // Sync URL to state when URL changes externally
   useEffect(() => {
@@ -120,20 +121,20 @@ export function MemoFilterProvider({ children }: { children: ReactNode }) {
 
   const clearAllFilters = useCallback(() => {
     setFiltersState([]);
-    setShortcutState(undefined);
+    setMemoViewState(undefined);
   }, []);
 
-  const setShortcut = useCallback((newShortcut?: string) => {
-    setShortcutState(newShortcut);
+  const setMemoView = useCallback((newMemoView?: string) => {
+    setMemoViewState(newMemoView);
   }, []);
 
   const hasFilter = useCallback((filter: MemoFilter) => filters.some((f) => getMemoFilterKey(f) === getMemoFilterKey(filter)), [filters]);
 
-  const hasActiveFilters = filters.length > 0 || shortcut !== undefined;
+  const hasActiveFilters = filters.length > 0 || memoView !== undefined;
   const value = useMemo(
     () => ({
       filters,
-      shortcut,
+      memoView,
       hasActiveFilters,
       getFiltersByFactor,
       setFilters,
@@ -141,12 +142,12 @@ export function MemoFilterProvider({ children }: { children: ReactNode }) {
       removeFilter,
       removeFiltersByFactor,
       clearAllFilters,
-      setShortcut,
+      setMemoView,
       hasFilter,
     }),
     [
       filters,
-      shortcut,
+      memoView,
       hasActiveFilters,
       getFiltersByFactor,
       setFilters,
@@ -154,7 +155,7 @@ export function MemoFilterProvider({ children }: { children: ReactNode }) {
       removeFilter,
       removeFiltersByFactor,
       clearAllFilters,
-      setShortcut,
+      setMemoView,
       hasFilter,
     ],
   );

@@ -4,7 +4,7 @@ import {
   BUILTIN_TASKS_VIEW_FILTER,
   BUILTIN_TASKS_VIEW_ID,
   getMemoScopePath,
-  getShortcutId,
+  getMemoViewId,
   isMemoScopeRoute,
   resolveMemoScope,
 } from "@/lib/memo-views";
@@ -21,14 +21,13 @@ describe("memo scopes", () => {
     expect(resolveMemoScope("/settings", { fallback: "explore" })).toBe("explore");
   });
 
-  it("maps only the three collection routes to memo scopes", () => {
+  it("maps collection routes while limiting primary scope paths to Home and Explore", () => {
     expect(isMemoScopeRoute("/")).toBe(true);
     expect(isMemoScopeRoute("/explore")).toBe(true);
     expect(isMemoScopeRoute("/archived")).toBe(true);
     expect(isMemoScopeRoute("/attachments")).toBe(false);
     expect(getMemoScopePath("home")).toBe("/");
     expect(getMemoScopePath("explore")).toBe("/explore");
-    expect(getMemoScopePath("archived")).toBe("/archived");
   });
 });
 
@@ -36,14 +35,14 @@ describe("memo views", () => {
   it("uses a collision-safe built-in Tasks view", () => {
     expect(BUILTIN_TASKS_VIEW_ID).not.toBe("tasks");
     expect(BUILTIN_TASKS_VIEW_FILTER).toBe("has_task_list && has_incomplete_tasks");
-    expect(getShortcutId("users/steven/shortcuts/work")).toBe("work");
+    expect(getMemoViewId("users/steven/views/work")).toBe("work");
   });
 
   it("composes Tasks with search, tags, creator, and visibility", () => {
     expect(
       buildMemoFilter({
         creatorName: "users/steven",
-        currentShortcut: BUILTIN_TASKS_VIEW_ID,
+        currentMemoView: BUILTIN_TASKS_VIEW_ID,
         filters: [
           { factor: "contentSearch", value: "plan" },
           { factor: "tagSearch", value: "work" },
@@ -56,13 +55,37 @@ describe("memo views", () => {
     );
   });
 
-  it("uses a custom shortcut filter when Tasks is not selected", () => {
+  it("maps the Space audience without falling back to Private", () => {
     expect(
       buildMemoFilter({
-        currentShortcut: "work",
         filters: [],
         includePinned: false,
-        selectedShortcutFilter: 'tag in ["work"]',
+        visibilities: [Visibility.PUBLIC, Visibility.PROTECTED, Visibility.SPACE],
+      }),
+    ).toBe('visibility in ["PUBLIC", "PROTECTED", "SPACE"]');
+  });
+
+  it("maps property filter factors to their CEL flags", () => {
+    expect(
+      buildMemoFilter({
+        filters: [
+          { factor: "property.hasLink", value: "" },
+          { factor: "property.hasTaskList", value: "" },
+          { factor: "property.hasCode", value: "" },
+          { factor: "property.hasLocation", value: "" },
+        ],
+        includePinned: false,
+      }),
+    ).toBe("has_link && has_task_list && has_code && has_location");
+  });
+
+  it("uses a custom memo view filter when Tasks is not selected", () => {
+    expect(
+      buildMemoFilter({
+        currentMemoView: "work",
+        filters: [],
+        includePinned: false,
+        selectedMemoViewFilter: 'tag in ["work"]',
       }),
     ).toBe('tag in ["work"]');
   });
@@ -77,9 +100,7 @@ describe("memo views", () => {
         filters: [{ factor: "displayTime", value: "2026-08-02" }],
         includePinned: false,
       }),
-    ).toBe(
-      `created_ts >= timestamp(${Math.floor(start.getTime() / 1000)}) && created_ts < timestamp(${Math.floor(end.getTime() / 1000)})`,
-    );
+    ).toBe(`created_ts >= timestamp(${Math.floor(start.getTime() / 1000)}) && created_ts < timestamp(${Math.floor(end.getTime() / 1000)})`);
   });
 
   it("ignores invalid display-time filter values", () => {

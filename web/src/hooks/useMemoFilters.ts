@@ -1,8 +1,9 @@
 import { useMemo } from "react";
-import { useAuth } from "@/contexts/AuthContext";
 import { type MemoFilter, useMemoFilterContext } from "@/contexts/MemoFilterContext";
-import { BUILTIN_TASKS_VIEW_FILTER, BUILTIN_TASKS_VIEW_ID, getShortcutId } from "@/lib/memo-views";
-import { buildMemoCreatorFilter } from "@/lib/resource-names";
+import useCurrentUser from "@/hooks/useCurrentUser";
+import { useMemoViews } from "@/hooks/useUserQueries";
+import { BUILTIN_TASKS_VIEW_FILTER, BUILTIN_TASKS_VIEW_ID, getMemoViewId } from "@/lib/memo-views";
+import { buildMemoCreatorFilter, getVisibilityName } from "@/lib/resource-names";
 import { Visibility } from "@/types/proto/api/v1/memo_service_pb";
 import { type Translations } from "@/utils/i18n";
 
@@ -16,19 +17,6 @@ export const MOOD_LEVEL_KEYS: readonly Translations[] = [
   "mood.level-6",
   "mood.level-7",
 ];
-
-const getVisibilityName = (visibility: Visibility): string => {
-  switch (visibility) {
-    case Visibility.PUBLIC:
-      return "PUBLIC";
-    case Visibility.PROTECTED:
-      return "PROTECTED";
-    case Visibility.PRIVATE:
-      return "PRIVATE";
-    default:
-      return "PRIVATE";
-  }
-};
 
 const escapeFilterValue = (value: string): string => JSON.stringify(value);
 
@@ -68,26 +56,26 @@ const getLocalDayTimestampRange = (value: string): { startTimestamp: number; end
 
 export interface UseMemoFiltersOptions {
   creatorName?: string;
-  includeShortcuts?: boolean;
+  includeMemoViews?: boolean;
   includePinned?: boolean;
   visibilities?: Visibility[];
 }
 
 interface BuildMemoFilterOptions {
   creatorName?: string;
-  currentShortcut?: string;
+  currentMemoView?: string;
   filters: MemoFilter[];
   includePinned: boolean;
-  selectedShortcutFilter?: string;
+  selectedMemoViewFilter?: string;
   visibilities?: Visibility[];
 }
 
 export const buildMemoFilter = ({
   creatorName,
-  currentShortcut,
+  currentMemoView,
   filters,
   includePinned,
-  selectedShortcutFilter,
+  selectedMemoViewFilter,
   visibilities,
 }: BuildMemoFilterOptions): string | undefined => {
   const conditions: string[] = [];
@@ -99,10 +87,10 @@ export const buildMemoFilter = ({
     }
   }
 
-  if (currentShortcut === BUILTIN_TASKS_VIEW_ID) {
+  if (currentMemoView === BUILTIN_TASKS_VIEW_ID) {
     conditions.push(BUILTIN_TASKS_VIEW_FILTER);
-  } else if (selectedShortcutFilter) {
-    conditions.push(selectedShortcutFilter);
+  } else if (selectedMemoViewFilter) {
+    conditions.push(selectedMemoViewFilter);
   }
 
   for (const filter of filters) {
@@ -120,6 +108,8 @@ export const buildMemoFilter = ({
       conditions.push(`has_task_list`);
     } else if (filter.factor === "property.hasCode") {
       conditions.push(`has_code`);
+    } else if (filter.factor === "property.hasLocation") {
+      conditions.push(`has_location`);
     } else if (filter.factor === "displayTime") {
       const range = getLocalDayTimestampRange(filter.value);
       if (range) {
@@ -144,27 +134,28 @@ export const buildMemoFilter = ({
 };
 
 export const useMemoFilters = (options: UseMemoFiltersOptions = {}): string | undefined => {
-  const { creatorName, includeShortcuts = false, includePinned = false, visibilities } = options;
+  const { creatorName, includeMemoViews = false, includePinned = false, visibilities } = options;
 
-  const { shortcuts } = useAuth();
-  const { filters, shortcut: currentShortcut } = useMemoFilterContext();
+  const currentUser = useCurrentUser();
+  const { data: memoViews = [] } = useMemoViews(includeMemoViews ? currentUser?.name : undefined);
+  const { filters, memoView: currentMemoView } = useMemoFilterContext();
 
-  // Get selected shortcut if needed
-  const selectedShortcutFilter = useMemo(() => {
-    if (!includeShortcuts || currentShortcut === BUILTIN_TASKS_VIEW_ID) return undefined;
-    return shortcuts.find((shortcut) => getShortcutId(shortcut.name) === currentShortcut)?.filter;
-  }, [includeShortcuts, currentShortcut, shortcuts]);
+  // Get the selected memo view if needed.
+  const selectedMemoViewFilter = useMemo(() => {
+    if (!includeMemoViews || currentMemoView === BUILTIN_TASKS_VIEW_ID) return undefined;
+    return memoViews.find((memoView) => getMemoViewId(memoView.name) === currentMemoView)?.filter;
+  }, [includeMemoViews, currentMemoView, memoViews]);
 
   return useMemo(
     () =>
       buildMemoFilter({
         creatorName,
-        currentShortcut: includeShortcuts ? currentShortcut : undefined,
+        currentMemoView: includeMemoViews ? currentMemoView : undefined,
         filters,
         includePinned,
-        selectedShortcutFilter,
+        selectedMemoViewFilter,
         visibilities,
       }),
-    [creatorName, currentShortcut, filters, includePinned, includeShortcuts, selectedShortcutFilter, visibilities],
+    [creatorName, currentMemoView, filters, includePinned, includeMemoViews, selectedMemoViewFilter, visibilities],
   );
 };

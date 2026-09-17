@@ -14,6 +14,7 @@ const { listIdentityProvidersMock, saveInstanceSettingMock } = vi.hoisted(() => 
 }));
 
 const mockInstance = {
+  accessSetting: { accessMode: 2 },
   generalSetting: create(InstanceSetting_GeneralSettingSchema, {}),
   memoRelatedSetting: create(InstanceSetting_MemoRelatedSettingSchema, {}),
   profile: { demo: false, instanceUrl: "https://memos.example.com" },
@@ -81,11 +82,11 @@ describe("<InstanceSection> public access setting", () => {
     expect(saveInstanceSettingMock.mock.calls[0][0].setting.value.value.allowedVisibilities).toEqual([]);
   });
 
-  it("explains that Instance URL is still required before anonymous access opens", () => {
+  it("does not couple anonymous access to the Instance URL", () => {
     mockInstance.profile = { demo: false, instanceUrl: "" };
     render(<InstanceSection />);
 
-    expect(screen.getByText(/setting\.instance\.public-access-instance-url-required/)).toBeInTheDocument();
+    expect(screen.queryByText(/setting\.instance\.public-access-instance-url-required/)).not.toBeInTheDocument();
   });
 
   it("shows the effective startup URL and persists a normalized frontend override", async () => {

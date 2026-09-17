@@ -361,6 +361,96 @@ func TestExtractAllMentions(t *testing.T) {
 	assert.Empty(t, data.Mentions)
 }
 
+func TestExtractAllManagedAttachmentImages(t *testing.T) {
+	svc := NewService()
+	data, err := svc.ExtractAll([]byte(strings.Join([]string{
+		"![canonical](/file/attachments/image-one)",
+		"![legacy](/file/attachments/image-two/photo.png)",
+		"![duplicate](/file/attachments/image-one)",
+		"![reference][managed-image]",
+		"",
+		"[managed-image]: /file/attachments/image-three",
+		"![external](https://example.com/file/attachments/external)",
+		"`![code](/file/attachments/code-image)`",
+	}, "\n")))
+	require.NoError(t, err)
+	require.Equal(t, []ManagedAttachmentReference{{UID: "image-one"}, {UID: "image-two"}, {UID: "image-three"}}, data.ManagedAttachmentReferences)
+	require.Empty(t, data.InvalidManagedAttachmentReferences)
+}
+
+func TestExtractAllRejectsMalformedManagedAttachmentImages(t *testing.T) {
+	svc := NewService()
+	data, err := svc.ExtractAll([]byte(strings.Join([]string{
+		"![query](/file/attachments/image-one?share_token=secret)",
+		"![encoded](/file/attachments/%69mage-two)",
+		"![extra](/file/attachments/image-three/file/extra)",
+		`<img src="/file/attachments/raw-html">`,
+	}, "\n")))
+	require.NoError(t, err)
+	require.Empty(t, data.ManagedAttachmentReferences)
+	require.Len(t, data.InvalidManagedAttachmentReferences, 4)
+}
+
+func TestExtractAllRejectsManagedAttachmentReferencesInRawHTML(t *testing.T) {
+	svc := NewService()
+	tests := []struct {
+		name    string
+		content string
+	}{
+		{
+			name:    "inline HTML",
+			content: `before <img src="/file/attachments/inline-image"> after`,
+		},
+		{
+			name: "HTML block",
+			content: strings.Join([]string{
+				"<div>",
+				`  <img src="/file/attachments/block-image">`,
+				"</div>",
+			}, "\n"),
+		},
+		{
+			name: "self-closing HTML block",
+			content: strings.Join([]string{
+				`<img`,
+				`  src="/file/attachments/multiline-image"`,
+				`/>`,
+			}, "\n"),
+		},
+		{
+			name: "HTML block closure line",
+			content: strings.Join([]string{
+				"<pre>",
+				"content",
+				`</pre><img src="/file/attachments/closure-image">`,
+			}, "\n"),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			data, err := svc.ExtractAll([]byte(test.content))
+			require.NoError(t, err)
+			require.Empty(t, data.ManagedAttachmentReferences)
+			require.Len(t, data.InvalidManagedAttachmentReferences, 1)
+		})
+	}
+}
+
+func TestExtractAllIgnoresManagedAttachmentReferencesInCode(t *testing.T) {
+	svc := NewService()
+	data, err := svc.ExtractAll([]byte(strings.Join([]string{
+		"`<img src=\"/file/attachments/inline-code\">`",
+		"",
+		"```html",
+		`<img src="/file/attachments/fenced-code">`,
+		"```",
+	}, "\n")))
+	require.NoError(t, err)
+	require.Empty(t, data.ManagedAttachmentReferences)
+	require.Empty(t, data.InvalidManagedAttachmentReferences)
+}
+
 func TestExtractAllMentionSyntaxAndContexts(t *testing.T) {
 	svc := NewService(WithTagExtension(), WithMentionExtension())
 	tests := []struct {
@@ -396,10 +486,6 @@ func TestMentionSourceSpelling(t *testing.T) {
 	rendered, err := svc.RenderMarkdown([]byte(content))
 	require.NoError(t, err)
 	assert.Equal(t, content, rendered)
-
-	html, err := svc.RenderHTML([]byte(content))
-	require.NoError(t, err)
-	assert.Contains(t, html, "@Alice-2")
 }
 
 func TestExtractAllSkipsTagsInsideLinks(t *testing.T) {
@@ -678,6 +764,7 @@ func TestExtractTagsMemosTagV1(t *testing.T) {
 		{name: "email inside emphasis", content: "_foo@example.com #tag_", expected: []string{"tag"}},
 		{name: "raw HTML syntax", content: "<span data-tag=\"#attribute\">#text</span>", expected: []string{"text"}},
 		{name: "inline math", content: "$#math$ #plain", expected: []string{"plain"}},
+		{name: "currency dollars leave tags visible", content: "$20,000 #budget and $30,000", expected: []string{"budget"}},
 		{name: "inline math exact closing run", content: "$#one$$ #two$ #plain", expected: []string{"plain"}},
 		{name: "inline math does not reopen within a dollar run", content: "$$#math$ #plain", expected: []string{"math", "plain"}},
 		{name: "inline math after escaped dollar", content: "\\$$#math$ #plain", expected: []string{"plain"}},
@@ -754,82 +841,7 @@ func TestTagSourceSpelling(t *testing.T) {
 	assert.Equal(t, "#done #\u0301foo", renamed)
 }
 
-func TestRenderHTMLPreservesTagSourceSpelling(t *testing.T) {
-	svc := NewService(WithTagExtension())
-	html, err := svc.RenderHTML([]byte("#R&D #A\u200dB"))
-	require.NoError(t, err)
-	assert.Equal(t, "<p>#R&amp;D #A\u200dB</p>\n", html)
-}
-
-func TestRenderHTMLRejectsUnclosedReferenceDestination(t *testing.T) {
-	svc := NewService(WithTagExtension())
-	html, err := svc.RenderHTML([]byte("[#use][bad]\n\n[bad]:("))
-	require.NoError(t, err)
-	assert.Equal(t, "<p>[#use][bad]</p>\n<p>[bad]:(</p>\n", html)
-}
-
-func TestRenderHTMLRecognizesGFMEmails(t *testing.T) {
-	svc := NewService(WithTagExtension())
-	tests := []struct {
-		content  string
-		expected string
-	}{
-		{
-			content:  "foo#mail@example.com",
-			expected: "<p>foo#<a href=\"mailto:mail@example.com\">mail@example.com</a></p>\n",
-		},
-		{
-			content:  "#foo/bar_baz@example.com",
-			expected: "<p>#foo/<a href=\"mailto:bar_baz@example.com\">bar_baz@example.com</a></p>\n",
-		},
-		{
-			content:  "_foo@example.com #tag_",
-			expected: "<p><em><a href=\"mailto:foo@example.com\">foo@example.com</a> #tag</em></p>\n",
-		},
-		{
-			content:  "foo@bar.com@baz.example",
-			expected: "<p><a href=\"mailto:foo@bar.com\">foo@bar.com</a>@baz.example</p>\n",
-		},
-		{
-			content:  "foo@bar.com+abc@def.com",
-			expected: "<p><a href=\"mailto:foo@bar.com\">foo@bar.com</a><a href=\"mailto:+abc@def.com\">+abc@def.com</a></p>\n",
-		},
-		{
-			content:  `#foo\+bar@example.com`,
-			expected: "<p>#<a href=\"mailto:foo+bar@example.com\">foo+bar@example.com</a></p>\n",
-		},
-		{
-			content:  `#foo\@example\.com`,
-			expected: "<p>#<a href=\"mailto:foo@example.com\">foo@example.com</a></p>\n",
-		},
-		{
-			content:  `#foo&#46;bar@example.com`,
-			expected: "<p>#<a href=\"mailto:foo.bar@example.com\">foo.bar@example.com</a></p>\n",
-		},
-		{
-			content:  `#foo&period;bar@example.com`,
-			expected: "<p>#<a href=\"mailto:foo.bar@example.com\">foo.bar@example.com</a></p>\n",
-		},
-		{
-			content:  `#foo&#64;example.com`,
-			expected: "<p>#<a href=\"mailto:foo@example.com\">foo@example.com</a></p>\n",
-		},
-	}
-	for _, test := range tests {
-		html, err := svc.RenderHTML([]byte(test.content))
-		require.NoError(t, err)
-		assert.Equal(t, test.expected, html)
-	}
-}
-
-func TestRenderHTMLRecognizesGFMEmailWithoutTagExtension(t *testing.T) {
-	svc := NewService()
-	html, err := svc.RenderHTML([]byte("mail@example.com"))
-	require.NoError(t, err)
-	assert.Equal(t, "<p><a href=\"mailto:mail@example.com\">mail@example.com</a></p>\n", html)
-}
-
-func TestRenderHTMLRecognizesGFMURLsInsideUnresolvedBracketText(t *testing.T) {
+func TestExtractAllRecognizesGFMURLsInsideUnresolvedBracketText(t *testing.T) {
 	svc := NewService(WithTagExtension())
 	for _, content := range []string{
 		"[ https://example.com/#hidden]",
@@ -837,10 +849,6 @@ func TestRenderHTMLRecognizesGFMURLsInsideUnresolvedBracketText(t *testing.T) {
 		"![ https://example.com/#hidden]",
 		"[text https://example.com/#hidden",
 	} {
-		html, err := svc.RenderHTML([]byte(content))
-		require.NoError(t, err)
-		assert.Contains(t, html, "<a href=\"https://example.com/#hidden")
-
 		data, err := svc.ExtractAll([]byte(content))
 		require.NoError(t, err)
 		assert.Empty(t, data.Tags)
@@ -877,10 +885,6 @@ func TestMathRenderingPreservesLiteralSource(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, content, rendered)
 	}
-
-	html, err := svc.RenderHTML([]byte("$x < y$\n\n$$meta\nx < y\n$$"))
-	require.NoError(t, err)
-	assert.Equal(t, "<p>$x &lt; y$</p>\n$$meta\nx &lt; y\n$$", html)
 }
 
 func TestRenderMarkdownPreservesLineBreakAfterTag(t *testing.T) {

@@ -11,6 +11,9 @@ import { useInstance } from "@/contexts/InstanceContext";
 import useDialog from "@/hooks/useDialog";
 import { IdentityProvider } from "@/types/proto/api/v1/idp_service_pb";
 import {
+  InstanceAccessMode,
+  InstanceSetting_AccessSetting,
+  InstanceSetting_AccessSettingSchema,
   InstanceSetting_GeneralSetting,
   InstanceSetting_GeneralSettingSchema,
   InstanceSetting_Key,
@@ -52,22 +55,25 @@ const InstanceSection = () => {
   const t = useTranslate();
   const customizeDialog = useDialog();
   const saveInstanceSetting = useInstanceSettingUpdater();
-  const { generalSetting: originalSetting, memoRelatedSetting, profile } = useInstance();
-  const [instanceGeneralSetting, setInstanceGeneralSetting] = useState<InstanceSetting_GeneralSetting>(originalSetting);
-  const originalPublicAccessEnabled = isPublicMemoEnabled(memoRelatedSetting.allowedVisibilities);
-  const [publicAccessEnabled, setPublicAccessEnabled] = useState(originalPublicAccessEnabled);
+  const { accessSetting: originalAccessSetting, generalSetting: originalGeneralSetting, memoRelatedSetting, profile } = useInstance();
+  const [instanceAccessSetting, setInstanceAccessSetting] = useState<InstanceSetting_AccessSetting>(originalAccessSetting);
+  const [instanceGeneralSetting, setInstanceGeneralSetting] = useState<InstanceSetting_GeneralSetting>(originalGeneralSetting);
   const [identityProviderList, setIdentityProviderList] = useState<IdentityProvider[]>([]);
   const effectiveInstanceURL = instanceGeneralSetting.instanceUrl ?? profile.instanceUrl;
   const normalizedInstanceURL = normalizeInstanceURL(effectiveInstanceURL);
   const instanceURLInvalid = normalizedInstanceURL === undefined;
 
   useEffect(() => {
-    setInstanceGeneralSetting(originalSetting);
-  }, [originalSetting]);
+    setInstanceAccessSetting(originalAccessSetting);
+  }, [originalAccessSetting]);
 
   useEffect(() => {
-    setPublicAccessEnabled(originalPublicAccessEnabled);
-  }, [originalPublicAccessEnabled]);
+    setInstanceGeneralSetting(originalGeneralSetting);
+  }, [originalGeneralSetting]);
+
+  const originalPublicAccessEnabled = isPublicMemoEnabled(memoRelatedSetting.allowedVisibilities);
+  const [publicAccessEnabled, setPublicAccessEnabled] = useState(originalPublicAccessEnabled);
+  useEffect(() => setPublicAccessEnabled(originalPublicAccessEnabled), [originalPublicAccessEnabled]);
 
   const fetchIdentityProviderList = async () => {
     const { identityProviders } = await identityProviderServiceClient.listIdentityProviders({});
@@ -96,14 +102,17 @@ const InstanceSection = () => {
     );
   };
 
+  const updateAccessMode = (accessMode: InstanceAccessMode) => {
+    setInstanceAccessSetting(create(InstanceSetting_AccessSettingSchema, { accessMode }));
+  };
+
   const handleSaveSettings = async () => {
     if (instanceURLInvalid) {
       toast.error(t("setting.instance.instance-url-invalid"));
       return;
     }
-
-    const savePublicAccessSetting = () =>
-      saveInstanceSetting({
+    if (publicAccessEnabled !== originalPublicAccessEnabled) {
+      const saved = await saveInstanceSetting({
         key: InstanceSetting_Key.MEMO_RELATED,
         setting: create(InstanceSettingSchema, {
           name: buildInstanceSettingName(InstanceSetting_Key.MEMO_RELATED),
@@ -115,47 +124,51 @@ const InstanceSection = () => {
             }),
           },
         }),
-        errorContext: "Update public access setting",
-        showSuccess: false,
+        errorContext: "Update public visibility",
+        showSuccessToast: false,
       });
-
-    // Close public access first, but only open it after the URL has saved.
-    // This prevents a combined update from exposing content in between requests.
-    if (publicAccessEnabled !== originalPublicAccessEnabled && !publicAccessEnabled && !(await savePublicAccessSetting())) {
-      return;
+      if (!saved) return;
     }
+    const generalSettingChanged = !isEqual(instanceGeneralSetting, originalGeneralSetting);
+    const accessSettingChanged = !isEqual(instanceAccessSetting, originalAccessSetting);
 
-    if (!isEqual(instanceGeneralSetting, originalSetting)) {
-      const settingToSave =
-        instanceGeneralSetting.instanceUrl === undefined
-          ? instanceGeneralSetting
-          : create(InstanceSetting_GeneralSettingSchema, { ...instanceGeneralSetting, instanceUrl: normalizedInstanceURL });
-      if (
-        !(await saveInstanceSetting({
-          key: InstanceSetting_Key.GENERAL,
-          setting: create(InstanceSettingSchema, {
-            name: buildInstanceSettingName(InstanceSetting_Key.GENERAL),
-            value: {
-              case: "generalSetting",
-              value: settingToSave,
-            },
-          }),
-          errorContext: "Update general settings",
-          showSuccess: false,
-        }))
-      ) {
+    if (generalSettingChanged) {
+      const generalSettingSaved = await saveInstanceSetting({
+        key: InstanceSetting_Key.GENERAL,
+        setting: create(InstanceSettingSchema, {
+          name: buildInstanceSettingName(InstanceSetting_Key.GENERAL),
+          value: {
+            case: "generalSetting",
+            value: create(InstanceSetting_GeneralSettingSchema, { ...instanceGeneralSetting, instanceUrl: normalizedInstanceURL }),
+          },
+        }),
+        errorContext: "Update general settings",
+        showSuccessToast: !accessSettingChanged,
+      });
+      if (!generalSettingSaved) {
         return;
       }
     }
 
-    if (publicAccessEnabled !== originalPublicAccessEnabled && publicAccessEnabled && !(await savePublicAccessSetting())) {
-      return;
-    }
-
-    if (!isEqual(instanceGeneralSetting, originalSetting) || publicAccessEnabled !== originalPublicAccessEnabled) {
-      toast.success(t("message.update-succeed"));
+    if (accessSettingChanged) {
+      await saveInstanceSetting({
+        key: InstanceSetting_Key.ACCESS,
+        setting: create(InstanceSettingSchema, {
+          name: buildInstanceSettingName(InstanceSetting_Key.ACCESS),
+          value: {
+            case: "accessSetting",
+            value: instanceAccessSetting,
+          },
+        }),
+        errorContext: "Update access settings",
+      });
     }
   };
+
+  const hasUnsavedChanges =
+    !isEqual(instanceGeneralSetting, originalGeneralSetting) ||
+    !isEqual(instanceAccessSetting, originalAccessSetting) ||
+    publicAccessEnabled !== originalPublicAccessEnabled;
 
   return (
     <SettingSection title={t("setting.system.label")}>
@@ -191,35 +204,33 @@ const InstanceSection = () => {
         <SettingList>
           <SettingListItem
             label={t("setting.instance.instance-url")}
-            description={
-              <>
-                {t("setting.instance.instance-url-description")}
-                {instanceURLInvalid && <span className="block text-destructive">{t("setting.instance.instance-url-invalid")}</span>}
-              </>
-            }
+            description={t("setting.instance.instance-url-description")}
             controlClassName="w-full sm:w-96"
           >
             <Input
               type="url"
               aria-label={t("setting.instance.instance-url")}
-              placeholder="https://memos.example.com"
               value={effectiveInstanceURL}
               onChange={(event) => updatePartialSetting({ instanceUrl: event.target.value })}
             />
+            {instanceURLInvalid && <span className="text-destructive">{t("setting.instance.instance-url-invalid")}</span>}
           </SettingListItem>
-
-          <SettingListItem
-            label={t("setting.instance.public-access")}
-            description={
-              effectiveInstanceURL
-                ? t("setting.instance.public-access-description")
-                : `${t("setting.instance.public-access-description")} ${t("setting.instance.public-access-instance-url-required")}`
-            }
-          >
+          <SettingListItem label={t("setting.instance.public-access")} description={t("setting.instance.public-access-description")}>
             <Switch
               aria-label={t("setting.instance.public-access")}
               checked={publicAccessEnabled}
               onCheckedChange={setPublicAccessEnabled}
+            />
+          </SettingListItem>
+          <SettingListItem
+            label={t("setting.instance.allow-public-access")}
+            description={t("setting.instance.allow-public-access-description")}
+          >
+            <Switch
+              aria-label={t("setting.instance.allow-public-access")}
+              disabled={profile.demo}
+              checked={instanceAccessSetting.accessMode === InstanceAccessMode.PUBLIC}
+              onCheckedChange={(checked) => updateAccessMode(checked ? InstanceAccessMode.PUBLIC : InstanceAccessMode.PRIVATE)}
             />
           </SettingListItem>
 
@@ -289,12 +300,7 @@ const InstanceSection = () => {
       </SettingGroup>
 
       <div className="w-full flex justify-end">
-        <Button
-          disabled={
-            instanceURLInvalid || (isEqual(instanceGeneralSetting, originalSetting) && publicAccessEnabled === originalPublicAccessEnabled)
-          }
-          onClick={handleSaveSettings}
-        >
+        <Button disabled={instanceURLInvalid || !hasUnsavedChanges} onClick={handleSaveSettings}>
           {t("common.save")}
         </Button>
       </div>

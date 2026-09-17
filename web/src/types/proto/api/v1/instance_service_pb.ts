@@ -20,7 +20,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/instance_service.proto.
  */
 export const file_api_v1_instance_service: GenFile = /*@__PURE__*/
-  fileDesc("Ch1hcGkvdjEvaW5zdGFuY2Vfc2VydmljZS5wcm90bxIMbWVtb3MuYXBpLnYxIo4BCg9JbnN0YW5jZVByb2ZpbGUSDwoHdmVyc2lvbhgCIAEoCRIMCgRkZW1vGAMgASgIEhQKDGluc3RhbmNlX3VybBgGIAEoCRIhCgVhZG1pbhgHIAEoCzISLm1lbW9zLmFwaS52MS5Vc2VyEg4KBmNvbW1pdBgIIAEoCRITCgtuZWVkc19zZXR1cBgJIAEoCCIbChlHZXRJbnN0YW5jZVByb2ZpbGVSZXF1ZXN0IukWCg9JbnN0YW5jZVNldHRpbmcSEQoEbmFtZRgBIAEoCUID4EEIEkcKD2dlbmVyYWxfc2V0dGluZxgCIAEoCzIsLm1lbW9zLmFwaS52MS5JbnN0YW5jZVNldHRpbmcuR2VuZXJhbFNldHRpbmdIABJHCg9zdG9yYWdlX3NldHRpbmcYAyABKAsyLC5tZW1vcy5hcGkudjEuSW5zdGFuY2VTZXR0aW5nLlN0b3JhZ2VTZXR0aW5nSAASUAoUbWVtb19yZWxhdGVkX3NldHRpbmcYBCABKAsyMC5tZW1vcy5hcGkudjEuSW5zdGFuY2VTZXR0aW5nLk1lbW9SZWxhdGVkU2V0dGluZ0gAEkEKDHRhZ3Nfc2V0dGluZxgFIAEoCzIpLm1lbW9zLmFwaS52MS5JbnN0YW5jZVNldHRpbmcuVGFnc1NldHRpbmdIABJRChRub3RpZmljYXRpb25fc2V0dGluZxgGIAEoCzIxLm1lbW9zLmFwaS52MS5JbnN0YW5jZVNldHRpbmcuTm90aWZpY2F0aW9uU2V0dGluZ0gAEj0KCmFpX3NldHRpbmcYByABKAsyJy5tZW1vcy5hcGkudjEuSW5zdGFuY2VTZXR0aW5nLkFJU2V0dGluZ0gAGrMDCg5HZW5lcmFsU2V0dGluZxIiChpkaXNhbGxvd191c2VyX3JlZ2lzdHJhdGlvbhgCIAEoCBIeChZkaXNhbGxvd19wYXNzd29yZF9hdXRoGAMgASgIEhkKEWFkZGl0aW9uYWxfc2NyaXB0GAQgASgJEhgKEGFkZGl0aW9uYWxfc3R5bGUYBSABKAkSUgoOY3VzdG9tX3Byb2ZpbGUYBiABKAsyOi5tZW1vcy5hcGkudjEuSW5zdGFuY2VTZXR0aW5nLkdlbmVyYWxTZXR0aW5nLkN1c3RvbVByb2ZpbGUSHQoVd2Vla19zdGFydF9kYXlfb2Zmc2V0GAcgASgFEiAKGGRpc2FsbG93X2NoYW5nZV91c2VybmFtZRgIIAEoCBIgChhkaXNhbGxvd19jaGFuZ2Vfbmlja25hbWUYCSABKAgSGQoMaW5zdGFuY2VfdXJsGAogASgJSACIAQEaRQoNQ3VzdG9tUHJvZmlsZRINCgV0aXRsZRgBIAEoCRITCgtkZXNjcmlwdGlvbhgCIAEoCRIQCghsb2dvX3VybBgDIAEoCUIPCg1faW5zdGFuY2VfdXJsGuEDCg5TdG9yYWdlU2V0dGluZxJOCgxzdG9yYWdlX3R5cGUYASABKA4yOC5tZW1vcy5hcGkudjEuSW5zdGFuY2VTZXR0aW5nLlN0b3JhZ2VTZXR0aW5nLlN0b3JhZ2VUeXBlEhkKEWZpbGVwYXRoX3RlbXBsYXRlGAIgASgJEhwKFHVwbG9hZF9zaXplX2xpbWl0X21iGAMgASgDEkgKCXMzX2NvbmZpZxgEIAEoCzI1Lm1lbW9zLmFwaS52MS5JbnN0YW5jZVNldHRpbmcuU3RvcmFnZVNldHRpbmcuUzNDb25maWcarQEKCFMzQ29uZmlnEhUKDWFjY2Vzc19rZXlfaWQYASABKAkSHgoRYWNjZXNzX2tleV9zZWNyZXQYAiABKAlCA+BBBBIQCghlbmRwb2ludBgDIAEoCRIOCgZyZWdpb24YBCABKAkSDgoGYnVja2V0GAUgASgJEhYKDnVzZV9wYXRoX3N0eWxlGAYgASgIEiAKGGluc2VjdXJlX3NraXBfdGxzX3ZlcmlmeRgHIAEoCCJMCgtTdG9yYWdlVHlwZRIcChhTVE9SQUdFX1RZUEVfVU5TUEVDSUZJRUQQABIMCghEQVRBQkFTRRABEgkKBUxPQ0FMEAISBgoCUzMQAxrPAQoSTWVtb1JlbGF0ZWRTZXR0aW5nEhwKFGNvbnRlbnRfbGVuZ3RoX2xpbWl0GAMgASgFEiAKGGVuYWJsZV9kb3VibGVfY2xpY2tfZWRpdBgEIAEoCBIRCglyZWFjdGlvbnMYByADKAkSHAoUYWxsb3dlZF92aXNpYmlsaXRpZXMYCCADKAkSEwoLbW9vZF9lbW9qaXMYCSADKAkSEwoLbW9vZF9jb2xvcnMYCiADKAlKBAgCEANSGGRpc3BsYXlfd2l0aF91cGRhdGVfdGltZRpRCgtUYWdNZXRhZGF0YRIsChBiYWNrZ3JvdW5kX2NvbG9yGAEgASgLMhIuZ29vZ2xlLnR5cGUuQ29sb3ISFAoMYmx1cl9jb250ZW50GAIgASgIGqgBCgtUYWdzU2V0dGluZxJBCgR0YWdzGAEgAygLMjMubWVtb3MuYXBpLnYxLkluc3RhbmNlU2V0dGluZy5UYWdzU2V0dGluZy5UYWdzRW50cnkaVgoJVGFnc0VudHJ5EgsKA2tleRgBIAEoCRI4CgV2YWx1ZRgCIAEoCzIpLm1lbW9zLmFwaS52MS5JbnN0YW5jZVNldHRpbmcuVGFnTWV0YWRhdGE6AjgBGroCChNOb3RpZmljYXRpb25TZXR0aW5nEk0KBWVtYWlsGAEgASgLMj4ubWVtb3MuYXBpLnYxLkluc3RhbmNlU2V0dGluZy5Ob3RpZmljYXRpb25TZXR0aW5nLkVtYWlsU2V0dGluZxrTAQoMRW1haWxTZXR0aW5nEg8KB2VuYWJsZWQYASABKAgSEQoJc210cF9ob3N0GAIgASgJEhEKCXNtdHBfcG9ydBgDIAEoBRIVCg1zbXRwX3VzZXJuYW1lGAQgASgJEhoKDXNtdHBfcGFzc3dvcmQYBSABKAlCA+BBBBISCgpmcm9tX2VtYWlsGAYgASgJEhEKCWZyb21fbmFtZRgHIAEoCRIQCghyZXBseV90bxgIIAEoCRIPCgd1c2VfdGxzGAkgASgIEg8KB3VzZV9zc2wYCiABKAgamAEKCUFJU2V0dGluZxJBCglwcm92aWRlcnMYASADKAsyLi5tZW1vcy5hcGkudjEuSW5zdGFuY2VTZXR0aW5nLkFJUHJvdmlkZXJDb25maWcSSAoNdHJhbnNjcmlwdGlvbhgCIAEoCzIxLm1lbW9zLmFwaS52MS5JbnN0YW5jZVNldHRpbmcuVHJhbnNjcmlwdGlvbkNvbmZpZxrGAQoQQUlQcm92aWRlckNvbmZpZxIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRI6CgR0eXBlGAMgASgOMiwubWVtb3MuYXBpLnYxLkluc3RhbmNlU2V0dGluZy5BSVByb3ZpZGVyVHlwZRIQCghlbmRwb2ludBgEIAEoCRIUCgdhcGlfa2V5GAUgASgJQgPgQQQSGAoLYXBpX2tleV9zZXQYCCABKAhCA+BBAxIZCgxhcGlfa2V5X2hpbnQYCSABKAlCA+BBAxpbChNUcmFuc2NyaXB0aW9uQ29uZmlnEhMKC3Byb3ZpZGVyX2lkGAEgASgJEg0KBW1vZGVsGAIgASgJEhAKCGxhbmd1YWdlGAMgASgJEg4KBnByb21wdBgEIAEoCSJqCgNLZXkSEwoPS0VZX1VOU1BFQ0lGSUVEEAASCwoHR0VORVJBTBABEgsKB1NUT1JBR0UQAhIQCgxNRU1PX1JFTEFURUQQAxIICgRUQUdTEAQSEAoMTk9USUZJQ0FUSU9OEAUSBgoCQUkQBiJKCg5BSVByb3ZpZGVyVHlwZRIgChxBSV9QUk9WSURFUl9UWVBFX1VOU1BFQ0lGSUVEEAASCgoGT1BFTkFJEAESCgoGR0VNSU5JEAI6YepBXgocbWVtb3MuYXBpLnYxL0luc3RhbmNlU2V0dGluZxIbaW5zdGFuY2Uvc2V0dGluZ3Mve3NldHRpbmd9KhBpbnN0YW5jZVNldHRpbmdzMg9pbnN0YW5jZVNldHRpbmdCBwoFdmFsdWUiTwoZR2V0SW5zdGFuY2VTZXR0aW5nUmVxdWVzdBIyCgRuYW1lGAEgASgJQiTgQQL6QR4KHG1lbW9zLmFwaS52MS9JbnN0YW5jZVNldHRpbmciVgofQmF0Y2hHZXRJbnN0YW5jZVNldHRpbmdzUmVxdWVzdBIzCgVuYW1lcxgBIAMoCUIk4EEC+kEeChxtZW1vcy5hcGkudjEvSW5zdGFuY2VTZXR0aW5nIlMKIEJhdGNoR2V0SW5zdGFuY2VTZXR0aW5nc1Jlc3BvbnNlEi8KCHNldHRpbmdzGAEgAygLMh0ubWVtb3MuYXBpLnYxLkluc3RhbmNlU2V0dGluZyKJAQocVXBkYXRlSW5zdGFuY2VTZXR0aW5nUmVxdWVzdBIzCgdzZXR0aW5nGAEgASgLMh0ubWVtb3MuYXBpLnYxLkluc3RhbmNlU2V0dGluZ0ID4EECEjQKC3VwZGF0ZV9tYXNrGAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLkZpZWxkTWFza0ID4EEBIpMBCh9UZXN0SW5zdGFuY2VFbWFpbFNldHRpbmdSZXF1ZXN0ElIKBWVtYWlsGAEgASgLMj4ubWVtb3MuYXBpLnYxLkluc3RhbmNlU2V0dGluZy5Ob3RpZmljYXRpb25TZXR0aW5nLkVtYWlsU2V0dGluZ0ID4EEBEhwKD3JlY2lwaWVudF9lbWFpbBgCIAEoCUID4EEBIhkKF0dldEluc3RhbmNlU3RhdHNSZXF1ZXN0IoQBCg9NZW1vTW9vZERpc3BsYXkSNwoGbGV2ZWxzGAEgAygLMicubWVtb3MuYXBpLnYxLk1lbW9Nb29kRGlzcGxheS5Nb29kTGV2ZWwaOAoJTW9vZExldmVsEg0KBWxldmVsGAEgASgFEg0KBWVtb2ppGAIgASgJEg0KBWNvbG9yGAMgASgJIhsKGUdldE1lbW9Nb29kRGlzcGxheVJlcXVlc3Qi3QEKHFVwZGF0ZU1lbW9Nb29kRGlzcGxheVJlcXVlc3QSUAoHdXBkYXRlcxgBIAMoCzI6Lm1lbW9zLmFwaS52MS5VcGRhdGVNZW1vTW9vZERpc3BsYXlSZXF1ZXN0Lk1vb2RMZXZlbFVwZGF0ZUID4EECGmsKD01vb2RMZXZlbFVwZGF0ZRISCgVsZXZlbBgBIAEoBUID4EECEhcKBWVtb2ppGAIgASgJQgPgQQFIAIgBARIXCgVjb2xvchgDIAEoCUID4EEBSAGIAQFCCAoGX2Vtb2ppQggKBl9jb2xvciLSAQoNSW5zdGFuY2VTdGF0cxI7CghkYXRhYmFzZRgBIAEoCzIpLm1lbW9zLmFwaS52MS5JbnN0YW5jZVN0YXRzLkRhdGFiYXNlU3RhdHMSGwoTbG9jYWxfc3RvcmFnZV9ieXRlcxgCIAEoAxIyCg5nZW5lcmF0ZWRfdGltZRgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAaMwoNRGF0YWJhc2VTdGF0cxIOCgZkcml2ZXIYASABKAkSEgoKc2l6ZV9ieXRlcxgCIAEoAzK+CQoPSW5zdGFuY2VTZXJ2aWNlEn4KEkdldEluc3RhbmNlUHJvZmlsZRInLm1lbW9zLmFwaS52MS5HZXRJbnN0YW5jZVByb2ZpbGVSZXF1ZXN0Gh0ubWVtb3MuYXBpLnYxLkluc3RhbmNlUHJvZmlsZSIggtPkkwIaEhgvYXBpL3YxL2luc3RhbmNlL3Byb2ZpbGUSjwEKEkdldEluc3RhbmNlU2V0dGluZxInLm1lbW9zLmFwaS52MS5HZXRJbnN0YW5jZVNldHRpbmdSZXF1ZXN0Gh0ubWVtb3MuYXBpLnYxLkluc3RhbmNlU2V0dGluZyIx2kEEbmFtZYLT5JMCJBIiL2FwaS92MS97bmFtZT1pbnN0YW5jZS9zZXR0aW5ncy8qfRKoAQoYQmF0Y2hHZXRJbnN0YW5jZVNldHRpbmdzEi0ubWVtb3MuYXBpLnYxLkJhdGNoR2V0SW5zdGFuY2VTZXR0aW5nc1JlcXVlc3QaLi5tZW1vcy5hcGkudjEuQmF0Y2hHZXRJbnN0YW5jZVNldHRpbmdzUmVzcG9uc2UiLYLT5JMCJzoBKiIiL2FwaS92MS9pbnN0YW5jZS9zZXR0aW5nczpiYXRjaEdldBK1AQoVVXBkYXRlSW5zdGFuY2VTZXR0aW5nEioubWVtb3MuYXBpLnYxLlVwZGF0ZUluc3RhbmNlU2V0dGluZ1JlcXVlc3QaHS5tZW1vcy5hcGkudjEuSW5zdGFuY2VTZXR0aW5nIlHaQRNzZXR0aW5nLHVwZGF0ZV9tYXNrgtPkkwI1OgdzZXR0aW5nMiovYXBpL3YxL3tzZXR0aW5nLm5hbWU9aW5zdGFuY2Uvc2V0dGluZ3MvKn0SngEKGFRlc3RJbnN0YW5jZUVtYWlsU2V0dGluZxItLm1lbW9zLmFwaS52MS5UZXN0SW5zdGFuY2VFbWFpbFNldHRpbmdSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IjuC0+STAjU6ASoiMC9hcGkvdjEvaW5zdGFuY2Uvc2V0dGluZ3Mvbm90aWZpY2F0aW9uOnRlc3RFbWFpbBJ2ChBHZXRJbnN0YW5jZVN0YXRzEiUubWVtb3MuYXBpLnYxLkdldEluc3RhbmNlU3RhdHNSZXF1ZXN0GhsubWVtb3MuYXBpLnYxLkluc3RhbmNlU3RhdHMiHoLT5JMCGBIWL2FwaS92MS9pbnN0YW5jZS9zdGF0cxKIAQoSR2V0TWVtb01vb2REaXNwbGF5EicubWVtb3MuYXBpLnYxLkdldE1lbW9Nb29kRGlzcGxheVJlcXVlc3QaHS5tZW1vcy5hcGkudjEuTWVtb01vb2REaXNwbGF5IiqC0+STAiQSIi9hcGkvdjEvaW5zdGFuY2UvbWVtby1tb29kLWRpc3BsYXkSkQEKFVVwZGF0ZU1lbW9Nb29kRGlzcGxheRIqLm1lbW9zLmFwaS52MS5VcGRhdGVNZW1vTW9vZERpc3BsYXlSZXF1ZXN0Gh0ubWVtb3MuYXBpLnYxLk1lbW9Nb29kRGlzcGxheSItgtPkkwInOgEqMiIvYXBpL3YxL2luc3RhbmNlL21lbW8tbW9vZC1kaXNwbGF5QqwBChBjb20ubWVtb3MuYXBpLnYxQhRJbnN0YW5jZVNlcnZpY2VQcm90b1ABWjBnaXRodWIuY29tL3VzZW1lbW9zL21lbW9zL3Byb3RvL2dlbi9hcGkvdjE7YXBpdjGiAgNNQViqAgxNZW1vcy5BcGkuVjHKAgxNZW1vc1xBcGlcVjHiAhhNZW1vc1xBcGlcVjFcR1BCTWV0YWRhdGHqAg5NZW1vczo6QXBpOjpWMWIGcHJvdG8z", [file_api_v1_user_service, file_google_api_annotations, file_google_api_client, file_google_api_field_behavior, file_google_api_resource, file_google_protobuf_empty, file_google_protobuf_field_mask, file_google_protobuf_timestamp, file_google_type_color]);
+  fileDesc("Ch1hcGkvdjEvaW5zdGFuY2Vfc2VydmljZS5wcm90bxIMbWVtb3MuYXBpLnYxIsUBCg9JbnN0YW5jZVByb2ZpbGUSDwoHdmVyc2lvbhgCIAEoCRIMCgRkZW1vGAMgASgIEhQKDGluc3RhbmNlX3VybBgGIAEoCRIhCgVhZG1pbhgHIAEoCzISLm1lbW9zLmFwaS52MS5Vc2VyEg4KBmNvbW1pdBgIIAEoCRITCgtuZWVkc19zZXR1cBgJIAEoCBI1CgthY2Nlc3NfbW9kZRgKIAEoDjIgLm1lbW9zLmFwaS52MS5JbnN0YW5jZUFjY2Vzc01vZGUiGwoZR2V0SW5zdGFuY2VQcm9maWxlUmVxdWVzdCKFHAoPSW5zdGFuY2VTZXR0aW5nEhEKBG5hbWUYASABKAlCA+BBCBJHCg9nZW5lcmFsX3NldHRpbmcYAiABKAsyLC5tZW1vcy5hcGkudjEuSW5zdGFuY2VTZXR0aW5nLkdlbmVyYWxTZXR0aW5nSAASRwoPc3RvcmFnZV9zZXR0aW5nGAMgASgLMiwubWVtb3MuYXBpLnYxLkluc3RhbmNlU2V0dGluZy5TdG9yYWdlU2V0dGluZ0gAElAKFG1lbW9fcmVsYXRlZF9zZXR0aW5nGAQgASgLMjAubWVtb3MuYXBpLnYxLkluc3RhbmNlU2V0dGluZy5NZW1vUmVsYXRlZFNldHRpbmdIABJBCgx0YWdzX3NldHRpbmcYBSABKAsyKS5tZW1vcy5hcGkudjEuSW5zdGFuY2VTZXR0aW5nLlRhZ3NTZXR0aW5nSAASUQoUbm90aWZpY2F0aW9uX3NldHRpbmcYBiABKAsyMS5tZW1vcy5hcGkudjEuSW5zdGFuY2VTZXR0aW5nLk5vdGlmaWNhdGlvblNldHRpbmdIABI9CgphaV9zZXR0aW5nGAcgASgLMicubWVtb3MuYXBpLnYxLkluc3RhbmNlU2V0dGluZy5BSVNldHRpbmdIABJFCg5hY2Nlc3Nfc2V0dGluZxgIIAEoCzIrLm1lbW9zLmFwaS52MS5JbnN0YW5jZVNldHRpbmcuQWNjZXNzU2V0dGluZ0gAGrMDCg5HZW5lcmFsU2V0dGluZxIiChpkaXNhbGxvd191c2VyX3JlZ2lzdHJhdGlvbhgCIAEoCBIeChZkaXNhbGxvd19wYXNzd29yZF9hdXRoGAMgASgIEhkKEWFkZGl0aW9uYWxfc2NyaXB0GAQgASgJEhgKEGFkZGl0aW9uYWxfc3R5bGUYBSABKAkSUgoOY3VzdG9tX3Byb2ZpbGUYBiABKAsyOi5tZW1vcy5hcGkudjEuSW5zdGFuY2VTZXR0aW5nLkdlbmVyYWxTZXR0aW5nLkN1c3RvbVByb2ZpbGUSHQoVd2Vla19zdGFydF9kYXlfb2Zmc2V0GAcgASgFEiAKGGRpc2FsbG93X2NoYW5nZV91c2VybmFtZRgIIAEoCBIgChhkaXNhbGxvd19jaGFuZ2Vfbmlja25hbWUYCSABKAgSGQoMaW5zdGFuY2VfdXJsGAogASgJSACIAQEaRQoNQ3VzdG9tUHJvZmlsZRINCgV0aXRsZRgBIAEoCRITCgtkZXNjcmlwdGlvbhgCIAEoCRIQCghsb2dvX3VybBgDIAEoCUIPCg1faW5zdGFuY2VfdXJsGtsCCgdTdG9yYWdlEgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSNwoEdHlwZRgDIAEoDjIpLm1lbW9zLmFwaS52MS5JbnN0YW5jZVNldHRpbmcuU3RvcmFnZVR5cGUSQwoJczNfY29uZmlnGAogASgLMi4ubWVtb3MuYXBpLnYxLkluc3RhbmNlU2V0dGluZy5TdG9yYWdlLlMzQ29uZmlnSAAarQEKCFMzQ29uZmlnEhUKDWFjY2Vzc19rZXlfaWQYASABKAkSHgoRYWNjZXNzX2tleV9zZWNyZXQYAiABKAlCA+BBBBIQCghlbmRwb2ludBgDIAEoCRIOCgZyZWdpb24YBCABKAkSDgoGYnVja2V0GAUgASgJEhYKDnVzZV9wYXRoX3N0eWxlGAYgASgIEiAKGGluc2VjdXJlX3NraXBfdGxzX3ZlcmlmeRgHIAEoCEIICgZjb25maWcatgQKDlN0b3JhZ2VTZXR0aW5nEk4KDHN0b3JhZ2VfdHlwZRgBIAEoDjI4Lm1lbW9zLmFwaS52MS5JbnN0YW5jZVNldHRpbmcuU3RvcmFnZVNldHRpbmcuU3RvcmFnZVR5cGUSGQoRZmlsZXBhdGhfdGVtcGxhdGUYAiABKAkSHAoUdXBsb2FkX3NpemVfbGltaXRfbWIYAyABKAMSSAoJczNfY29uZmlnGAQgASgLMjUubWVtb3MuYXBpLnYxLkluc3RhbmNlU2V0dGluZy5TdG9yYWdlU2V0dGluZy5TM0NvbmZpZxI3CghzdG9yYWdlcxgFIAMoCzIlLm1lbW9zLmFwaS52MS5JbnN0YW5jZVNldHRpbmcuU3RvcmFnZRIaChJkZWZhdWx0X3N0b3JhZ2VfaWQYBiABKAkarQEKCFMzQ29uZmlnEhUKDWFjY2Vzc19rZXlfaWQYASABKAkSHgoRYWNjZXNzX2tleV9zZWNyZXQYAiABKAlCA+BBBBIQCghlbmRwb2ludBgDIAEoCRIOCgZyZWdpb24YBCABKAkSDgoGYnVja2V0GAUgASgJEhYKDnVzZV9wYXRoX3N0eWxlGAYgASgIEiAKGGluc2VjdXJlX3NraXBfdGxzX3ZlcmlmeRgHIAEoCCJMCgtTdG9yYWdlVHlwZRIcChhTVE9SQUdFX1RZUEVfVU5TUEVDSUZJRUQQABIMCghEQVRBQkFTRRABEgkKBUxPQ0FMEAISBgoCUzMQAxrPAQoSTWVtb1JlbGF0ZWRTZXR0aW5nEhwKFGNvbnRlbnRfbGVuZ3RoX2xpbWl0GAMgASgFEiAKGGVuYWJsZV9kb3VibGVfY2xpY2tfZWRpdBgEIAEoCBIRCglyZWFjdGlvbnMYByADKAkSHAoUYWxsb3dlZF92aXNpYmlsaXRpZXMYCCADKAkSEwoLbW9vZF9lbW9qaXMYCSADKAkSEwoLbW9vZF9jb2xvcnMYCiADKAlKBAgCEANSGGRpc3BsYXlfd2l0aF91cGRhdGVfdGltZRpRCgtUYWdNZXRhZGF0YRIsChBiYWNrZ3JvdW5kX2NvbG9yGAEgASgLMhIuZ29vZ2xlLnR5cGUuQ29sb3ISFAoMYmx1cl9jb250ZW50GAIgASgIGqgBCgtUYWdzU2V0dGluZxJBCgR0YWdzGAEgAygLMjMubWVtb3MuYXBpLnYxLkluc3RhbmNlU2V0dGluZy5UYWdzU2V0dGluZy5UYWdzRW50cnkaVgoJVGFnc0VudHJ5EgsKA2tleRgBIAEoCRI4CgV2YWx1ZRgCIAEoCzIpLm1lbW9zLmFwaS52MS5JbnN0YW5jZVNldHRpbmcuVGFnTWV0YWRhdGE6AjgBGroCChNOb3RpZmljYXRpb25TZXR0aW5nEk0KBWVtYWlsGAEgASgLMj4ubWVtb3MuYXBpLnYxLkluc3RhbmNlU2V0dGluZy5Ob3RpZmljYXRpb25TZXR0aW5nLkVtYWlsU2V0dGluZxrTAQoMRW1haWxTZXR0aW5nEg8KB2VuYWJsZWQYASABKAgSEQoJc210cF9ob3N0GAIgASgJEhEKCXNtdHBfcG9ydBgDIAEoBRIVCg1zbXRwX3VzZXJuYW1lGAQgASgJEhoKDXNtdHBfcGFzc3dvcmQYBSABKAlCA+BBBBISCgpmcm9tX2VtYWlsGAYgASgJEhEKCWZyb21fbmFtZRgHIAEoCRIQCghyZXBseV90bxgIIAEoCRIPCgd1c2VfdGxzGAkgASgIEg8KB3VzZV9zc2wYCiABKAgamAEKCUFJU2V0dGluZxJBCglwcm92aWRlcnMYASADKAsyLi5tZW1vcy5hcGkudjEuSW5zdGFuY2VTZXR0aW5nLkFJUHJvdmlkZXJDb25maWcSSAoNdHJhbnNjcmlwdGlvbhgCIAEoCzIxLm1lbW9zLmFwaS52MS5JbnN0YW5jZVNldHRpbmcuVHJhbnNjcmlwdGlvbkNvbmZpZxrGAQoQQUlQcm92aWRlckNvbmZpZxIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRI6CgR0eXBlGAMgASgOMiwubWVtb3MuYXBpLnYxLkluc3RhbmNlU2V0dGluZy5BSVByb3ZpZGVyVHlwZRIQCghlbmRwb2ludBgEIAEoCRIUCgdhcGlfa2V5GAUgASgJQgPgQQQSGAoLYXBpX2tleV9zZXQYCCABKAhCA+BBAxIZCgxhcGlfa2V5X2hpbnQYCSABKAlCA+BBAxpbChNUcmFuc2NyaXB0aW9uQ29uZmlnEhMKC3Byb3ZpZGVyX2lkGAEgASgJEg0KBW1vZGVsGAIgASgJEhAKCGxhbmd1YWdlGAMgASgJEg4KBnByb21wdBgEIAEoCRpGCg1BY2Nlc3NTZXR0aW5nEjUKC2FjY2Vzc19tb2RlGAEgASgOMiAubWVtb3MuYXBpLnYxLkluc3RhbmNlQWNjZXNzTW9kZSJ2CgNLZXkSEwoPS0VZX1VOU1BFQ0lGSUVEEAASCwoHR0VORVJBTBABEgsKB1NUT1JBR0UQAhIQCgxNRU1PX1JFTEFURUQQAxIICgRUQUdTEAQSEAoMTk9USUZJQ0FUSU9OEAUSBgoCQUkQBhIKCgZBQ0NFU1MQByJMCgtTdG9yYWdlVHlwZRIcChhTVE9SQUdFX1RZUEVfVU5TUEVDSUZJRUQQABIMCghEQVRBQkFTRRABEgkKBUxPQ0FMEAISBgoCUzMQAyJKCg5BSVByb3ZpZGVyVHlwZRIgChxBSV9QUk9WSURFUl9UWVBFX1VOU1BFQ0lGSUVEEAASCgoGT1BFTkFJEAESCgoGR0VNSU5JEAI6YepBXgocbWVtb3MuYXBpLnYxL0luc3RhbmNlU2V0dGluZxIbaW5zdGFuY2Uvc2V0dGluZ3Mve3NldHRpbmd9KhBpbnN0YW5jZVNldHRpbmdzMg9pbnN0YW5jZVNldHRpbmdCBwoFdmFsdWUiTwoZR2V0SW5zdGFuY2VTZXR0aW5nUmVxdWVzdBIyCgRuYW1lGAEgASgJQiTgQQL6QR4KHG1lbW9zLmFwaS52MS9JbnN0YW5jZVNldHRpbmciVgofQmF0Y2hHZXRJbnN0YW5jZVNldHRpbmdzUmVxdWVzdBIzCgVuYW1lcxgBIAMoCUIk4EEC+kEeChxtZW1vcy5hcGkudjEvSW5zdGFuY2VTZXR0aW5nIlMKIEJhdGNoR2V0SW5zdGFuY2VTZXR0aW5nc1Jlc3BvbnNlEi8KCHNldHRpbmdzGAEgAygLMh0ubWVtb3MuYXBpLnYxLkluc3RhbmNlU2V0dGluZyKJAQocVXBkYXRlSW5zdGFuY2VTZXR0aW5nUmVxdWVzdBIzCgdzZXR0aW5nGAEgASgLMh0ubWVtb3MuYXBpLnYxLkluc3RhbmNlU2V0dGluZ0ID4EECEjQKC3VwZGF0ZV9tYXNrGAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLkZpZWxkTWFza0ID4EEBIpMBCh9UZXN0SW5zdGFuY2VFbWFpbFNldHRpbmdSZXF1ZXN0ElIKBWVtYWlsGAEgASgLMj4ubWVtb3MuYXBpLnYxLkluc3RhbmNlU2V0dGluZy5Ob3RpZmljYXRpb25TZXR0aW5nLkVtYWlsU2V0dGluZ0ID4EEBEhwKD3JlY2lwaWVudF9lbWFpbBgCIAEoCUID4EEBIhkKF0dldEluc3RhbmNlU3RhdHNSZXF1ZXN0IoQBCg9NZW1vTW9vZERpc3BsYXkSNwoGbGV2ZWxzGAEgAygLMicubWVtb3MuYXBpLnYxLk1lbW9Nb29kRGlzcGxheS5Nb29kTGV2ZWwaOAoJTW9vZExldmVsEg0KBWxldmVsGAEgASgFEg0KBWVtb2ppGAIgASgJEg0KBWNvbG9yGAMgASgJIhsKGUdldE1lbW9Nb29kRGlzcGxheVJlcXVlc3Qi3QEKHFVwZGF0ZU1lbW9Nb29kRGlzcGxheVJlcXVlc3QSUAoHdXBkYXRlcxgBIAMoCzI6Lm1lbW9zLmFwaS52MS5VcGRhdGVNZW1vTW9vZERpc3BsYXlSZXF1ZXN0Lk1vb2RMZXZlbFVwZGF0ZUID4EECGmsKD01vb2RMZXZlbFVwZGF0ZRISCgVsZXZlbBgBIAEoBUID4EECEhcKBWVtb2ppGAIgASgJQgPgQQFIAIgBARIXCgVjb2xvchgDIAEoCUID4EEBSAGIAQFCCAoGX2Vtb2ppQggKBl9jb2xvciLSAQoNSW5zdGFuY2VTdGF0cxI7CghkYXRhYmFzZRgBIAEoCzIpLm1lbW9zLmFwaS52MS5JbnN0YW5jZVN0YXRzLkRhdGFiYXNlU3RhdHMSGwoTbG9jYWxfc3RvcmFnZV9ieXRlcxgCIAEoAxIyCg5nZW5lcmF0ZWRfdGltZRgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAaMwoNRGF0YWJhc2VTdGF0cxIOCgZkcml2ZXIYASABKAkSEgoKc2l6ZV9ieXRlcxgCIAEoAyp9ChJJbnN0YW5jZUFjY2Vzc01vZGUSJAogSU5TVEFOQ0VfQUNDRVNTX01PREVfVU5TUEVDSUZJRUQQABIgChxJTlNUQU5DRV9BQ0NFU1NfTU9ERV9QUklWQVRFEAESHwobSU5TVEFOQ0VfQUNDRVNTX01PREVfUFVCTElDEAIyvgkKD0luc3RhbmNlU2VydmljZRJ+ChJHZXRJbnN0YW5jZVByb2ZpbGUSJy5tZW1vcy5hcGkudjEuR2V0SW5zdGFuY2VQcm9maWxlUmVxdWVzdBodLm1lbW9zLmFwaS52MS5JbnN0YW5jZVByb2ZpbGUiIILT5JMCGhIYL2FwaS92MS9pbnN0YW5jZS9wcm9maWxlEo8BChJHZXRJbnN0YW5jZVNldHRpbmcSJy5tZW1vcy5hcGkudjEuR2V0SW5zdGFuY2VTZXR0aW5nUmVxdWVzdBodLm1lbW9zLmFwaS52MS5JbnN0YW5jZVNldHRpbmciMdpBBG5hbWWC0+STAiQSIi9hcGkvdjEve25hbWU9aW5zdGFuY2Uvc2V0dGluZ3MvKn0SqAEKGEJhdGNoR2V0SW5zdGFuY2VTZXR0aW5ncxItLm1lbW9zLmFwaS52MS5CYXRjaEdldEluc3RhbmNlU2V0dGluZ3NSZXF1ZXN0Gi4ubWVtb3MuYXBpLnYxLkJhdGNoR2V0SW5zdGFuY2VTZXR0aW5nc1Jlc3BvbnNlIi2C0+STAic6ASoiIi9hcGkvdjEvaW5zdGFuY2Uvc2V0dGluZ3M6YmF0Y2hHZXQStQEKFVVwZGF0ZUluc3RhbmNlU2V0dGluZxIqLm1lbW9zLmFwaS52MS5VcGRhdGVJbnN0YW5jZVNldHRpbmdSZXF1ZXN0Gh0ubWVtb3MuYXBpLnYxLkluc3RhbmNlU2V0dGluZyJR2kETc2V0dGluZyx1cGRhdGVfbWFza4LT5JMCNToHc2V0dGluZzIqL2FwaS92MS97c2V0dGluZy5uYW1lPWluc3RhbmNlL3NldHRpbmdzLyp9Ep4BChhUZXN0SW5zdGFuY2VFbWFpbFNldHRpbmcSLS5tZW1vcy5hcGkudjEuVGVzdEluc3RhbmNlRW1haWxTZXR0aW5nUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSI7gtPkkwI1OgEqIjAvYXBpL3YxL2luc3RhbmNlL3NldHRpbmdzL25vdGlmaWNhdGlvbjp0ZXN0RW1haWwSdgoQR2V0SW5zdGFuY2VTdGF0cxIlLm1lbW9zLmFwaS52MS5HZXRJbnN0YW5jZVN0YXRzUmVxdWVzdBobLm1lbW9zLmFwaS52MS5JbnN0YW5jZVN0YXRzIh6C0+STAhgSFi9hcGkvdjEvaW5zdGFuY2Uvc3RhdHMSiAEKEkdldE1lbW9Nb29kRGlzcGxheRInLm1lbW9zLmFwaS52MS5HZXRNZW1vTW9vZERpc3BsYXlSZXF1ZXN0Gh0ubWVtb3MuYXBpLnYxLk1lbW9Nb29kRGlzcGxheSIqgtPkkwIkEiIvYXBpL3YxL2luc3RhbmNlL21lbW8tbW9vZC1kaXNwbGF5EpEBChVVcGRhdGVNZW1vTW9vZERpc3BsYXkSKi5tZW1vcy5hcGkudjEuVXBkYXRlTWVtb01vb2REaXNwbGF5UmVxdWVzdBodLm1lbW9zLmFwaS52MS5NZW1vTW9vZERpc3BsYXkiLYLT5JMCJzoBKjIiL2FwaS92MS9pbnN0YW5jZS9tZW1vLW1vb2QtZGlzcGxheUKsAQoQY29tLm1lbW9zLmFwaS52MUIUSW5zdGFuY2VTZXJ2aWNlUHJvdG9QAVowZ2l0aHViLmNvbS91c2VtZW1vcy9tZW1vcy9wcm90by9nZW4vYXBpL3YxO2FwaXYxogIDTUFYqgIMTWVtb3MuQXBpLlYxygIMTWVtb3NcQXBpXFYx4gIYTWVtb3NcQXBpXFYxXEdQQk1ldGFkYXRh6gIOTWVtb3M6OkFwaTo6VjFiBnByb3RvMw", [file_api_v1_user_service, file_google_api_annotations, file_google_api_client, file_google_api_field_behavior, file_google_api_resource, file_google_protobuf_empty, file_google_protobuf_field_mask, file_google_protobuf_timestamp, file_google_type_color]);
 
 /**
  * Instance profile message containing basic instance information.
@@ -74,6 +74,13 @@ export type InstanceProfile = Message<"memos.api.v1.InstanceProfile"> & {
    * @generated from field: bool needs_setup = 9;
    */
   needsSetup: boolean;
+
+  /**
+   * Access mode controls whether unauthenticated users may access instance content.
+   *
+   * @generated from field: memos.api.v1.InstanceAccessMode access_mode = 10;
+   */
+  accessMode: InstanceAccessMode;
 };
 
 /**
@@ -151,6 +158,12 @@ export type InstanceSetting = Message<"memos.api.v1.InstanceSetting"> & {
      */
     value: InstanceSetting_AISetting;
     case: "aiSetting";
+  } | {
+    /**
+     * @generated from field: memos.api.v1.InstanceSetting.AccessSetting access_setting = 8;
+     */
+    value: InstanceSetting_AccessSetting;
+    case: "accessSetting";
   } | { case: undefined; value?: undefined };
 };
 
@@ -272,13 +285,111 @@ export const InstanceSetting_GeneralSetting_CustomProfileSchema: GenMessage<Inst
   messageDesc(file_api_v1_instance_service, 2, 0, 0);
 
 /**
+ * Storage is a configured attachment storage instance.
+ *
+ * @generated from message memos.api.v1.InstanceSetting.Storage
+ */
+export type InstanceSetting_Storage = Message<"memos.api.v1.InstanceSetting.Storage"> & {
+  /**
+   * id is the stable identifier referenced by attachments.
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * name is the human-readable storage name.
+   *
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: memos.api.v1.InstanceSetting.StorageType type = 3;
+   */
+  type: InstanceSetting_StorageType;
+
+  /**
+   * @generated from oneof memos.api.v1.InstanceSetting.Storage.config
+   */
+  config: {
+    /**
+     * @generated from field: memos.api.v1.InstanceSetting.Storage.S3Config s3_config = 10;
+     */
+    value: InstanceSetting_Storage_S3Config;
+    case: "s3Config";
+  } | { case: undefined; value?: undefined };
+};
+
+/**
+ * Describes the message memos.api.v1.InstanceSetting.Storage.
+ * Use `create(InstanceSetting_StorageSchema)` to create a new message.
+ */
+export const InstanceSetting_StorageSchema: GenMessage<InstanceSetting_Storage> = /*@__PURE__*/
+  messageDesc(file_api_v1_instance_service, 2, 1);
+
+/**
+ * S3 configuration for an S3-compatible object store.
+ * Reference: https://developers.cloudflare.com/r2/examples/aws/aws-sdk-go/
+ *
+ * @generated from message memos.api.v1.InstanceSetting.Storage.S3Config
+ */
+export type InstanceSetting_Storage_S3Config = Message<"memos.api.v1.InstanceSetting.Storage.S3Config"> & {
+  /**
+   * @generated from field: string access_key_id = 1;
+   */
+  accessKeyId: string;
+
+  /**
+   * @generated from field: string access_key_secret = 2;
+   */
+  accessKeySecret: string;
+
+  /**
+   * @generated from field: string endpoint = 3;
+   */
+  endpoint: string;
+
+  /**
+   * @generated from field: string region = 4;
+   */
+  region: string;
+
+  /**
+   * @generated from field: string bucket = 5;
+   */
+  bucket: string;
+
+  /**
+   * @generated from field: bool use_path_style = 6;
+   */
+  usePathStyle: boolean;
+
+  /**
+   * insecure_skip_tls_verify disables TLS certificate verification when connecting
+   * to the S3 endpoint. Only enable this for trusted endpoints that use a self-signed
+   * certificate; it removes protection against man-in-the-middle attacks.
+   *
+   * @generated from field: bool insecure_skip_tls_verify = 7;
+   */
+  insecureSkipTlsVerify: boolean;
+};
+
+/**
+ * Describes the message memos.api.v1.InstanceSetting.Storage.S3Config.
+ * Use `create(InstanceSetting_Storage_S3ConfigSchema)` to create a new message.
+ */
+export const InstanceSetting_Storage_S3ConfigSchema: GenMessage<InstanceSetting_Storage_S3Config> = /*@__PURE__*/
+  messageDesc(file_api_v1_instance_service, 2, 1, 0);
+
+/**
  * Storage configuration settings for instance attachments.
  *
  * @generated from message memos.api.v1.InstanceSetting.StorageSetting
  */
 export type InstanceSetting_StorageSetting = Message<"memos.api.v1.InstanceSetting.StorageSetting"> & {
   /**
-   * storage_type is the storage type.
+   * Legacy compatibility field. New clients use default_storage_id.
    *
    * @generated from field: memos.api.v1.InstanceSetting.StorageSetting.StorageType storage_type = 1;
    */
@@ -300,11 +411,25 @@ export type InstanceSetting_StorageSetting = Message<"memos.api.v1.InstanceSetti
   uploadSizeLimitMb: bigint;
 
   /**
-   * The S3 config.
+   * Legacy compatibility field. New clients use storages.
    *
    * @generated from field: memos.api.v1.InstanceSetting.StorageSetting.S3Config s3_config = 4;
    */
   s3Config?: InstanceSetting_StorageSetting_S3Config | undefined;
+
+  /**
+   * Configured storage instances, including inactive instances referenced by attachments.
+   *
+   * @generated from field: repeated memos.api.v1.InstanceSetting.Storage storages = 5;
+   */
+  storages: InstanceSetting_Storage[];
+
+  /**
+   * Storage used for new attachments.
+   *
+   * @generated from field: string default_storage_id = 6;
+   */
+  defaultStorageId: string;
 };
 
 /**
@@ -312,10 +437,10 @@ export type InstanceSetting_StorageSetting = Message<"memos.api.v1.InstanceSetti
  * Use `create(InstanceSetting_StorageSettingSchema)` to create a new message.
  */
 export const InstanceSetting_StorageSettingSchema: GenMessage<InstanceSetting_StorageSetting> = /*@__PURE__*/
-  messageDesc(file_api_v1_instance_service, 2, 1);
+  messageDesc(file_api_v1_instance_service, 2, 2);
 
 /**
- * S3 configuration for cloud storage backend.
+ * Legacy S3 configuration retained for compatibility with existing clients.
  * Reference: https://developers.cloudflare.com/r2/examples/aws/aws-sdk-go/
  *
  * @generated from message memos.api.v1.InstanceSetting.StorageSetting.S3Config
@@ -366,10 +491,10 @@ export type InstanceSetting_StorageSetting_S3Config = Message<"memos.api.v1.Inst
  * Use `create(InstanceSetting_StorageSetting_S3ConfigSchema)` to create a new message.
  */
 export const InstanceSetting_StorageSetting_S3ConfigSchema: GenMessage<InstanceSetting_StorageSetting_S3Config> = /*@__PURE__*/
-  messageDesc(file_api_v1_instance_service, 2, 1, 0);
+  messageDesc(file_api_v1_instance_service, 2, 2, 0);
 
 /**
- * Storage type enumeration for different storage backends.
+ * Legacy storage type enum retained for compatibility with existing clients.
  *
  * @generated from enum memos.api.v1.InstanceSetting.StorageSetting.StorageType
  */
@@ -405,7 +530,7 @@ export enum InstanceSetting_StorageSetting_StorageType {
  * Describes the enum memos.api.v1.InstanceSetting.StorageSetting.StorageType.
  */
 export const InstanceSetting_StorageSetting_StorageTypeSchema: GenEnum<InstanceSetting_StorageSetting_StorageType> = /*@__PURE__*/
-  enumDesc(file_api_v1_instance_service, 2, 1, 0);
+  enumDesc(file_api_v1_instance_service, 2, 2, 0);
 
 /**
  * Memo-related instance settings and policies.
@@ -465,7 +590,7 @@ export type InstanceSetting_MemoRelatedSetting = Message<"memos.api.v1.InstanceS
  * Use `create(InstanceSetting_MemoRelatedSettingSchema)` to create a new message.
  */
 export const InstanceSetting_MemoRelatedSettingSchema: GenMessage<InstanceSetting_MemoRelatedSetting> = /*@__PURE__*/
-  messageDesc(file_api_v1_instance_service, 2, 2);
+  messageDesc(file_api_v1_instance_service, 2, 3);
 
 /**
  * Metadata for a tag.
@@ -494,7 +619,7 @@ export type InstanceSetting_TagMetadata = Message<"memos.api.v1.InstanceSetting.
  * Use `create(InstanceSetting_TagMetadataSchema)` to create a new message.
  */
 export const InstanceSetting_TagMetadataSchema: GenMessage<InstanceSetting_TagMetadata> = /*@__PURE__*/
-  messageDesc(file_api_v1_instance_service, 2, 3);
+  messageDesc(file_api_v1_instance_service, 2, 4);
 
 /**
  * Tag metadata configuration.
@@ -520,7 +645,7 @@ export type InstanceSetting_TagsSetting = Message<"memos.api.v1.InstanceSetting.
  * Use `create(InstanceSetting_TagsSettingSchema)` to create a new message.
  */
 export const InstanceSetting_TagsSettingSchema: GenMessage<InstanceSetting_TagsSetting> = /*@__PURE__*/
-  messageDesc(file_api_v1_instance_service, 2, 4);
+  messageDesc(file_api_v1_instance_service, 2, 5);
 
 /**
  * Notification transport configuration.
@@ -539,7 +664,7 @@ export type InstanceSetting_NotificationSetting = Message<"memos.api.v1.Instance
  * Use `create(InstanceSetting_NotificationSettingSchema)` to create a new message.
  */
 export const InstanceSetting_NotificationSettingSchema: GenMessage<InstanceSetting_NotificationSetting> = /*@__PURE__*/
-  messageDesc(file_api_v1_instance_service, 2, 5);
+  messageDesc(file_api_v1_instance_service, 2, 6);
 
 /**
  * Email delivery configuration for notifications.
@@ -603,7 +728,7 @@ export type InstanceSetting_NotificationSetting_EmailSetting = Message<"memos.ap
  * Use `create(InstanceSetting_NotificationSetting_EmailSettingSchema)` to create a new message.
  */
 export const InstanceSetting_NotificationSetting_EmailSettingSchema: GenMessage<InstanceSetting_NotificationSetting_EmailSetting> = /*@__PURE__*/
-  messageDesc(file_api_v1_instance_service, 2, 5, 0);
+  messageDesc(file_api_v1_instance_service, 2, 6, 0);
 
 /**
  * AI provider configuration settings.
@@ -632,7 +757,7 @@ export type InstanceSetting_AISetting = Message<"memos.api.v1.InstanceSetting.AI
  * Use `create(InstanceSetting_AISettingSchema)` to create a new message.
  */
 export const InstanceSetting_AISettingSchema: GenMessage<InstanceSetting_AISetting> = /*@__PURE__*/
-  messageDesc(file_api_v1_instance_service, 2, 6);
+  messageDesc(file_api_v1_instance_service, 2, 7);
 
 /**
  * AIProviderConfig represents one callable AI provider connection.
@@ -687,7 +812,7 @@ export type InstanceSetting_AIProviderConfig = Message<"memos.api.v1.InstanceSet
  * Use `create(InstanceSetting_AIProviderConfigSchema)` to create a new message.
  */
 export const InstanceSetting_AIProviderConfigSchema: GenMessage<InstanceSetting_AIProviderConfig> = /*@__PURE__*/
-  messageDesc(file_api_v1_instance_service, 2, 7);
+  messageDesc(file_api_v1_instance_service, 2, 8);
 
 /**
  * TranscriptionConfig configures the speech-to-text feature.
@@ -733,7 +858,26 @@ export type InstanceSetting_TranscriptionConfig = Message<"memos.api.v1.Instance
  * Use `create(InstanceSetting_TranscriptionConfigSchema)` to create a new message.
  */
 export const InstanceSetting_TranscriptionConfigSchema: GenMessage<InstanceSetting_TranscriptionConfig> = /*@__PURE__*/
-  messageDesc(file_api_v1_instance_service, 2, 8);
+  messageDesc(file_api_v1_instance_service, 2, 9);
+
+/**
+ * Access policy configuration for the instance.
+ *
+ * @generated from message memos.api.v1.InstanceSetting.AccessSetting
+ */
+export type InstanceSetting_AccessSetting = Message<"memos.api.v1.InstanceSetting.AccessSetting"> & {
+  /**
+   * @generated from field: memos.api.v1.InstanceAccessMode access_mode = 1;
+   */
+  accessMode: InstanceAccessMode;
+};
+
+/**
+ * Describes the message memos.api.v1.InstanceSetting.AccessSetting.
+ * Use `create(InstanceSetting_AccessSettingSchema)` to create a new message.
+ */
+export const InstanceSetting_AccessSettingSchema: GenMessage<InstanceSetting_AccessSetting> = /*@__PURE__*/
+  messageDesc(file_api_v1_instance_service, 2, 10);
 
 /**
  * Enumeration of instance setting keys.
@@ -787,6 +931,13 @@ export enum InstanceSetting_Key {
    * @generated from enum value: AI = 6;
    */
   AI = 6,
+
+  /**
+   * ACCESS is the key for instance access policy settings.
+   *
+   * @generated from enum value: ACCESS = 7;
+   */
+  ACCESS = 7,
 }
 
 /**
@@ -794,6 +945,43 @@ export enum InstanceSetting_Key {
  */
 export const InstanceSetting_KeySchema: GenEnum<InstanceSetting_Key> = /*@__PURE__*/
   enumDesc(file_api_v1_instance_service, 2, 0);
+
+/**
+ * @generated from enum memos.api.v1.InstanceSetting.StorageType
+ */
+export enum InstanceSetting_StorageType {
+  /**
+   * @generated from enum value: STORAGE_TYPE_UNSPECIFIED = 0;
+   */
+  STORAGE_TYPE_UNSPECIFIED = 0,
+
+  /**
+   * DATABASE stores attachment content in the application database.
+   *
+   * @generated from enum value: DATABASE = 1;
+   */
+  DATABASE = 1,
+
+  /**
+   * LOCAL stores attachment content on the local filesystem.
+   *
+   * @generated from enum value: LOCAL = 2;
+   */
+  LOCAL = 2,
+
+  /**
+   * S3 stores attachment content in an S3-compatible object store.
+   *
+   * @generated from enum value: S3 = 3;
+   */
+  S3 = 3,
+}
+
+/**
+ * Describes the enum memos.api.v1.InstanceSetting.StorageType.
+ */
+export const InstanceSetting_StorageTypeSchema: GenEnum<InstanceSetting_StorageType> = /*@__PURE__*/
+  enumDesc(file_api_v1_instance_service, 2, 1);
 
 /**
  * AIProviderType is the provider implementation type.
@@ -821,7 +1009,7 @@ export enum InstanceSetting_AIProviderType {
  * Describes the enum memos.api.v1.InstanceSetting.AIProviderType.
  */
 export const InstanceSetting_AIProviderTypeSchema: GenEnum<InstanceSetting_AIProviderType> = /*@__PURE__*/
-  enumDesc(file_api_v1_instance_service, 2, 1);
+  enumDesc(file_api_v1_instance_service, 2, 2);
 
 /**
  * Request message for GetInstanceSetting method.
@@ -1141,6 +1329,34 @@ export type InstanceStats_DatabaseStats = Message<"memos.api.v1.InstanceStats.Da
  */
 export const InstanceStats_DatabaseStatsSchema: GenMessage<InstanceStats_DatabaseStats> = /*@__PURE__*/
   messageDesc(file_api_v1_instance_service, 12, 0);
+
+/**
+ * InstanceAccessMode controls whether unauthenticated users may access instance content.
+ *
+ * @generated from enum memos.api.v1.InstanceAccessMode
+ */
+export enum InstanceAccessMode {
+  /**
+   * @generated from enum value: INSTANCE_ACCESS_MODE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: INSTANCE_ACCESS_MODE_PRIVATE = 1;
+   */
+  PRIVATE = 1,
+
+  /**
+   * @generated from enum value: INSTANCE_ACCESS_MODE_PUBLIC = 2;
+   */
+  PUBLIC = 2,
+}
+
+/**
+ * Describes the enum memos.api.v1.InstanceAccessMode.
+ */
+export const InstanceAccessModeSchema: GenEnum<InstanceAccessMode> = /*@__PURE__*/
+  enumDesc(file_api_v1_instance_service, 0);
 
 /**
  * @generated from service memos.api.v1.InstanceService

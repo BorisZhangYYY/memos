@@ -1,4 +1,5 @@
 import {
+  AstroidIcon,
   BarChart3Icon,
   CogIcon,
   DatabaseIcon,
@@ -26,6 +27,7 @@ import MyAccountSection from "@/components/Settings/MyAccountSection";
 import NotificationSection from "@/components/Settings/NotificationSection";
 import PreferencesSection from "@/components/Settings/PreferencesSection";
 import ResourceStatsSection from "@/components/Settings/ResourceStatsSection";
+import SpacesSection from "@/components/Settings/SpacesSection";
 import SSOSection from "@/components/Settings/SSOSection";
 import StorageSection from "@/components/Settings/StorageSection";
 import TagsSection from "@/components/Settings/TagsSection";
@@ -34,6 +36,7 @@ import { InstanceSetting_Key } from "@/types/proto/api/v1/instance_service_pb";
 
 export type SettingSectionKey =
   | "my-account"
+  | "spaces"
   | "access-token"
   | "preference"
   | "finance"
@@ -66,6 +69,13 @@ export const SETTINGS_SECTIONS: SettingSectionDefinition[] = [
     labelKey: "setting.my-account.label",
     icon: UserIcon,
     component: MyAccountSection,
+  },
+  {
+    key: "spaces",
+    scope: "basic",
+    labelKey: "setting.spaces.label",
+    icon: AstroidIcon,
+    component: SpacesSection,
   },
   {
     key: "access-token",

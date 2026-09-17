@@ -1,5 +1,7 @@
+import { DirectionProvider } from "@base-ui/react/direction-provider";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { SIDEBAR_SECTION_ACTION_BUTTON_CLASSES, SIDEBAR_SECTION_ACTION_ICON_CLASSES } from "@/components/AppSidebar/SidebarSection";
 import MemoDisplaySettingMenu from "@/components/MemoDisplaySettingMenu";
 import { ViewProvider } from "@/contexts/ViewContext";
 
@@ -41,7 +43,11 @@ describe("MemoDisplaySettingMenu", () => {
       </ViewProvider>,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "View options" }));
+    const trigger = screen.getByRole("button", { name: "View options" });
+    expect(trigger).toHaveClass(...SIDEBAR_SECTION_ACTION_BUTTON_CLASSES.split(" "));
+    expect(trigger.querySelector("svg")).toHaveClass(SIDEBAR_SECTION_ACTION_ICON_CLASSES);
+
+    fireEvent.click(trigger);
 
     const compactMode = screen.getByRole("switch", { name: "Compact mode" });
     expect(compactMode).not.toBeChecked();
@@ -52,5 +58,20 @@ describe("MemoDisplaySettingMenu", () => {
     expect(compactMode).toBeChecked();
     expect(compactMode).toHaveAttribute("aria-disabled", "true");
     expect(screen.getByText("Grid layouts always use compact cards.")).toBeInTheDocument();
+  });
+
+  it("moves horizontally in the visual direction for RTL layouts", () => {
+    render(
+      <DirectionProvider direction="rtl">
+        <ViewProvider>
+          <MemoDisplaySettingMenu />
+        </ViewProvider>
+      </DirectionProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "View options" }));
+    fireEvent.keyDown(screen.getByRole("radiogroup", { name: "Layout" }), { key: "ArrowLeft" });
+
+    expect(screen.getByRole("radio", { name: "2 columns" })).toBeChecked();
   });
 });

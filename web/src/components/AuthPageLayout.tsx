@@ -2,8 +2,9 @@ import { ArrowRightIcon, CompassIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useInstance } from "@/contexts/InstanceContext";
 import { ROUTES } from "@/router/routes";
+import { InstanceAccessMode } from "@/types/proto/api/v1/instance_service_pb";
 import { useTranslate } from "@/utils/i18n";
-import { isAnonymousExploreEnabled } from "@/utils/visibility";
+import { isPublicMemoEnabled } from "@/utils/visibility";
 import AuthFooter from "./AuthFooter";
 
 interface Props {
@@ -56,7 +57,8 @@ export const AuthOptionsLoading = () => <div className="h-9 w-full animate-pulse
 const AuthPageLayout = ({ chip, title, subtitle, hideExplore, children }: Props) => {
   const t = useTranslate();
   const { generalSetting, memoRelatedSetting, profile } = useInstance();
-  const showExplore = isAnonymousExploreEnabled(profile.instanceUrl, memoRelatedSetting.allowedVisibilities) && !hideExplore;
+  const showExplore =
+    profile.accessMode === InstanceAccessMode.PUBLIC && isPublicMemoEnabled(memoRelatedSetting.allowedVisibilities) && !hideExplore;
 
   return (
     <div className="min-h-svh w-full flex flex-col items-center px-4 py-4 sm:py-8">
@@ -79,7 +81,7 @@ const AuthPageLayout = ({ chip, title, subtitle, hideExplore, children }: Props)
               >
                 <CompassIcon className="h-3.5 w-3.5" />
                 {t("auth.explore-public-memos")}
-                <ArrowRightIcon className="-ml-1 h-3.5 w-3.5 opacity-0 transition-all group-hover:ml-0 group-hover:opacity-100" />
+                <ArrowRightIcon className="-ms-1 h-3.5 w-3.5 opacity-0 transition-all group-hover:ms-0 group-hover:opacity-100 rtl:rotate-180" />
               </Link>
             </div>
           )}

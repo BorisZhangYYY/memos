@@ -157,8 +157,8 @@ func shiftedTime(value *store.Reminder, dateValue string) *int64 {
 	if err != nil {
 		return nil
 	}
-	result := time.Date(date.Year(), date.Month(), date.Day(), old.Hour(), old.Minute(), old.Second(), 0, location).Unix()
-	return &result
+	resultSec := time.Date(date.Year(), date.Month(), date.Day(), old.Hour(), old.Minute(), old.Second(), 0, location).Unix()
+	return &resultSec
 }
 
 func addMonthsClamped(value time.Time, months int) time.Time {

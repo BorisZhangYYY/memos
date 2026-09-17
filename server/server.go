@@ -9,8 +9,8 @@ import (
 	"os"
 	"sync"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
 	"github.com/pkg/errors"
@@ -21,9 +21,7 @@ import (
 	"github.com/usememos/memos/server/router/fileserver"
 	"github.com/usememos/memos/server/router/frontend"
 	"github.com/usememos/memos/server/router/mcp"
-	"github.com/usememos/memos/server/router/rss"
 	reminderrunner "github.com/usememos/memos/server/runner/reminder"
-	"github.com/usememos/memos/server/runner/s3presign"
 	"github.com/usememos/memos/store"
 )
 
@@ -34,12 +32,11 @@ type Server struct {
 	Profile *profile.Profile
 	Store   *store.Store
 
-	echoServer *echo.Echo
-	httpServer *http.Server
-	sseHub     *apiv1.SSEHub
-
-	backgroundRunnerCancels []context.CancelFunc
+	echoServer              *echo.Echo
+	httpServer              *http.Server
+	sseHub                  *apiv1.SSEHub
 	backgroundRunnerWG      sync.WaitGroup
+	backgroundRunnerCancels []context.CancelFunc
 }
 
 func NewServer(ctx context.Context, instanceProfile *profile.Profile, store *store.Store) (*Server, error) {
@@ -84,8 +81,6 @@ func NewServer(ctx context.Context, instanceProfile *profile.Profile, store *sto
 	// Serve frontend static files.
 	frontend.NewFrontendService(instanceProfile, store).Serve(ctx, echoServer)
 
-	rootGroup := echoServer.Group("")
-
 	apiV1Service := apiv1.NewAPIV1Service(s.Secret, instanceProfile, store)
 	s.sseHub = apiV1Service.SSEHub
 
@@ -93,9 +88,6 @@ func NewServer(ctx context.Context, instanceProfile *profile.Profile, store *sto
 	// This uses native HTTP serving (http.ServeContent) instead of gRPC for video/audio files.
 	fileServerService := fileserver.NewFileServerService(s.Profile, s.Store, s.Secret)
 	fileServerService.RegisterRoutes(echoServer)
-
-	// Create and register RSS routes (needs markdown service from apiV1Service).
-	rss.NewRSSService(s.Profile, s.Store, apiV1Service.MarkdownService).RegisterRoutes(rootGroup)
 
 	// Register gRPC gateway as api v1 (includes SSE endpoint on CORS-enabled group).
 	if err := apiV1Service.RegisterGateway(ctx, echoServer); err != nil {
@@ -108,10 +100,11 @@ func NewServer(ctx context.Context, instanceProfile *profile.Profile, store *sto
 	}
 	mcpService.RegisterRoutes(echoServer)
 
+	s.startBackgroundRunners(ctx)
 	return s, nil
 }
 
-func (s *Server) Start(ctx context.Context) error {
+func (s *Server) Start() error {
 	var address, network string
 	if len(s.Profile.UNIXSock) == 0 {
 		address = fmt.Sprintf("%s:%d", s.Profile.Addr, s.Profile.Port)
@@ -139,7 +132,6 @@ func (s *Server) Start(ctx context.Context) error {
 			slog.Error("failed to start echo server", "error", err)
 		}
 	}()
-	s.startBackgroundRunners(ctx)
 
 	return nil
 }
@@ -151,9 +143,9 @@ func (s *Server) Shutdown(ctx context.Context) {
 	slog.Info("server shutting down")
 
 	s.stopBackgroundRunners()
+	s.waitBackgroundRunners(ctx)
 	s.closeLongLivedConnections()
 	s.shutdownHTTPServer(ctx)
-	s.waitBackgroundRunners(ctx)
 
 	// Close database connection.
 	if err := s.Store.Close(); err != nil {
@@ -166,23 +158,10 @@ func (s *Server) Shutdown(ctx context.Context) {
 func (s *Server) startBackgroundRunners(ctx context.Context) {
 	// Create a separate context for each background runner
 	// This allows us to control cancellation for each runner independently
-	s3Context, s3Cancel := context.WithCancel(ctx)
 	reminderContext, reminderCancel := context.WithCancel(ctx)
 
 	// Store the cancel function so we can properly shut down runners
-	s.backgroundRunnerCancels = append(s.backgroundRunnerCancels, s3Cancel, reminderCancel)
-
-	// Create and start S3 presign runner
-	s3presignRunner := s3presign.NewRunner(s.Store)
-	s3presignRunner.RunOnce(ctx)
-
-	// Start continuous S3 presign runner
-	s.backgroundRunnerWG.Add(1)
-	go func() {
-		defer s.backgroundRunnerWG.Done()
-		s3presignRunner.Run(s3Context)
-		slog.Info("s3presign runner stopped")
-	}()
+	s.backgroundRunnerCancels = append(s.backgroundRunnerCancels, reminderCancel)
 
 	reminderRunner := reminderrunner.NewRunner(s.Store, s.Profile)
 	reminderRunner.RunOnce(ctx)
@@ -249,7 +228,7 @@ func (s *Server) getOrUpsertInstanceBasicSetting(ctx context.Context) (*storepb.
 	}
 	modified := false
 	if instanceBasicSetting.SecretKey == "" {
-		instanceBasicSetting.SecretKey = uuid.NewString()
+		instanceBasicSetting.SecretKey = uuid.NewV4().String()
 		modified = true
 	}
 	if modified {

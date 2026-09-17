@@ -62,7 +62,6 @@
     "archive": "归档",
     "archived": "已归档",
     "attachments": "附件",
-    "auto-expand": "自动展开",
     "avatar": "头像",
     "basic": "基础",
     "beta": "测试",
@@ -105,6 +104,7 @@
     "last-updated-at": "最后更新时间",
     "learn-more": "了解更多",
     "link": "链接",
+    "manage": "管理",
     "map": "地图",
     "mark": "引用",
     "memo": "备忘录",
@@ -139,8 +139,6 @@
     "select": "选择",
     "settings": "设置",
     "share": "分享",
-    "shortcut-filter": "捷径过滤器",
-    "shortcuts": "捷径",
     "sign-in": "登录",
     "sign-in-to-memos": "登录 Memos",
     "sign-out": "退出登录",
@@ -190,12 +188,31 @@
       "link-prompt": "输入链接地址",
       "more": "更多格式"
     },
+    "new-memo": "新建备忘录",
     "no-changes-detected": "未检测到更改",
     "save": "保存",
     "saving": "保存中...",
+    "validation": {
+      "cannot-save": "无法保存",
+      "content-required": "需要填写正文或添加附件",
+      "finish-audio-recording": "请先完成录音再保存",
+      "loading-content": "正在加载备忘录内容",
+      "resolve-image-uploads": "请先处理未完成的图片上传",
+      "save-in-progress": "正在保存",
+      "unsupported-attachment-image-url": "不支持的附件图片地址：{{url}}",
+      "wait-for-upload": "请等待上传完成"
+    },
     "insert-menu": {
+      "add-attachment": "添加附件",
       "add-location": "添加位置",
+      "image-upload-failed": "部分图片上传失败，请重试或将已上传文件保留为附件。",
+      "image-upload-stopped": "图片上传已暂停 {{completed}}/{{total}}",
+      "insert-image": "插入图片",
+      "keep-as-attachments": "保留为附件",
       "link-memo": "链接备忘录",
+      "retry-image-upload": "重试",
+      "uploading-inline-image": "正在上传到正文",
+      "uploading-images": "正在上传图片 {{completed}}/{{total}}",
       "upload-file": "上传文件"
     },
     "location-picker": {
@@ -567,6 +584,7 @@
     "filters": {
       "has-code": "有代码",
       "has-link": "有链接",
+      "has-location": "有位置",
       "has-task-list": "有待办",
       "label": "过滤器"
     },
@@ -803,13 +821,17 @@
       "language-description": "立即更新界面语言，并保存到当前账号。",
       "memo-defaults-description": "设置创建新备忘录时使用的默认值。",
       "memo-defaults-title": "备忘录默认值",
+      "save-media-metadata": "保存媒体元数据",
+      "save-media-metadata-description": "为之后上传的文件保存可用的相机型号、拍摄时间、位置、图片尺寸和基础视频信息。任何能查看附件的人都可能获取这些元数据。已有附件不受影响。",
       "theme-description": "立即在当前设备上应用所选主题。",
       "theme": "主题",
-      "label": "偏好设置"
+      "label": "偏好设置",
+      "uploads-privacy-description": "控制上传媒体时提交的隐私敏感信息。",
+      "uploads-privacy-title": "上传与隐私"
     },
-    "shortcut": {
-      "delete-confirm": "您确定要删除捷径 `{{title}}` 吗？",
-      "delete-success": "捷径 `{{title}}` 删除成功"
+    "memo-view": {
+      "delete-confirm": "您确定要删除视图 `{{title}}` 吗？",
+      "delete-success": "视图 `{{title}}` 删除成功"
     },
     "sso": {
       "account": "账户",
@@ -907,7 +929,6 @@
       "path": "存储路径",
       "path-description": "您可以使用本地存储中的相同动态变量，例如 {filename}",
       "path-placeholder": "自定义路径",
-      "presign-placeholder": "预签名链接（可选）",
       "region": "地区",
       "region-description": "服务商要求的区域。部分兼容服务只需要填写服务商接受的区域字符串。",
       "region-placeholder": "区域名称",
@@ -1189,6 +1210,39 @@
     "connecting": "正在连接",
     "disconnected": "已断开"
   },
+  "attachment-details": {
+    "actions": {
+      "copied": "已复制坐标",
+      "copy-coordinates": "复制坐标",
+      "hide": "隐藏附件详情",
+      "hide-map": "隐藏地图",
+      "show": "显示附件详情",
+      "show-map": "显示地图"
+    },
+    "empty": "没有保存的拍摄信息。",
+    "fields": {
+      "altitude": "海拔",
+      "camera": "相机",
+      "captured": "拍摄时间",
+      "dimensions": "尺寸",
+      "duration": "时长",
+      "exposure": "曝光",
+      "file": "文件",
+      "lens": "镜头",
+      "location": "坐标",
+      "source-orientation": "源 EXIF 方向",
+      "uploaded": "上传时间"
+    },
+    "sections": {
+      "camera": "相机",
+      "capture": "拍摄",
+      "file": "文件",
+      "location": "位置",
+      "technical": "技术信息"
+    },
+    "timezone-unknown": "未知时区",
+    "title": "详情"
+  },
   "attachment-library": {
     "actions": {
       "open": "打开",
@@ -1221,5 +1275,41 @@
       "description": "这些文件从未附加到任何备忘。可在此查看或删除。",
       "title": "未关联的上传"
     }
+  },
+  "personal": {
+    "title": "个人生活",
+    "private": "仅自己可见 · 全局个人数据",
+    "description": "回顾心情、管理收支与提醒事项",
+    "previous": "上一页",
+    "next": "下一页",
+    "date": "日期范围",
+    "today": "今天",
+    "day": "按日查看",
+    "month": "按月查看",
+    "load-error": "部分数据加载失败，请重试。",
+    "retry": "重试",
+    "loading": "正在加载个人记录",
+    "mood-count": "所选时段心情记录",
+    "income": "所选时段收入",
+    "expense": "所选时段支出",
+    "pending-global": "全部待办提醒",
+    "mood": "心情",
+    "all-moods": "全部心情",
+    "empty-mood": "所选时段暂无匹配的心情记录",
+    "finance": "收支",
+    "add-transaction": "记一笔",
+    "net": "所选时段结余",
+    "finance-settings": "管理钱包与分类",
+    "transaction": "交易",
+    "empty-finance": "所选时段暂无收支记录",
+    "reminders": "提醒事项",
+    "manage-reminders": "创建与管理",
+    "reminders-scope": "待办跨所有日期；完成历史可在提醒中心查看。",
+    "complete": "完成提醒",
+    "empty-reminders": "目前没有待办提醒",
+    "completion-history": "查看完成历史与统计",
+    "previous-period": "前一时段",
+    "next-period": "后一时段",
+    "outcomes-range": "所选时段完成情况"
   }
 }

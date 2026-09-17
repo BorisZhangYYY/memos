@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate, type RouteObject, useSearchParams } from "react-router-dom";
+import { createBrowserRouter, Navigate, type RouteObject } from "react-router-dom";
 import App from "@/App";
 import { ChunkLoadErrorFallback } from "@/components/ErrorBoundary";
 import MainLayout from "@/layouts/MainLayout";
@@ -19,6 +19,8 @@ const About = lazyWithReload(() => import("@/pages/About"));
 const Archived = lazyWithReload(() => import("@/pages/Archived"));
 const AuthCallback = lazyWithReload(() => import("@/pages/AuthCallback"));
 const Explore = lazyWithReload(() => import("@/pages/Explore"));
+const PersonalDashboard = lazyWithReload(() => import("@/pages/PersonalDashboard"));
+const Reminders = lazyWithReload(() => import("@/pages/Reminders"));
 const Home = lazyWithReload(() => import("@/pages/Home"));
 const Inboxes = lazyWithReload(() => import("@/pages/Inboxes"));
 const MemoDetail = lazyWithReload(() => import("@/pages/MemoDetail"));
@@ -26,7 +28,7 @@ const NotFound = lazyWithReload(() => import("@/pages/NotFound"));
 const PermissionDenied = lazyWithReload(() => import("@/pages/PermissionDenied"));
 const Attachments = lazyWithReload(() => import("@/pages/Attachments"));
 const Setting = lazyWithReload(() => import("@/pages/Setting"));
-const Shortcuts = lazyWithReload(() => import("@/pages/Shortcuts"));
+const MemoViews = lazyWithReload(() => import("@/pages/MemoViews"));
 const SignIn = lazyWithReload(() => import("@/pages/SignIn"));
 const SignUp = lazyWithReload(() => import("@/pages/SignUp"));
 const UserProfile = lazyWithReload(() => import("@/pages/UserProfile"));
@@ -34,14 +36,6 @@ const UserProfile = lazyWithReload(() => import("@/pages/UserProfile"));
 // Backward compatibility alias.
 export const Routes = ROUTES;
 export { ROUTES };
-
-const RemindersRedirect = () => {
-  const [searchParams] = useSearchParams();
-  const next = new URLSearchParams({ reminders: "1" });
-  const selected = searchParams.get("selected");
-  if (selected) next.set("selected", selected);
-  return <Navigate to={`${Routes.HOME}?${next.toString()}`} replace />;
-};
 
 /**
  * Static route configuration. Exported so tests can assert on the tree shape
@@ -103,7 +97,7 @@ export const routeConfig: RouteObject[] = [
                   { path: Routes.ARCHIVED, element: <Archived /> },
                   {
                     element: <RequireFullInitializationRoute />,
-                    children: [{ path: Routes.SHORTCUTS, element: <Shortcuts /> }],
+                    children: [{ path: Routes.VIEWS, element: <MemoViews /> }],
                   },
                 ],
               },
@@ -118,7 +112,9 @@ export const routeConfig: RouteObject[] = [
                 element: <RequireFullInitializationRoute />,
                 children: [
                   { path: Routes.ATTACHMENTS, element: <Attachments /> },
-                  { path: Routes.REMINDERS, element: <RemindersRedirect /> },
+                  { path: Routes.REMINDERS, element: <Reminders /> },
+                  { path: Routes.PERSONAL, element: <PersonalDashboard /> },
+                  { path: "/shortcuts", element: <Navigate to={Routes.VIEWS} replace /> },
                   { path: Routes.INBOX, element: <Inboxes /> },
                   { path: Routes.SETTING, element: <Setting /> },
                 ],

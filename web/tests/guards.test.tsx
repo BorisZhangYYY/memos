@@ -22,7 +22,8 @@ vi.mock("@/contexts/AuthContext", () => ({
 vi.mock("@/contexts/InstanceContext", () => ({
   useInstance: () => ({
     isInitialized: initialization.instance,
-    profile: { instanceUrl: initialization.instanceUrl },
+    accessSetting: { accessMode: 2 },
+    profile: { instanceUrl: initialization.instanceUrl, accessMode: initialization.instanceUrl ? 2 : 1 },
     memoRelatedSetting: { allowedVisibilities: initialization.allowedVisibilities },
   }),
 }));

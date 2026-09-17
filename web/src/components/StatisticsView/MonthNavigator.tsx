@@ -2,8 +2,10 @@ import dayjs from "dayjs";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
+import { SIDEBAR_ROW_BOX_CLASSES } from "@/components/AppSidebar/SidebarRow";
 import { Button } from "@/components/ui/button";
 import { addMonths } from "@/lib/calendar-utils";
+import { cn } from "@/lib/utils";
 import type { MonthNavigatorProps } from "@/types/statistics";
 
 export const MonthNavigator = memo(({ visibleMonth, onMonthChange, monthlyMoodEmoji }: MonthNavigatorProps) => {
@@ -13,21 +15,21 @@ export const MonthNavigator = memo(({ visibleMonth, onMonthChange, monthlyMoodEm
   const handleNextMonth = () => onMonthChange(addMonths(visibleMonth, 1));
 
   return (
-    <header className="mb-1.5 flex w-full items-center justify-between gap-3">
-      <h2 className="flex min-w-0 items-center gap-1.5 truncate text-[15px] font-semibold leading-7 tracking-[-0.015em] text-foreground/90 select-none">
+    <header className={cn(SIDEBAR_ROW_BOX_CLASSES, "mb-1.5 justify-between h-auto min-h-[30px]")}>
+      <h2 className="flex min-w-0 items-center gap-1.5 whitespace-normal break-words text-[15px] font-semibold leading-7 tracking-[-0.015em] text-foreground/90 select-none">
         {monthLabel}
         {monthlyMoodEmoji && <span aria-label={t("mood.monthly-average")}>{monthlyMoodEmoji}</span>}
       </h2>
 
-      <nav className="flex shrink-0 items-center gap-1" aria-label={t("common.month-navigation")}>
+      <nav className="flex shrink-0 items-center gap-0.5" aria-label={t("common.month-navigation")}>
         <Button
           variant="ghost"
           size="icon-sm"
           onClick={handlePrevMonth}
           aria-label={t("common.previous-month")}
-          className="size-7 rounded-md text-muted-foreground/65 hover:bg-muted/50 hover:text-foreground/90"
+          className="size-6 rounded text-muted-foreground/65 hover:bg-muted/50 hover:text-foreground/90"
         >
-          <ChevronLeftIcon className="size-[15px]" strokeWidth={1.75} />
+          <ChevronLeftIcon className="size-4 rtl:rotate-180" strokeWidth={1.75} />
         </Button>
 
         <Button
@@ -35,9 +37,9 @@ export const MonthNavigator = memo(({ visibleMonth, onMonthChange, monthlyMoodEm
           size="icon-sm"
           onClick={handleNextMonth}
           aria-label={t("common.next-month")}
-          className="size-7 rounded-md text-muted-foreground/65 hover:bg-muted/50 hover:text-foreground/90"
+          className="size-6 rounded text-muted-foreground/65 hover:bg-muted/50 hover:text-foreground/90"
         >
-          <ChevronRightIcon className="size-[15px]" strokeWidth={1.75} />
+          <ChevronRightIcon className="size-4 rtl:rotate-180" strokeWidth={1.75} />
         </Button>
       </nav>
     </header>

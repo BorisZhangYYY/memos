@@ -200,7 +200,7 @@ const ReminderStatistics = ({ parent }: { parent?: string }) => {
                             className={`size-2.5 shrink-0 rounded-full ${skipped ? "bg-rose-500" : late ? "bg-amber-500" : "bg-emerald-500"}`}
                           />
                           <div className="min-w-0 flex-1">
-                            <div className="truncate text-sm font-medium">{occurrence.title}</div>
+                            <div className="whitespace-normal break-words text-sm font-medium">{occurrence.title}</div>
                             <div className="mt-0.5 text-xs text-muted-foreground">{occurrence.reminderListDisplayName}</div>
                           </div>
                           <div className="shrink-0 text-right text-xs">

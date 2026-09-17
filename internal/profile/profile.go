@@ -34,7 +34,7 @@ type Profile struct {
 	Version string
 	// Commit is the current build commit of server
 	Commit string
-	// InstanceURL is the url of your memos instance.
+	// InstanceURL is the canonical external URL of the Memos instance.
 	InstanceURL string
 
 	instanceURLMu sync.RWMutex
@@ -61,8 +61,7 @@ func (p *Profile) SetInstanceURL(instanceURL string) {
 }
 
 // NormalizeInstanceURL validates and canonicalizes an externally reachable
-// HTTP(S) base URL. An empty value is valid and disables anonymous access and
-// URL-dependent features.
+// HTTP(S) base URL. An empty value is valid; access policy is configured separately.
 func NormalizeInstanceURL(raw string) (string, error) {
 	instanceURL := strings.TrimSpace(raw)
 	if instanceURL == "" {
@@ -81,18 +80,8 @@ func NormalizeInstanceURL(raw string) (string, error) {
 	}
 
 	parsed.Path = strings.TrimRight(parsed.Path, "/")
+	parsed.RawPath = strings.TrimRight(parsed.RawPath, "/")
 	return parsed.String(), nil
-}
-
-// AllowAnonymous reports whether unauthenticated visitors may access the instance.
-//
-// Anonymous access is enabled only when an InstanceURL is configured. An instance
-// with no InstanceURL set is treated as private: anonymous callers are limited to
-// the auth-bootstrap endpoints (sign-in, share links, etc.) and the web UI redirects
-// them to the sign-in page instead of the public Explore view. Authenticated callers
-// (session, access token, or personal access token) are never affected.
-func (p *Profile) AllowAnonymous() bool {
-	return strings.TrimSpace(p.GetInstanceURL()) != ""
 }
 
 func checkDataDir(dataDir string) (string, error) {
@@ -116,6 +105,10 @@ func checkDataDir(dataDir string) (string, error) {
 }
 
 func (p *Profile) Validate() error {
+	if p.Demo && p.Driver != "sqlite" {
+		return errors.Errorf("demo mode requires the sqlite database driver, got %q", p.Driver)
+	}
+
 	instanceURL, err := NormalizeInstanceURL(p.GetInstanceURL())
 	if err != nil {
 		return errors.Wrap(err, "invalid instance URL")

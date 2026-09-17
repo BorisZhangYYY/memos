@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import ReminderCompletionDialog from "@/components/Reminder/ReminderCompletionDialog";
 import { ReminderDatePicker } from "@/components/Reminder/ReminderDateTimePicker";
@@ -224,9 +224,10 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
   const user = useCurrentUser();
   const t = useTranslate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const parent = user?.name;
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const [activeView, setActiveView] = useState<SmartView>("all");
+  const [activeView, setActiveView] = useState<SmartView>(searchParams.get("view") === "statistics" ? "statistics" : "all");
   const [activeList, setActiveList] = useState("");
   const [query, setQuery] = useState("");
   const [draftVisible, setDraftVisible] = useState(false);
@@ -236,6 +237,7 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
   const [listDialogOpen, setListDialogOpen] = useState(false);
   const [editingList, setEditingList] = useState<ReminderList>();
   const [selectedReminder, setSelectedReminder] = useState<Reminder>();
+  const selectedFromURL = searchParams.get("selected");
   const [deleteCandidate, setDeleteCandidate] = useState<Reminder>();
   const [completionCandidate, setCompletionCandidate] = useState<Reminder>();
   const [deleteListCandidate, setDeleteListCandidate] = useState<ReminderList>();
@@ -250,6 +252,23 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
 
   const { data: lists = [] } = useReminderLists(parent);
   const { data: allReminders = [] } = useReminders(parent, { view: ListRemindersRequest_View.ALL, timeZone });
+  const { data: completedForSelection = [] } = useReminders(parent, {
+    view: ListRemindersRequest_View.COMPLETED,
+    timeZone,
+    enabled: Boolean(selectedFromURL),
+  });
+  const { data: archivedForSelection = [] } = useReminders(parent, {
+    state: State.ARCHIVED,
+    timeZone,
+    enabled: Boolean(selectedFromURL),
+  });
+  useEffect(() => {
+    if (!selectedFromURL) return;
+    const selected = [...allReminders, ...completedForSelection, ...archivedForSelection].find(
+      (item) => item.name === selectedFromURL || item.name.endsWith(`/${selectedFromURL}`),
+    );
+    if (selected) setSelectedReminder(selected);
+  }, [selectedFromURL, allReminders, completedForSelection, archivedForSelection]);
   const selectedView = activeList ? ListRemindersRequest_View.ALL : VIEW_BY_ID[activeView];
   const selectedState = activeView === "archived" ? State.ARCHIVED : State.NORMAL;
   const { data: reminders = [], isLoading } = useReminders(parent, {
@@ -561,7 +580,9 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
                 >
                   <ReminderListIcon icon={list.icon} className="size-3.5" />
                 </span>
-                <span className="min-w-0 flex-1 truncate text-left">{listDisplayName(list, t("common.reminders"))}</span>
+                <span className="min-w-0 flex-1 whitespace-normal break-words text-left">
+                  {listDisplayName(list, t("common.reminders"))}
+                </span>
                 <span className="text-xs tabular-nums text-muted-foreground">{list.pendingCount}</span>
               </button>
               <DropdownMenu>
@@ -622,7 +643,7 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
       <main className="flex min-h-0 min-w-0 flex-1 flex-col">
         <header className="shrink-0 border-b px-4 py-4 sm:px-6">
           <div className="flex items-center justify-between gap-3">
-            <h1 className="truncate text-3xl font-bold tracking-tight">{pageTitle}</h1>
+            <h1 className="whitespace-normal break-words text-3xl font-bold tracking-tight">{pageTitle}</h1>
             {activeView === "completed" && !activeList && reminders.length > 0 && (
               <Button
                 variant="ghost"
@@ -760,6 +781,14 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
             if (open) return;
             setSelectedReminder(undefined);
             setDetailDraft(undefined);
+            if (selectedFromURL)
+              setSearchParams(
+                (next) => {
+                  next.delete("selected");
+                  return next;
+                },
+                { replace: true },
+              );
           }}
         />
       )}

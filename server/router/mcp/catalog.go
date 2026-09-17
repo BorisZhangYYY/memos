@@ -63,8 +63,11 @@ var curatedOperationIDs = []string{
 	"UserService_GetUserStats",
 	"UserService_GetUserSetting",
 	"UserService_UpdateUserSetting",
+	"MemoViewService_ListMemoViews",
+	"SpaceService_ListSpaces",
+	"SpaceService_GetSpace",
 	// The only allowed auth/identity operation: a read-only "whoami" so agents
-	// can resolve the current user (e.g. for ShortcutService_ListShortcuts).
+	// can resolve the current user (e.g. for MemoViewService_ListMemoViews).
 	"AuthService_GetCurrentUser",
 }
 

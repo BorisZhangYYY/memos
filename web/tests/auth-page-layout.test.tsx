@@ -2,8 +2,9 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import AuthPageLayout from "@/components/AuthPageLayout";
+import { InstanceAccessMode } from "@/types/proto/api/v1/instance_service_pb";
 
-const instance = vi.hoisted(() => ({ instanceUrl: "", allowedVisibilities: [] as string[] }));
+const instance = vi.hoisted(() => ({ instanceUrl: "https://notes.example.com", accessMode: 1 }));
 
 vi.mock("@/contexts/InstanceContext", () => ({
   useInstance: () => ({ profile: instance, generalSetting: {}, memoRelatedSetting: instance }),
@@ -27,33 +28,24 @@ const renderLayout = (props?: { hideExplore?: boolean }) =>
 
 describe("<AuthPageLayout> explore band", () => {
   beforeEach(() => {
-    instance.instanceUrl = "";
-    instance.allowedVisibilities = [];
+    instance.accessMode = InstanceAccessMode.PRIVATE;
   });
 
   it("links to Explore on public instances", () => {
-    instance.instanceUrl = "https://demo.example.com";
+    instance.accessMode = InstanceAccessMode.PUBLIC;
     renderLayout();
 
     expect(screen.getByRole("link", { name: /auth\.explore-public-memos/ })).toHaveAttribute("href", "/explore");
   });
 
-  it("omits the band when no instance URL is configured", () => {
-    renderLayout();
-
-    expect(screen.queryByRole("link", { name: /auth\.explore-public-memos/ })).not.toBeInTheDocument();
-  });
-
-  it("omits the band when PUBLIC visibility is disabled", () => {
-    instance.instanceUrl = "https://private.example.com";
-    instance.allowedVisibilities = ["PRIVATE"];
+  it("omits the band on private instances even when an instance URL is configured", () => {
     renderLayout();
 
     expect(screen.queryByRole("link", { name: /auth\.explore-public-memos/ })).not.toBeInTheDocument();
   });
 
   it("omits the band when hideExplore is set (first-run setup)", () => {
-    instance.instanceUrl = "https://demo.example.com";
+    instance.accessMode = InstanceAccessMode.PUBLIC;
     renderLayout({ hideExplore: true });
 
     expect(screen.queryByRole("link", { name: /auth\.explore-public-memos/ })).not.toBeInTheDocument();

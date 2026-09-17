@@ -1,35 +1,45 @@
 package notification
 
 import (
+	"context"
+	"fmt"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/usememos/memos/internal/profile"
-	storepb "github.com/usememos/memos/proto/gen/store"
 	"github.com/usememos/memos/store"
+	teststore "github.com/usememos/memos/store/test"
 )
 
-func TestBuildReminderEmailMessageUsesReminderTimeZoneAndDeepLink(t *testing.T) {
-	location, err := time.LoadLocation("Asia/Shanghai")
-	require.NoError(t, err)
-	remindTime := time.Date(2026, time.August, 11, 20, 0, 0, 0, location)
-	dispatcher := &EmailDispatcher{profile: &profile.Profile{InstanceURL: "https://memos.example/"}}
+func TestEmailMemoReadCreatorLifecycle(t *testing.T) {
+	ctx := context.Background()
+	st := teststore.NewTestingStore(ctx, t)
+	defer st.Close()
+	dispatcher := NewEmailDispatcher(nil, st, nil)
 
-	message, err := dispatcher.buildReminderEmailMessage(
-		&storepb.InboxMessage{
-			Type: storepb.InboxMessage_REMINDER,
-			Payload: &storepb.InboxMessage_Reminder{Reminder: &storepb.InboxMessage_ReminderPayload{
-				ReminderUid: "weekly-report", Title: "Weekly report", RemindTs: remindTime.Unix(), Early: true, TimeZone: "Asia/Shanghai",
-			}},
-		},
-		&store.User{Username: "owner", Email: "owner@example.com"},
-	)
+	creator, err := st.CreateUser(ctx, &store.User{Username: "email-memo-creator", Role: store.RoleUser, PasswordHash: "hash"})
 	require.NoError(t, err)
-	require.Equal(t, []string{"owner@example.com"}, message.To)
-	require.Equal(t, "[Memos] Reminder: Weekly report", message.Subject)
-	require.Contains(t, message.Body, "This is an early reminder.")
-	require.Contains(t, message.Body, "Tue, 11 Aug 2026 20:00:00 +0800 (Asia/Shanghai)")
-	require.Contains(t, message.Body, "https://memos.example/reminders?selected=weekly-report")
+	viewer, err := st.CreateUser(ctx, &store.User{Username: "email-memo-viewer", Role: store.RoleUser, PasswordHash: "hash"})
+	require.NoError(t, err)
+	memo, err := st.CreateMemo(ctx, &store.Memo{
+		UID: "email-memo-creator-lifecycle", CreatorID: creator.ID, Content: "memo", Visibility: store.Protected,
+	})
+	require.NoError(t, err)
+	archived := store.Archived
+	_, err = st.UpdateUser(ctx, &store.UpdateUser{ID: creator.ID, RowStatus: &archived})
+	require.NoError(t, err)
+
+	readable, err := dispatcher.listMemosByID(ctx, []int32{memo.ID}, viewer.ID)
+	require.NoError(t, err)
+	require.Contains(t, readable, memo.ID, "archiving the creator must not narrow an active PROTECTED memo")
+
+	_, err = st.GetDriver().GetDB().ExecContext(ctx,
+		fmt.Sprintf("UPDATE memo SET creator_id = 2147483000 WHERE id = %d", memo.ID))
+	require.NoError(t, err)
+	danglingMemo, err := st.GetMemo(ctx, &store.FindMemo{ID: &memo.ID})
+	require.NoError(t, err)
+	require.NotNil(t, danglingMemo)
+	readable, err = dispatcher.listMemosByID(ctx, []int32{danglingMemo.ID}, viewer.ID)
+	require.NoError(t, err)
+	require.NotContains(t, readable, danglingMemo.ID, "email rendering must fail closed for a missing memo creator")
 }

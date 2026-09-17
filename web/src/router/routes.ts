@@ -1,11 +1,12 @@
 export const ROUTES = {
   HOME: "/",
+  PERSONAL: "/personal",
   ABOUT: "/about",
   ATTACHMENTS: "/attachments",
   REMINDERS: "/reminders",
   INBOX: "/inbox",
   ARCHIVED: "/archived",
-  SHORTCUTS: "/shortcuts",
+  VIEWS: "/views",
   SETTING: "/setting",
   EXPLORE: "/explore",
   AUTH: "/auth",

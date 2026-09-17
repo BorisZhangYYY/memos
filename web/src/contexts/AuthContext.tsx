@@ -1,9 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from "react";
 import { clearAccessToken, getAccessToken } from "@/auth-state";
-import { authServiceClient, refreshAccessToken, shortcutServiceClient, userServiceClient } from "@/connect";
+import { authServiceClient, refreshAccessToken, userServiceClient } from "@/connect";
 import { userKeys } from "@/hooks/useUserQueries";
-import type { Shortcut } from "@/types/proto/api/v1/shortcut_service_pb";
 import type {
   User,
   UserSetting_GeneralSetting,
@@ -18,7 +17,6 @@ interface AuthState {
   userPersonaSetting: UserSetting_PersonaSetting | undefined;
   userWebhooksSetting: UserSetting_WebhooksSetting | undefined;
   userTagsSetting: UserSetting_TagsSetting | undefined;
-  shortcuts: Shortcut[];
   /** Authentication identity has settled, while user settings may still be loading. */
   isIdentityInitialized: boolean;
   /** User settings that affect memo presentation are safe to consume. */
@@ -43,7 +41,6 @@ const UNAUTHENTICATED_STATE: AuthState = {
   userPersonaSetting: undefined,
   userWebhooksSetting: undefined,
   userTagsSetting: undefined,
-  shortcuts: [],
   isIdentityInitialized: true,
   isUserSettingsInitialized: true,
   isInitialized: true,
@@ -58,7 +55,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     userPersonaSetting: undefined,
     userWebhooksSetting: undefined,
     userTagsSetting: undefined,
-    shortcuts: [],
     isIdentityInitialized: false,
     isUserSettingsInitialized: false,
     isInitialized: false,
@@ -66,42 +62,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const fetchUserSettings = useCallback(async (userName: string) => {
-    const userSettingsPromise = userServiceClient.listUserSettings({ parent: userName }).then(({ settings }) => {
-      const generalSetting = settings.find((s) => s.value.case === "generalSetting");
-      const webhooksSetting = settings.find((s) => s.value.case === "webhooksSetting");
-      const tagsSetting = settings.find((s) => s.value.case === "tagsSetting");
-      const personaSetting = settings.find((s) => s.value.case === "personaSetting");
-      const userSettings = {
-        userGeneralSetting: generalSetting?.value.case === "generalSetting" ? generalSetting.value.value : undefined,
-        userPersonaSetting: personaSetting?.value.case === "personaSetting" ? personaSetting.value.value : undefined,
-        userWebhooksSetting: webhooksSetting?.value.case === "webhooksSetting" ? webhooksSetting.value.value : undefined,
-        userTagsSetting: tagsSetting?.value.case === "tagsSetting" ? tagsSetting.value.value : undefined,
-      };
-
-      // Tag settings control sensitive-content blurring. Publish them as soon
-      // as this request settles instead of waiting for unrelated shortcuts.
-      setState((prev) =>
-        prev.currentUser?.name === userName
-          ? {
-              ...prev,
-              ...userSettings,
-              isUserSettingsInitialized: true,
-            }
-          : prev,
-      );
-
-      return userSettings;
-    });
-
-    const [userSettings, { shortcuts }] = await Promise.all([
-      userSettingsPromise,
-      shortcutServiceClient.listShortcuts({ parent: userName }),
-    ]);
-
-    return {
-      ...userSettings,
-      shortcuts,
+    const { settings } = await userServiceClient.listUserSettings({ parent: userName });
+    const generalSetting = settings.find((s) => s.value.case === "generalSetting");
+    const webhooksSetting = settings.find((s) => s.value.case === "webhooksSetting");
+    const tagsSetting = settings.find((s) => s.value.case === "tagsSetting");
+    const personaSetting = settings.find((s) => s.value.case === "personaSetting");
+    const userSettings = {
+      userPersonaSetting: personaSetting?.value.case === "personaSetting" ? personaSetting.value.value : undefined,
+      userGeneralSetting: generalSetting?.value.case === "generalSetting" ? generalSetting.value.value : undefined,
+      userWebhooksSetting: webhooksSetting?.value.case === "webhooksSetting" ? webhooksSetting.value.value : undefined,
+      userTagsSetting: tagsSetting?.value.case === "tagsSetting" ? tagsSetting.value.value : undefined,
     };
+
+    // Tag settings control sensitive-content blurring. Publish them as soon as
+    // this request settles; memo views are managed separately by React Query.
+    setState((prev) =>
+      prev.currentUser?.name === userName
+        ? {
+            ...prev,
+            ...userSettings,
+            isUserSettingsInitialized: true,
+          }
+        : prev,
+    );
+
+    return userSettings;
   }, []);
 
   const initialize = useCallback(async () => {

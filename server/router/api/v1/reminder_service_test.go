@@ -19,7 +19,7 @@ func TestReminderServiceLifecycleAndIsolation(t *testing.T) {
 	service := newIntegrationService(t)
 	alice, err := service.Store.CreateUser(ctx, &store.User{Username: "reminder-alice", Role: store.RoleUser})
 	require.NoError(t, err)
-	bob, err := service.Store.CreateUser(ctx, &store.User{Username: "reminder-bob", Role: store.RoleUser})
+	bob, err := service.Store.CreateUser(ctx, &store.User{Username: "reminder-bob", Role: store.RoleAdmin})
 	require.NoError(t, err)
 	aliceCtx, bobCtx := userCtx(ctx, alice.ID), userCtx(ctx, bob.ID)
 

@@ -2,8 +2,9 @@ import { Navigate, Outlet, useLocation, useSearchParams } from "react-router-dom
 import { useAuth } from "@/contexts/AuthContext";
 import { useInstance } from "@/contexts/InstanceContext";
 import useCurrentUser from "@/hooks/useCurrentUser";
+import { InstanceAccessMode } from "@/types/proto/api/v1/instance_service_pb";
 import { AUTH_REDIRECT_PARAM, buildAuthRoute, getSafeRedirectPath } from "@/utils/auth-redirect";
-import { isAnonymousExploreEnabled, isPublicMemoEnabled } from "@/utils/visibility";
+import { isPublicMemoEnabled } from "@/utils/visibility";
 import { ROUTES } from "./routes";
 
 /** Waits for instance settings used by public/auth pages to settle. */
@@ -35,7 +36,7 @@ export const LandingRoute = () => {
   }
 
   if (!currentUser) {
-    if (!isAnonymousExploreEnabled(profile.instanceUrl, memoRelatedSetting.allowedVisibilities)) {
+    if (!(profile.accessMode === InstanceAccessMode.PUBLIC && isPublicMemoEnabled(memoRelatedSetting.allowedVisibilities))) {
       const redirect = `${location.pathname}${location.search}${location.hash}`;
       return <Navigate to={buildAuthRoute({ redirect })} replace />;
     }
@@ -65,7 +66,7 @@ export const RequireExploreEnabledRoute = () => {
   if (!isPublicMemoEnabled(memoRelatedSetting.allowedVisibilities)) {
     return <Navigate to={currentUser ? ROUTES.HOME : ROUTES.AUTH} replace />;
   }
-  if (!currentUser && !isAnonymousExploreEnabled(profile.instanceUrl, memoRelatedSetting.allowedVisibilities)) {
+  if (!currentUser && !(profile.accessMode === InstanceAccessMode.PUBLIC && isPublicMemoEnabled(memoRelatedSetting.allowedVisibilities))) {
     return <Navigate to={ROUTES.AUTH} replace />;
   }
 

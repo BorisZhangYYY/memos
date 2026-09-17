@@ -1,7 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { toast } from "react-hot-toast";
 import { useNewMemo } from "@/contexts/NewMemoContext";
+import { attachmentKeys } from "@/hooks/useAttachmentQueries";
 import { memoKeys } from "@/hooks/useMemoQueries";
 import { userKeys } from "@/hooks/useUserQueries";
 import { handleError } from "@/lib/error";
@@ -13,6 +14,7 @@ import { useEditorContext } from "../state";
 interface UseMemoSaveOptions {
   memoName?: string;
   parentMemoName?: string;
+  defaultSpace?: string;
   defaultVisibility?: Visibility;
   defaultCreateTime?: Date;
   discardDraft: () => void;
@@ -29,6 +31,7 @@ interface UseMemoSaveOptions {
 export function useMemoSave({
   memoName,
   parentMemoName,
+  defaultSpace,
   defaultVisibility,
   defaultCreateTime,
   discardDraft,
@@ -41,32 +44,40 @@ export function useMemoSave({
   const { markNewMemo } = useNewMemo();
   const { actions, dispatch, getState } = useEditorContext();
 
+  const savedNameRef = useRef<string | undefined>(undefined);
+
   return useCallback(async () => {
     const state = getState();
-    const { valid, reason } = validationService.canSave(state);
+    const { valid, reason, detail } = validationService.canSave(state);
     if (!valid) {
-      toast.error(reason || "Cannot save");
+      toast.error(reason ? t(reason, detail ? { url: detail } : undefined) : t("editor.validation.cannot-save"));
       return;
     }
 
     dispatch(actions.setLoading("saving", true));
 
     try {
-      const result = await memoService.save(state, { memoName, parentMemoName });
+      const retrying = Boolean(savedNameRef.current);
+      const result = await memoService.save(state, { memoName: memoName ?? savedNameRef.current, parentMemoName, space: defaultSpace });
+      if (!memoName) savedNameRef.current = result.memoName;
 
-      if (!result.hasChanges && !hasExternalChanges) {
+      if (!result.hasChanges && !hasExternalChanges && !retrying) {
         toast.error(t("editor.no-changes-detected"));
         onCancel?.();
         return;
       }
 
-      if (result.hasChanges) {
+      // Keep the editor and draft until reminder associations have been saved.
+      // A retry updates the already-created memo instead of creating a duplicate.
+      await onConfirm?.(result.memoName);
+      if (result.hasChanges || retrying || hasExternalChanges) {
         // Prevent the autosave unmount flush from restoring the saved draft.
         discardDraft();
 
         const invalidationPromises = [
           queryClient.invalidateQueries({ queryKey: memoKeys.lists() }),
           queryClient.invalidateQueries({ queryKey: userKeys.stats() }),
+          queryClient.invalidateQueries({ queryKey: attachmentKeys.lists() }),
         ];
         if (memoName) {
           invalidationPromises.push(queryClient.invalidateQueries({ queryKey: memoKeys.detail(memoName) }));
@@ -90,7 +101,7 @@ export function useMemoSave({
       if (!memoName && !parentMemoName) {
         markNewMemo(result.memoName);
       }
-      await onConfirm?.(result.memoName);
+      savedNameRef.current = undefined;
     } catch (error) {
       handleError(error, toast.error, {
         context: "Failed to save memo",
@@ -102,6 +113,7 @@ export function useMemoSave({
   }, [
     actions,
     defaultCreateTime,
+    defaultSpace,
     defaultVisibility,
     discardDraft,
     dispatch,

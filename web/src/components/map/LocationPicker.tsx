@@ -61,7 +61,9 @@ const LocationMarker = ({ position: initialPosition, onChange, readonly: readOnl
     }
   }, [initialPosition, map]);
 
-  return position === undefined ? null : <Marker position={position} icon={defaultMarkerIcon}></Marker>;
+  return position === undefined ? null : (
+    <Marker position={position} icon={defaultMarkerIcon} interactive={false} keyboard={false}></Marker>
+  );
 };
 
 // Reusable glass-style button component
@@ -83,6 +85,7 @@ const GlassButton = ({ icon, onClick, ariaLabel, title }: GlassButtonProps) => {
         "inline-flex items-center justify-center h-8 w-8 rounded-lg",
         "border border-border/80 bg-background/88 text-foreground shadow-sm backdrop-blur-md",
         "hover:scale-105 hover:bg-background hover:shadow-md active:scale-95",
+        "focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
       )}
     >
       {icon}
@@ -292,7 +295,7 @@ const LocationPicker = ({ readonly: readOnly = false, latlng, onChange = noopOnL
       )}
     >
       <MapContainer
-        className="h-full w-full !bg-muted"
+        className="map-attribution-minimal h-full w-full !bg-muted"
         center={mapCenter}
         zoom={latlng ? 13 : 2}
         scrollWheelZoom={false}

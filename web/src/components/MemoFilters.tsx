@@ -9,6 +9,7 @@ import {
   HeartIcon,
   LinkIcon,
   LucideIcon,
+  MapPinIcon,
   SearchIcon,
   XIcon,
 } from "lucide-react";
@@ -67,6 +68,10 @@ const FILTER_CONFIGS: Record<FilterFactor, FilterConfig> = {
   moodLevel: {
     icon: HeartIcon,
     getLabel: getMoodLevelLabel,
+  },
+  "property.hasLocation": {
+    icon: MapPinIcon,
+    getLabel: (_, t) => t("memo.filters.has-location"),
   },
 };
 

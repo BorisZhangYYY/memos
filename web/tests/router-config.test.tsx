@@ -59,16 +59,20 @@ describe("router configuration", () => {
   });
 
   it("wraps authenticated-only pages in RequireAuthRoute", () => {
-    for (const path of [ROUTES.ARCHIVED, ROUTES.ATTACHMENTS, ROUTES.INBOX, ROUTES.SETTING]) {
+    for (const path of [ROUTES.ARCHIVED, ROUTES.VIEWS, ROUTES.ATTACHMENTS, ROUTES.INBOX, ROUTES.SETTING]) {
       expect(hasAncestorOfType(routeConfig, path, RequireAuthRoute)).toBe(true);
     }
   });
 
   it("keeps non-feed pages behind their full initialization requirements", () => {
-    for (const path of [ROUTES.SHORTCUTS, ROUTES.ATTACHMENTS, ROUTES.INBOX, ROUTES.SETTING]) {
+    for (const path of [ROUTES.VIEWS, ROUTES.ATTACHMENTS, ROUTES.INBOX, ROUTES.SETTING]) {
       expect(hasAncestorOfType(routeConfig, path, RequireFullInitializationRoute)).toBe(true);
     }
     expect(hasAncestorOfType(routeConfig, ROUTES.ABOUT, RequireInstanceInitializationRoute)).toBe(true);
+  });
+
+  it("does not register a dedicated new memo route", () => {
+    expect(findByPath(routeConfig, "/new")).toBeUndefined();
   });
 
   it("leaves memo feeds available for early queries", () => {

@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useCreateFinanceTransaction, useFinanceCategories, useFinanceWallets } from "@/hooks/useFinanceQueries";
 import { localDateTimeInputValue, parseYuanToMinor } from "@/lib/finance";
 import { State } from "@/types/proto/api/v1/common_pb";
@@ -15,12 +16,13 @@ import { useTranslate } from "@/utils/i18n";
 
 interface Props {
   open: boolean;
+  inline?: boolean;
   onOpenChange: (open: boolean) => void;
   parent: string;
   initialType?: FinanceTransaction_Type;
 }
 
-const FinanceTransactionDialog = ({ open, onOpenChange, parent, initialType = FinanceTransaction_Type.EXPENSE }: Props) => {
+const FinanceTransactionDialog = ({ open, onOpenChange, parent, inline = false, initialType = FinanceTransaction_Type.EXPENSE }: Props) => {
   const t = useTranslate();
   const { data: wallets = [] } = useFinanceWallets(parent);
   const { data: categories = [] } = useFinanceCategories(parent);
@@ -91,144 +93,152 @@ const FinanceTransactionDialog = ({ open, onOpenChange, parent, initialType = Fi
     }
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t("finance.transaction.title")}</DialogTitle>
-          <DialogDescription>{t("finance.transaction.description")}</DialogDescription>
-        </DialogHeader>
+  const content = (
+    <>
+      <header className="space-y-2">
+        <h3 className="text-lg font-semibold">{t("finance.transaction.title")}</h3>
+        <p className="text-sm text-muted-foreground">{t("finance.transaction.description")}</p>
+      </header>
 
-        {activeWallets.length === 0 ? (
-          <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">{t("finance.transaction.no-wallet")}</div>
-        ) : (
-          <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { value: FinanceTransaction_Type.EXPENSE, label: t("finance.type.expense"), icon: ArrowDownIcon },
-                { value: FinanceTransaction_Type.INCOME, label: t("finance.type.income"), icon: ArrowUpIcon },
-                { value: FinanceTransaction_Type.TRANSFER, label: t("finance.type.transfer"), icon: ArrowRightLeftIcon },
-              ].map((option) => (
-                <Button
-                  key={option.value}
-                  type="button"
-                  variant={type === option.value ? "secondary" : "outline"}
-                  onClick={() => setType(option.value)}
-                >
-                  <option.icon className="mr-1.5 size-4" />
-                  {option.label}
-                </Button>
-              ))}
+      {activeWallets.length === 0 ? (
+        <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">{t("finance.transaction.no-wallet")}</div>
+      ) : (
+        <div className="space-y-4">
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { value: FinanceTransaction_Type.EXPENSE, label: t("finance.type.expense"), icon: ArrowDownIcon },
+              { value: FinanceTransaction_Type.INCOME, label: t("finance.type.income"), icon: ArrowUpIcon },
+              { value: FinanceTransaction_Type.TRANSFER, label: t("finance.type.transfer"), icon: ArrowRightLeftIcon },
+            ].map((option) => (
+              <Button
+                key={option.value}
+                type="button"
+                variant={type === option.value ? "secondary" : "outline"}
+                onClick={() => setType(option.value)}
+              >
+                <option.icon className="mr-1.5 size-4" />
+                {option.label}
+              </Button>
+            ))}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="finance-amount">{t("finance.amount")}</Label>
+            <div className="relative">
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">¥</span>
+              <Input
+                id="finance-amount"
+                className="pl-7 text-lg font-medium"
+                inputMode="decimal"
+                placeholder="0.00"
+                value={amount}
+                onChange={(event) => setAmount(event.target.value)}
+                autoFocus
+              />
             </div>
+          </div>
 
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="finance-amount">{t("finance.amount")}</Label>
-              <div className="relative">
-                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">¥</span>
-                <Input
-                  id="finance-amount"
-                  className="pl-7 text-lg font-medium"
-                  inputMode="decimal"
-                  placeholder="0.00"
-                  value={amount}
-                  onChange={(event) => setAmount(event.target.value)}
-                  autoFocus
-                />
-              </div>
+              <Label>{type === FinanceTransaction_Type.TRANSFER ? t("finance.wallet.source") : t("finance.wallet.label")}</Label>
+              <Select value={wallet} onValueChange={setWallet}>
+                <SelectTrigger className="h-auto min-h-9 w-full [&_[data-slot=select-value]]:whitespace-normal">
+                  <span className="whitespace-normal break-words">{activeWallets.find((item) => item.name === wallet)?.displayName}</span>
+                </SelectTrigger>
+                <SelectContent>
+                  {activeWallets.map((item) => (
+                    <SelectItem key={item.name} value={item.name}>
+                      {item.displayName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            {type === FinanceTransaction_Type.TRANSFER ? (
               <div className="space-y-1.5">
-                <Label>{type === FinanceTransaction_Type.TRANSFER ? t("finance.wallet.source") : t("finance.wallet.label")}</Label>
-                <Select value={wallet} onValueChange={setWallet}>
-                  <SelectTrigger className="w-full">
-                    <span className="truncate">{activeWallets.find((item) => item.name === wallet)?.displayName}</span>
+                <Label>{t("finance.wallet.destination")}</Label>
+                <Select value={destinationWallet} onValueChange={setDestinationWallet}>
+                  <SelectTrigger className="h-auto min-h-9 w-full [&_[data-slot=select-value]]:whitespace-normal">
+                    <span
+                      className={
+                        destinationWallet ? "whitespace-normal break-words" : "whitespace-normal break-words text-muted-foreground"
+                      }
+                    >
+                      {activeWallets.find((item) => item.name === destinationWallet)?.displayName ?? t("finance.wallet.select-destination")}
+                    </span>
                   </SelectTrigger>
                   <SelectContent>
-                    {activeWallets.map((item) => (
+                    {activeWallets
+                      .filter((item) => item.name !== wallet)
+                      .map((item) => (
+                        <SelectItem key={item.name} value={item.name}>
+                          {item.displayName}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                <Label>{t("finance.category.label")}</Label>
+                <Select value={category} onValueChange={setCategory}>
+                  <SelectTrigger className="h-auto min-h-9 w-full [&_[data-slot=select-value]]:whitespace-normal">
+                    <span className={category ? "flex min-w-0 items-center gap-2" : "whitespace-normal break-words text-muted-foreground"}>
+                      {selectedCategory?.emoji && <span className="shrink-0 text-base">{selectedCategory.emoji}</span>}
+                      <span className="whitespace-normal break-words">{selectedCategory?.displayName ?? t("finance.category.select")}</span>
+                    </span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {matchingCategories.map((item) => (
                       <SelectItem key={item.name} value={item.name}>
-                        {item.displayName}
+                        {item.emoji && <span className="text-base">{item.emoji}</span>}
+                        <span>{item.displayName}</span>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-
-              {type === FinanceTransaction_Type.TRANSFER ? (
-                <div className="space-y-1.5">
-                  <Label>{t("finance.wallet.destination")}</Label>
-                  <Select value={destinationWallet} onValueChange={setDestinationWallet}>
-                    <SelectTrigger className="w-full">
-                      <span className={destinationWallet ? "truncate" : "truncate text-muted-foreground"}>
-                        {activeWallets.find((item) => item.name === destinationWallet)?.displayName ??
-                          t("finance.wallet.select-destination")}
-                      </span>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {activeWallets
-                        .filter((item) => item.name !== wallet)
-                        .map((item) => (
-                          <SelectItem key={item.name} value={item.name}>
-                            {item.displayName}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              ) : (
-                <div className="space-y-1.5">
-                  <Label>{t("finance.category.label")}</Label>
-                  <Select value={category} onValueChange={setCategory}>
-                    <SelectTrigger className="w-full">
-                      <span className={category ? "flex min-w-0 items-center gap-2" : "truncate text-muted-foreground"}>
-                        {selectedCategory?.emoji && <span className="shrink-0 text-base">{selectedCategory.emoji}</span>}
-                        <span className="truncate">{selectedCategory?.displayName ?? t("finance.category.select")}</span>
-                      </span>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {matchingCategories.map((item) => (
-                        <SelectItem key={item.name} value={item.name}>
-                          {item.emoji && <span className="text-base">{item.emoji}</span>}
-                          <span>{item.displayName}</span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="finance-occur-time">{t("finance.occur-time")}</Label>
-              <Input
-                id="finance-occur-time"
-                type="datetime-local"
-                value={occurTime}
-                onChange={(event) => setOccurTime(event.target.value)}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="finance-note">{t("finance.note")}</Label>
-              <Input
-                id="finance-note"
-                maxLength={500}
-                value={note}
-                onChange={(event) => setNote(event.target.value)}
-                placeholder={t("finance.note-placeholder")}
-              />
-            </div>
+            )}
           </div>
-        )}
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {t("common.cancel")}
-          </Button>
-          <Button onClick={handleSubmit} disabled={!canSubmit || isPending}>
-            {t("common.save")}
-          </Button>
-        </DialogFooter>
+          <div className="space-y-1.5">
+            <Label htmlFor="finance-occur-time">{t("finance.occur-time")}</Label>
+            <Input id="finance-occur-time" type="datetime-local" value={occurTime} onChange={(event) => setOccurTime(event.target.value)} />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="finance-note">{t("finance.note")}</Label>
+            <Textarea
+              id="finance-note"
+              maxLength={500}
+              value={note}
+              onChange={(event) => setNote(event.target.value)}
+              placeholder={t("finance.note-placeholder")}
+            />
+          </div>
+        </div>
+      )}
+
+      <DialogFooter>
+        <Button variant="outline" onClick={() => onOpenChange(false)}>
+          {t("common.cancel")}
+        </Button>
+        <Button onClick={handleSubmit} disabled={!canSubmit || isPending}>
+          {t("common.save")}
+        </Button>
+      </DialogFooter>
+    </>
+  );
+  if (inline) return open ? <div className="space-y-5 rounded-xl border bg-background p-4">{content}</div> : null;
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader className="sr-only">
+          <DialogTitle>{t("finance.transaction.title")}</DialogTitle>
+          <DialogDescription>{t("finance.transaction.description")}</DialogDescription>
+        </DialogHeader>
+        {content}
       </DialogContent>
     </Dialog>
   );

@@ -143,6 +143,12 @@ func (r *renderer) renderFieldPredicate(cond *FieldPredicateCondition) (renderRe
 			return renderResult{}, err
 		}
 		return renderResult{sql: sql}, nil
+	case FieldKindJSONExists:
+		sql, err := r.jsonExistsSQL(field)
+		if err != nil {
+			return renderResult{}, errors.Wrap(err, "failed to render JSON existence predicate")
+		}
+		return renderResult{sql: sql}, nil
 	default:
 		return renderResult{}, errors.Errorf("field %q cannot be used as a predicate", cond.Field)
 	}
@@ -162,6 +168,8 @@ func (r *renderer) renderComparison(cond *ComparisonCondition) (renderResult, er
 			return r.renderJSONBoolComparison(field, cond.Operator, cond.Right)
 		case FieldKindJSONInt:
 			return r.renderJSONIntComparison(field, cond.Operator, cond.Right)
+		case FieldKindJSONExists:
+			return r.renderJSONExistsComparison(field, cond.Operator, cond.Right)
 		case FieldKindScalar:
 			return r.renderScalarComparison(field, cond.Operator, cond.Right)
 		default:
@@ -633,9 +641,6 @@ func (r *renderer) renderListComprehension(cond *ListComprehensionCondition) (re
 // kinds the same exact, case-sensitive semantics.
 func (r *renderer) renderTagComprehension(field Field, pred PredicateExpr, kind ComprehensionKind) (renderResult, error) {
 	arrayExpr := jsonArrayExpr(r.dialect, field)
-	if r.dialect == DialectMySQL {
-		return r.renderMySQLTagComprehension(arrayExpr, pred, kind)
-	}
 	elemCond, err := r.tagElementPredicateSQL("tag_item.value", pred)
 	if err != nil {
 		return renderResult{}, err
@@ -647,6 +652,10 @@ func (r *renderer) renderTagComprehension(field Field, pred PredicateExpr, kind 
 		arrayExpr = fmt.Sprintf("COALESCE(%s, JSON_ARRAY())", arrayExpr)
 		elements = fmt.Sprintf("json_each(%s) AS tag_item", arrayExpr)
 		length = fmt.Sprintf("json_array_length(%s)", arrayExpr)
+	case DialectMySQL:
+		arrayExpr = fmt.Sprintf("COALESCE(%s, JSON_ARRAY())", arrayExpr)
+		elements = fmt.Sprintf("JSON_TABLE(%s, '$[*]' COLUMNS (value LONGTEXT PATH '$')) AS tag_item", arrayExpr)
+		length = fmt.Sprintf("JSON_LENGTH(%s)", arrayExpr)
 	case DialectPostgres:
 		arrayExpr = fmt.Sprintf("COALESCE(%s, '[]'::jsonb)", arrayExpr)
 		elements = fmt.Sprintf("jsonb_array_elements_text(%s) AS tag_item(value)", arrayExpr)
@@ -655,54 +664,30 @@ func (r *renderer) renderTagComprehension(field Field, pred PredicateExpr, kind 
 		return renderResult{}, errors.Errorf("unsupported dialect %s", r.dialect)
 	}
 
+	// MySQL rewrites `EXISTS (SELECT ... FROM JSON_TABLE(<outer column>))` into a semi-join
+	// that drops the lateral dependency on the outer row, so the subquery silently evaluates
+	// as empty and the predicate is always false. Counting rows keeps the correlation intact.
+	// See TestTagComprehensionAvoidsMySQLExistsSemiJoin.
+	anyMatch := func(cond string) string {
+		if r.dialect == DialectMySQL {
+			return fmt.Sprintf("(SELECT COUNT(*) FROM %s WHERE %s) > 0", elements, cond)
+		}
+		return fmt.Sprintf("EXISTS (SELECT 1 FROM %s WHERE %s)", elements, cond)
+	}
+	noMatch := func(cond string) string {
+		if r.dialect == DialectMySQL {
+			return fmt.Sprintf("(SELECT COUNT(*) FROM %s WHERE %s) = 0", elements, cond)
+		}
+		return fmt.Sprintf("NOT EXISTS (SELECT 1 FROM %s WHERE %s)", elements, cond)
+	}
+
 	switch kind {
 	case ComprehensionExists:
-		return renderResult{sql: fmt.Sprintf("EXISTS (SELECT 1 FROM %s WHERE %s)", elements, elemCond)}, nil
+		return renderResult{sql: anyMatch(elemCond)}, nil
 	case ComprehensionAll:
-		return renderResult{sql: fmt.Sprintf("(%s > 0 AND NOT EXISTS (SELECT 1 FROM %s WHERE NOT (%s)))", length, elements, elemCond)}, nil
+		return renderResult{sql: fmt.Sprintf("(%s > 0 AND %s)", length, noMatch(fmt.Sprintf("NOT (%s)", elemCond)))}, nil
 	case ComprehensionExistsOne:
 		return renderResult{sql: fmt.Sprintf("(SELECT COUNT(*) FROM %s WHERE %s) = 1", elements, elemCond)}, nil
-	default:
-		return renderResult{}, errors.Errorf("unsupported comprehension kind %s", kind)
-	}
-}
-
-// renderMySQLTagComprehension uses JSON_SEARCH instead of a correlated
-// JSON_TABLE subquery. MySQL can incorrectly return no rows when such a
-// subquery references a JSON column from an outer query that also has joins.
-// JSON_SEARCH returns every matching array path, so its result length supports
-// exists, all, and exists_one without a correlated table expression.
-func (r *renderer) renderMySQLTagComprehension(arrayExpr string, pred PredicateExpr, kind ComprehensionKind) (renderResult, error) {
-	var pattern string
-	switch p := pred.(type) {
-	case *EqualsPredicate:
-		pattern = escapeTagLikeLiteral(p.Value)
-	case *StartsWithPredicate:
-		pattern = tagLikePattern(TextMatchPrefix, p.Prefix)
-	case *EndsWithPredicate:
-		pattern = tagLikePattern(TextMatchSuffix, p.Suffix)
-	case *ContainsPredicate:
-		pattern = tagLikePattern(TextMatchContains, p.Substring)
-	default:
-		return renderResult{}, errors.Errorf("unsupported tag predicate %T", pred)
-	}
-
-	arrayExpr = fmt.Sprintf("COALESCE(%s, JSON_ARRAY())", arrayExpr)
-	search := fmt.Sprintf(
-		"JSON_SEARCH(%s, 'all', CAST(%s AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_bin, '!')",
-		arrayExpr,
-		r.addArg(pattern),
-	)
-	matches := fmt.Sprintf("COALESCE(JSON_LENGTH(%s), 0)", search)
-	length := fmt.Sprintf("JSON_LENGTH(%s)", arrayExpr)
-
-	switch kind {
-	case ComprehensionExists:
-		return renderResult{sql: matches + " > 0"}, nil
-	case ComprehensionAll:
-		return renderResult{sql: fmt.Sprintf("(%s > 0 AND %s = %s)", length, matches, length)}, nil
-	case ComprehensionExistsOne:
-		return renderResult{sql: matches + " = 1"}, nil
 	default:
 		return renderResult{}, errors.Errorf("unsupported comprehension kind %s", kind)
 	}
@@ -779,6 +764,49 @@ func tagLikePattern(mode TextMatchMode, value string) string {
 
 func escapeTagLikeLiteral(value string) string {
 	return strings.NewReplacer("!", "!!", "%", "!%", "_", "!_").Replace(value)
+}
+
+// jsonExistsSQL renders a predicate that is true when the JSON key at the
+// field's path holds a non-null value. A missing key and an explicit JSON null
+// both count as absent on every dialect.
+func (r *renderer) jsonExistsSQL(field Field) (string, error) {
+	expr := jsonExtractExpr(r.dialect, field)
+	switch r.dialect {
+	case DialectSQLite, DialectPostgres:
+		// SQLite's JSON_EXTRACT and Postgres' terminal ->> fold both a missing
+		// key and a JSON null to SQL NULL.
+		return fmt.Sprintf("%s IS NOT NULL", expr), nil
+	case DialectMySQL:
+		// MySQL's JSON_EXTRACT returns SQL NULL for a missing key but a JSON
+		// null literal for an explicit null; JSON_TYPE reports 'NULL' only for
+		// the latter, so both collapse to 'NULL' here.
+		return fmt.Sprintf("COALESCE(JSON_TYPE(%s), 'NULL') != 'NULL'", expr), nil
+	default:
+		return "", errors.Errorf("unsupported dialect %s", r.dialect)
+	}
+}
+
+func (r *renderer) renderJSONExistsComparison(field Field, op ComparisonOperator, right ValueExpr) (renderResult, error) {
+	value, err := expectBool(right)
+	if err != nil {
+		return renderResult{}, errors.Wrap(err, "json existence comparison requires a boolean value")
+	}
+	existsSQL, err := r.jsonExistsSQL(field)
+	if err != nil {
+		return renderResult{}, errors.Wrap(err, "failed to render JSON existence comparison")
+	}
+	want := value
+	switch op {
+	case CompareEq:
+	case CompareNeq:
+		want = !want
+	default:
+		return renderResult{}, errors.Errorf("operator %s not supported for field %q", op, field.Name)
+	}
+	if want {
+		return renderResult{sql: existsSQL}, nil
+	}
+	return renderResult{sql: fmt.Sprintf("NOT (%s)", existsSQL)}, nil
 }
 
 func (r *renderer) jsonBoolPredicate(field Field) (string, error) {
