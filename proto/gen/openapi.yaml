@@ -250,6 +250,30 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/v1/auth/password:verify:
+        post:
+            tags:
+                - AuthService
+            description: |-
+                VerifyPassword checks the authenticated user's account password without
+                 creating or replacing a session.
+            operationId: AuthService_VerifyPassword
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/VerifyPasswordRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content: {}
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/v1/auth/refresh:
         post:
             tags:
@@ -6541,6 +6565,24 @@ components:
                 saveMediaMetadata:
                     type: boolean
                     description: Whether the official client should save metadata from future media uploads.
+                disableReminders:
+                    type: boolean
+                    description: Personal extensions are opt-out so existing users keep their current UI.
+                disableFinance:
+                    type: boolean
+                disableMood:
+                    type: boolean
+                personalFeaturePrivacy:
+                    enum:
+                        - VISIBLE
+                        - BLURRED
+                        - COLLAPSED
+                    type: string
+                    description: How personal panels are presented when Home first loads.
+                    format: enum
+                requirePasswordForPrivateContent:
+                    type: boolean
+                    description: Require the account password before revealing private or blurred content.
             description: General user settings configuration.
         UserSetting_PersonaSetting:
             type: object
@@ -6715,6 +6757,13 @@ components:
                     type: boolean
                     description: Whether a signing secret is configured for this webhook.
             description: UserWebhook represents a webhook owned by a user.
+        VerifyPasswordRequest:
+            required:
+                - password
+            type: object
+            properties:
+                password:
+                    type: string
         VideoMetadata:
             type: object
             properties:

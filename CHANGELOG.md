@@ -1,19 +1,53 @@
 # Changelog
 
-## 0.34.0 (Unreleased)
+## [0.34.0](https://github.com/BorisZhangYYY/memos/compare/v0.33.6...v0.34.0) (2026-09-25)
+
+### Summary
+
+This release integrates the official v0.31 editor and organization work while
+keeping the fork's mood, finance, and reminder features available from a compact
+homepage widget. Personal features can now be disabled or privacy-protected
+without replacing the standard Memo workflow.
 
 ### Features
 
-* Integrate upstream v0.31.0-rc.1, including Spaces, Saved Views, the unified sidebar, global editor, inline images, rich links, and the improved Markdown workflow.
-* Add a dedicated personal Dashboard for moods, finances, and reminders, keeping the Memo feed as the default homepage.
-* Keep all personal records owner-only across Spaces, including protection from instance and Space administrators.
+* **Official editor integration:** brings in Spaces, Saved Views, the unified
+  sidebar, inline images, rich links, editor formatting controls and shortcuts,
+  improved tag completion, and the updated Markdown workflow from upstream
+  v0.31.0-rc.1.
+* **Homepage personal widget:** restores mood, finance, and reminder summaries
+  above the Memo editor and feed, with compact tabbed navigation and a remembered
+  expanded or collapsed state.
+* **Personal feature management:** allows mood, finance, and reminders to be
+  disabled independently or together so an account can return to the stock Memo
+  experience.
+* **Private-content protection:** supports tag-style blurring with optional
+  account-password verification. A successful verification unlocks the personal
+  widget and protected reminder-linked Memos for the current app session, while
+  individual Memos can be locked again independently.
+* **Integrated management:** moves wallet and category management into the
+  finance widget and keeps reminder management in a focused homepage dialog with
+  per-list creation targets.
+
+### Bug Fixes
+
+* Preserve pasted image positions and distinguish paste from drag-and-drop
+  placement in the CodeMirror editor.
+* Keep reminder drafts focused without scrolling the list or causing a visible
+  jump, and align reminder metadata actions consistently across rows.
+* Hide reminder notifications, mood controls, finance controls, and associated
+  queries when their personal feature is disabled.
 
 ### Compatibility
 
-* Preserve the fork migration history and place new upstream migrations after it; retain legacy Memo, finance, reminder, and completion-history data.
-* Keep legacy Shortcut APIs backed by Saved Views and preserve the existing mood protobuf field number.
-* Detach private reminders when a linked Memo is deleted while retaining reminder completion history.
-* Separate instance access policy from its external URL and preserve the previous effective policy on first upgrade.
+* Preserve the fork migration history and place new upstream migrations after
+  it; retain legacy Memo, finance, reminder, and completion-history data.
+* Keep legacy Shortcut APIs backed by Saved Views and preserve the existing mood
+  protobuf field number.
+* Detach private reminders when a linked Memo is deleted while retaining reminder
+  completion history.
+* Separate instance access policy from its external URL and preserve the previous
+  effective policy on first upgrade.
 
 See [the integration notes](docs/v0.34-integration.md) for migration behavior and verification.
 

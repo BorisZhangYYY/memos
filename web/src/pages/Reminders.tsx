@@ -129,88 +129,92 @@ const ReminderRow = ({
         {completed && <CheckIcon className="size-3" />}
       </button>
       <button type="button" className="min-w-0 flex-1 text-left" onClick={onOpen}>
-        <div className="flex items-start gap-2">
-          <span className={cn("min-w-0 flex-1 break-words text-[15px] leading-5", completed && "text-muted-foreground line-through")}>
-            {reminder.title}
-          </span>
-          <span className="flex h-6 shrink-0 items-center gap-1">
-            {reminder.priority !== Reminder_Priority.PRIORITY_UNSPECIFIED && (
-              <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-md bg-primary/10 px-1 text-sm font-semibold leading-none text-primary">
-                {"!".repeat(reminder.priority)}
-              </span>
-            )}
-            {reminder.flagged && (
-              <span className="inline-flex size-6 items-center justify-center rounded-md bg-orange-400/10 text-orange-500">
-                <FlagIcon className="size-3.5 fill-current" />
-              </span>
-            )}
-          </span>
-        </div>
+        <span className={cn("block break-words text-[15px] leading-5", completed && "text-muted-foreground line-through")}>
+          {reminder.title}
+        </span>
         <ReminderMetadata reminder={reminder} list={list} className="mt-1" />
       </button>
-      {reminder.memo && (
-        <Button
-          nativeButton={false}
-          variant="ghost"
-          size="icon-sm"
-          className="mt-0.5 shrink-0 text-primary"
-          render={<Link to={`/${reminder.memo}`} state={{ from: returnLocation }} />}
-          aria-label={t("reminder.open-linked-memo")}
-          title={t("reminder.open-linked-memo")}
-        >
-          <FileTextIcon className="size-4" />
-        </Button>
-      )}
-      {canChooseCompletionDate && (
+      <div className="mt-0.5 grid w-[9.75rem] shrink-0 grid-cols-5 gap-1">
+        {reminder.priority !== Reminder_Priority.PRIORITY_UNSPECIFIED ? (
+          <span className="inline-flex size-7 items-center justify-center rounded-md bg-primary/10 text-sm font-semibold leading-none text-primary">
+            {"!".repeat(reminder.priority)}
+          </span>
+        ) : (
+          <span aria-hidden="true" />
+        )}
+        {reminder.flagged ? (
+          <span className="inline-flex size-7 items-center justify-center rounded-md bg-orange-400/10 text-orange-500">
+            <FlagIcon className="size-3.5 fill-current" />
+          </span>
+        ) : (
+          <span aria-hidden="true" />
+        )}
+        {reminder.memo ? (
+          <Button
+            nativeButton={false}
+            variant="ghost"
+            size="icon-sm"
+            className="size-7 shrink-0 p-0 text-primary"
+            render={<Link to={`/${reminder.memo}`} state={{ from: returnLocation }} />}
+            aria-label={t("reminder.open-linked-memo")}
+            title={t("reminder.open-linked-memo")}
+          >
+            <FileTextIcon className="size-4" />
+          </Button>
+        ) : (
+          <span aria-hidden="true" />
+        )}
+        {canChooseCompletionDate ? (
+          <button
+            type="button"
+            className="flex size-7 shrink-0 items-center justify-center rounded-full text-destructive transition-colors hover:bg-destructive/10"
+            onClick={(event) => {
+              event.stopPropagation();
+              onChooseCompletionDate();
+            }}
+            aria-label={t("reminder.complete-on-date")}
+            title={t("reminder.complete-on-date")}
+          >
+            <CalendarClockIcon className="size-4" />
+          </button>
+        ) : completed && !archived ? (
+          <button
+            type="button"
+            className="flex size-7 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            onClick={(event) => {
+              event.stopPropagation();
+              onArchive();
+            }}
+            aria-label={t("common.archive")}
+            title={t("common.archive")}
+          >
+            <ArchiveIcon className="size-4" />
+          </button>
+        ) : archived ? (
+          <button
+            type="button"
+            className="flex size-7 shrink-0 items-center justify-center rounded-full text-destructive transition-colors hover:bg-destructive/10"
+            onClick={(event) => {
+              event.stopPropagation();
+              onDelete();
+            }}
+            aria-label={t("common.delete")}
+            title={t("common.delete")}
+          >
+            <Trash2Icon className="size-4" />
+          </button>
+        ) : (
+          <span aria-hidden="true" />
+        )}
         <button
           type="button"
-          className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full text-destructive transition-colors hover:bg-destructive/10"
-          onClick={(event) => {
-            event.stopPropagation();
-            onChooseCompletionDate();
-          }}
-          aria-label={t("reminder.complete-on-date")}
-          title={t("reminder.complete-on-date")}
+          className="flex size-7 shrink-0 items-center justify-center rounded-full text-primary opacity-60 transition-opacity hover:bg-primary/10 hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+          onClick={onOpen}
+          aria-label={t("reminder.details")}
         >
-          <CalendarClockIcon className="size-4" />
+          <InfoIcon className="size-5" />
         </button>
-      )}
-      {completed && !archived && (
-        <button
-          type="button"
-          className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          onClick={(event) => {
-            event.stopPropagation();
-            onArchive();
-          }}
-          aria-label={t("common.archive")}
-          title={t("common.archive")}
-        >
-          <ArchiveIcon className="size-4" />
-        </button>
-      )}
-      {archived && (
-        <button
-          type="button"
-          className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full text-destructive transition-colors hover:bg-destructive/10"
-          onClick={(event) => {
-            event.stopPropagation();
-            onDelete();
-          }}
-          aria-label={t("common.delete")}
-          title={t("common.delete")}
-        >
-          <Trash2Icon className="size-4" />
-        </button>
-      )}
-      <button
-        type="button"
-        className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full text-primary opacity-60 transition-opacity hover:bg-primary/10 hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
-        onClick={onOpen}
-        aria-label={t("reminder.details")}
-      >
-        <InfoIcon className="size-5" />
-      </button>
+      </div>
     </div>
   );
 };
@@ -231,6 +235,7 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
   const [activeList, setActiveList] = useState("");
   const [query, setQuery] = useState("");
   const [draftVisible, setDraftVisible] = useState(false);
+  const [draftListName, setDraftListName] = useState("");
   const [draftTitle, setDraftTitle] = useState("");
   const [draftDueDate, setDraftDueDate] = useState("");
   const [draftFlagged, setDraftFlagged] = useState(false);
@@ -300,14 +305,28 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
   );
 
   useEffect(() => {
-    if (draftVisible) requestAnimationFrame(() => draftRef.current?.focus());
-  }, [draftVisible]);
+    if (!draftVisible) return;
+    let focusConfirmationFrame = 0;
+    const focusFrame = requestAnimationFrame(() => {
+      draftRef.current?.focus({ preventScroll: true });
+      focusConfirmationFrame = requestAnimationFrame(() => draftRef.current?.focus({ preventScroll: true }));
+    });
+    return () => {
+      cancelAnimationFrame(focusFrame);
+      cancelAnimationFrame(focusConfirmationFrame);
+    };
+  }, [draftListName, draftVisible]);
 
   useEffect(() => {
     if (!parent || lists.length === 0) return;
 
     if (selectionOwnerRef.current !== parent) {
       selectionOwnerRef.current = parent;
+      if (embedded) {
+        setActiveList("");
+        setActiveView("all");
+        return;
+      }
       const selectedList = resolveReminderListSelection(lists, readRememberedReminderList(parent));
       setActiveList(selectedList);
       setActiveView("all");
@@ -321,23 +340,31 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
       setActiveView("all");
       rememberReminderList(parent, selectedList);
     }
-  }, [activeList, lists, parent]);
+  }, [activeList, embedded, lists, parent]);
 
   const selectView = (view: SmartView) => {
     setActiveView(view);
     setActiveList("");
+    setDraftListName("");
     setDraftVisible(false);
   };
 
   const selectList = (name: string) => {
     setActiveList(name);
     setActiveView("all");
+    setDraftListName("");
     setDraftVisible(false);
     if (parent) rememberReminderList(parent, name);
   };
 
   const defaultList = activeList || resolveReminderListSelection(lists);
+  const draftTargetList = draftListName || defaultList;
+  const showDraftForList = (listName = defaultList) => {
+    setDraftListName(listName);
+    setDraftVisible(true);
+  };
   const resetDraft = useCallback(() => {
+    setDraftListName("");
     setDraftTitle("");
     setDraftDueDate("");
     setDraftFlagged(false);
@@ -347,7 +374,7 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
   const commitDraft = useCallback(async () => {
     if (draftCommitInProgressRef.current) return;
     const title = draftTitle.trim();
-    const reminderList = defaultList;
+    const reminderList = draftTargetList;
     const dueDate = draftDueDate || (activeView === "today" || activeView === "scheduled" ? today : "");
     const flagged = draftFlagged || activeView === "flagged";
     resetDraft();
@@ -363,7 +390,7 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
     } finally {
       draftCommitInProgressRef.current = false;
     }
-  }, [activeView, createReminder, defaultList, draftDueDate, draftFlagged, draftTitle, parent, resetDraft, timeZone, today]);
+  }, [activeView, createReminder, draftDueDate, draftFlagged, draftTargetList, draftTitle, parent, resetDraft, timeZone, today]);
 
   useEffect(() => {
     if (!draftVisible) return;
@@ -381,7 +408,7 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
   const openDraftDetails = () => {
     setDetailDraft({
       title: draftTitle,
-      reminderList: defaultList,
+      reminderList: draftTargetList,
       dueDate: draftDueDate || (activeView === "today" || activeView === "scheduled" ? today : ""),
       flagged: draftFlagged || activeView === "flagged",
     });
@@ -458,7 +485,8 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
     return Array.from(map.entries()).map(([name, items]) => ({ list: lists.find((list) => list.name === name), reminders: items }));
   }, [activeList, lists, reminders]);
 
-  const draftGroupName = activeList || defaultList;
+  const draftGroupName = draftTargetList;
+  const showPerListCreateTargets = !activeList && activeView === "all" && grouped.length > 1;
   const groupsWithDraft = useMemo(() => {
     if (!draftVisible || !draftGroupName || grouped.some((group) => group.list?.name === draftGroupName)) return grouped;
     const targetList = lists.find((list) => list.name === draftGroupName);
@@ -477,7 +505,7 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
   }, [draftGroupName, draftVisible, grouped, lists]);
 
   const renderDraft = (bordered: boolean) => (
-    <div ref={draftContainerRef} data-reminder-draft className={cn("py-3", bordered && "border-t")}>
+    <div ref={draftContainerRef} data-reminder-draft className={cn("scroll-mt-3 py-3", bordered && "border-t")}>
       <div className="flex items-start gap-3">
         <CircleIcon className="mt-1.5 size-5 shrink-0 text-muted-foreground/40" />
         <div className="min-w-0 flex-1">
@@ -697,9 +725,10 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
             }
             const target = event.target as HTMLElement;
             if (target.closest("button, input, [data-reminder-row], [data-reminder-draft], h2")) return;
+            if (showPerListCreateTargets) return;
             if (activeView !== "completed" && activeView !== "archived" && activeView !== "statistics") {
               if (draftVisible) void commitDraft();
-              else setDraftVisible(true);
+              else showDraftForList();
             }
           }}
         >
@@ -713,7 +742,7 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
                 <button
                   type="button"
                   className="flex min-h-40 w-full flex-1 items-center justify-center text-sm text-muted-foreground"
-                  onClick={() => activeView !== "completed" && activeView !== "archived" && !draftVisible && setDraftVisible(true)}
+                  onClick={() => activeView !== "completed" && activeView !== "archived" && !draftVisible && showDraftForList()}
                 >
                   {activeView === "completed"
                     ? t("reminder.no-completed")
@@ -750,20 +779,38 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
                       />
                     ))}
                     {draftVisible && group.list?.name === draftGroupName && renderDraft(group.reminders.length > 0)}
+                    {showPerListCreateTargets && !draftVisible && group.list && (
+                      <button
+                        type="button"
+                        data-reminder-list-create
+                        className="flex min-h-14 w-full items-center border-b border-border/70 px-1 py-3 text-muted-foreground/45 transition-colors hover:text-muted-foreground"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          showDraftForList(group.list?.name);
+                        }}
+                        aria-label={`${t("reminder.click-empty-to-create")}: ${listDisplayName(group.list, t("common.reminders"))}`}
+                      >
+                        <span className="size-5 rounded-full border-2 border-dotted border-current" />
+                      </button>
+                    )}
                   </section>
                 ))
               )}
-              {grouped.length > 0 && !draftVisible && activeView !== "completed" && activeView !== "archived" && (
-                <button
-                  type="button"
-                  className="min-h-20 w-full flex-1 cursor-text"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setDraftVisible(true);
-                  }}
-                  aria-label={t("reminder.click-empty-to-create")}
-                />
-              )}
+              {grouped.length > 0 &&
+                !draftVisible &&
+                !showPerListCreateTargets &&
+                activeView !== "completed" &&
+                activeView !== "archived" && (
+                  <button
+                    type="button"
+                    className="min-h-20 w-full flex-1 cursor-text"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      showDraftForList();
+                    }}
+                    aria-label={t("reminder.click-empty-to-create")}
+                  />
+                )}
               {draftVisible && !groupsWithDraft.some((group) => group.list?.name === draftGroupName) && renderDraft(grouped.length > 0)}
             </div>
           )}

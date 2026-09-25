@@ -19,13 +19,13 @@ interface Props {
 const MoodFilterSection = ({ navigationTarget, onSelect }: Props) => {
   const t = useTranslate();
   const navigate = useNavigate();
-  const { filters, setFilters, getFiltersByFactor } = useMemoFilterContext();
+  const { filters, setFilters } = useMemoFilterContext();
   const { memoRelatedSetting } = useInstance();
   const emojis = memoRelatedSetting?.moodEmojis?.length === 7 ? memoRelatedSetting.moodEmojis : DEFAULT_MOOD_EMOJIS;
   const moodColors = getMoodPalette(memoRelatedSetting?.moodColors);
 
   // Multiple levels can be selected at once; the filter value is a comma-separated list.
-  const activeFilter = getFiltersByFactor("moodLevel")[0];
+  const activeFilter = filters.find((filter) => filter.factor === "moodLevel");
   const activeLevels = activeFilter ? parseMoodLevelList(activeFilter.value) : undefined;
 
   const applyLevels = (levels: number[]) => {

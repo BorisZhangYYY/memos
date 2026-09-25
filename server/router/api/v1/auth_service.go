@@ -2,10 +2,12 @@ package v1
 
 import (
 	"context"
+	"strings"
 
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	v1pb "github.com/usememos/memos/proto/gen/api/v1"
@@ -37,6 +39,28 @@ func (s *APIV1Service) GetCurrentUser(ctx context.Context, _ *v1pb.GetCurrentUse
 	return &v1pb.GetCurrentUserResponse{
 		User: convertUserFromStore(user, user),
 	}, nil
+}
+
+// VerifyPassword checks the current user's account password without changing
+// their session. It is used to reveal locally hidden private content.
+func (s *APIV1Service) VerifyPassword(ctx context.Context, request *v1pb.VerifyPasswordRequest) (*emptypb.Empty, error) {
+	user, err := s.fetchCurrentUser(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Unauthenticated, "failed to get current user: %v", err)
+	}
+	if user == nil {
+		return nil, status.Errorf(codes.Unauthenticated, "user not authenticated")
+	}
+	if strings.TrimSpace(request.Password) == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "password is required")
+	}
+	if user.PasswordHash == "" {
+		return nil, status.Errorf(codes.FailedPrecondition, "this account does not have a password")
+	}
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(request.Password)); err != nil {
+		return nil, status.Errorf(codes.PermissionDenied, "incorrect password")
+	}
+	return &emptypb.Empty{}, nil
 }
 
 // SignIn authenticates a user with credentials and returns tokens.

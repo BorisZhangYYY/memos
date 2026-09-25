@@ -109,6 +109,14 @@ func (s *ConnectServiceHandler) RefreshToken(ctx context.Context, req *connect.R
 	})
 }
 
+func (s *ConnectServiceHandler) VerifyPassword(ctx context.Context, req *connect.Request[v1pb.VerifyPasswordRequest]) (*connect.Response[emptypb.Empty], error) {
+	resp, err := s.APIV1Service.VerifyPassword(ctx, req.Msg)
+	if err != nil {
+		return nil, convertGRPCError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
 // UserService
 
 func (s *ConnectServiceHandler) ListUsers(ctx context.Context, req *connect.Request[v1pb.ListUsersRequest]) (*connect.Response[v1pb.ListUsersResponse], error) {

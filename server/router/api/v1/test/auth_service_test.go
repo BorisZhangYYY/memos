@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -18,6 +19,35 @@ import (
 	apiv1 "github.com/usememos/memos/server/router/api/v1"
 	"github.com/usememos/memos/store"
 )
+
+func TestVerifyPassword(t *testing.T) {
+	t.Parallel()
+
+	ts := NewTestService(t)
+	defer ts.Cleanup()
+
+	ctx := context.Background()
+	user, err := ts.CreateRegularUser(ctx, "password-verify-user")
+	require.NoError(t, err)
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte("correct horse battery staple"), bcrypt.DefaultCost)
+	require.NoError(t, err)
+	passwordHashString := string(passwordHash)
+	_, err = ts.Store.UpdateUser(ctx, &store.UpdateUser{ID: user.ID, PasswordHash: &passwordHashString})
+	require.NoError(t, err)
+
+	authCtx := ts.CreateUserContext(ctx, user.ID)
+	_, err = ts.Service.VerifyPassword(authCtx, &v1pb.VerifyPasswordRequest{Password: "correct horse battery staple"})
+	require.NoError(t, err)
+
+	_, err = ts.Service.VerifyPassword(authCtx, &v1pb.VerifyPasswordRequest{Password: "wrong password"})
+	require.Equal(t, codes.PermissionDenied, status.Code(err))
+
+	_, err = ts.Service.VerifyPassword(authCtx, &v1pb.VerifyPasswordRequest{})
+	require.Equal(t, codes.InvalidArgument, status.Code(err))
+
+	_, err = ts.Service.VerifyPassword(ctx, &v1pb.VerifyPasswordRequest{Password: "correct horse battery staple"})
+	require.Equal(t, codes.Unauthenticated, status.Code(err))
+}
 
 func TestCreateLinkedIdentityBindsCurrentUser(t *testing.T) {
 	t.Parallel()

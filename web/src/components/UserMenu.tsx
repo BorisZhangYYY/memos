@@ -17,10 +17,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { useSSEConnectionStatus } from "@/hooks/useLiveMemoRefresh";
 import useNavigateTo from "@/hooks/useNavigateTo";
+import usePersonalFeatures from "@/hooks/usePersonalFeatures";
 import { useNotifications, useUpdateUserGeneralSetting } from "@/hooks/useUserQueries";
 import { cn } from "@/lib/utils";
 import { Routes } from "@/router";
-import { UserNotification_Status } from "@/types/proto/api/v1/user_service_pb";
+import { UserNotification_Status, UserNotification_Type } from "@/types/proto/api/v1/user_service_pb";
 import { getLocaleWithFallback, loadLocale, useTranslate } from "@/utils/i18n";
 import { getThemeWithFallback, loadTheme, THEME_OPTIONS } from "@/utils/theme";
 import { LocaleSearchList } from "./LocalePicker";
@@ -49,6 +50,7 @@ const UserMenu = (props: Props) => {
   const { setMobileOpen } = useAppSidebar();
   const currentUser = useCurrentUser();
   const { userGeneralSetting, refetchSettings, logout } = useAuth();
+  const { remindersEnabled } = usePersonalFeatures();
   const { mutate: updateUserGeneralSetting } = useUpdateUserGeneralSetting(currentUser?.name);
   const { data: notifications = [] } = useNotifications();
   const sseStatus = useSSEConnectionStatus();
@@ -56,7 +58,10 @@ const UserMenu = (props: Props) => {
   const currentTheme = getThemeWithFallback(userGeneralSetting?.theme);
   const inboxActive = Boolean(matchPath(Routes.INBOX, location.pathname));
   const archivedActive = Boolean(matchPath(Routes.ARCHIVED, location.pathname));
-  const unreadCount = notifications.filter((notification) => notification.status === UserNotification_Status.UNREAD).length;
+  const unreadCount = notifications.filter(
+    (notification) =>
+      notification.status === UserNotification_Status.UNREAD && (remindersEnabled || notification.type !== UserNotification_Type.REMINDER),
+  ).length;
   const userLabel = currentUser?.displayName || currentUser?.username || t("common.profile");
   const triggerLabel = `${userLabel}, ${t("common.more")}${unreadCount > 0 ? `, ${unreadCount} ${t("inbox.unread")}` : ""}`;
   const inboxLabel = unreadCount > 0 ? `${t("common.inbox")}, ${unreadCount} ${t("inbox.unread")}` : t("common.inbox");

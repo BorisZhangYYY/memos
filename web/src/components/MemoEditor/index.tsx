@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useInstance } from "@/contexts/InstanceContext";
 import { useLocalStorage } from "@/hooks";
 import useCurrentUser from "@/hooks/useCurrentUser";
+import usePersonalFeatures from "@/hooks/usePersonalFeatures";
 import { useReminders, useUpdateReminder } from "@/hooks/useReminderQueries";
 import { cn } from "@/lib/utils";
 import { InstanceSetting_Key } from "@/types/proto/api/v1/instance_service_pb";
@@ -14,6 +15,7 @@ import { convertVisibilityFromString } from "@/utils/memo";
 import { resolveDefaultMemoVisibility } from "@/utils/visibility";
 import { AudioRecorderPanel, EditorContent, EditorMetadata, FocusModeOverlay, TimestampPopover } from "./components";
 import { FOCUS_MODE_STYLES, FORMATTING_TOOLBAR_STORAGE_KEY } from "./constants";
+import type { EditorFileOrigin } from "./Editor/extensions";
 import {
   splitInlineLocalFiles,
   toLocalFiles,
@@ -57,6 +59,7 @@ const MemoEditorImpl: React.FC<MemoEditorProps> = ({
 }) => {
   const t = useTranslate();
   const currentUser = useCurrentUser();
+  const { remindersEnabled } = usePersonalFeatures();
   const editorRef = useRef<EditorController>(null);
   const { actions, dispatch, getState } = useEditorContext();
   // Subscribe only to the low-frequency slices this component renders from, so
@@ -71,6 +74,7 @@ const MemoEditorImpl: React.FC<MemoEditorProps> = ({
   const [isTranscribingAudio, setIsTranscribingAudio] = useState(false);
   const { data: reminders = [], isSuccess: remindersLoaded } = useReminders(currentUser?.name, {
     view: ListRemindersRequest_View.ALL,
+    enabled: remindersEnabled,
   });
   const updateReminder = useUpdateReminder();
   const [linkedReminderNames, setLinkedReminderNames] = useState<string[]>([]);
@@ -284,15 +288,23 @@ const MemoEditorImpl: React.FC<MemoEditorProps> = ({
     void handleStartAudioRecording();
   };
 
-  /** Shared by the ＋ menu (no position) and by editor paste/drop (drop position). */
-  const handleInsertImages = useCallback(
-    (files: File[], position?: number) => {
+  const handleFiles = useCallback(
+    (files: File[], placement: { inline: false } | { inline: true; position?: number }) => {
       if (getState().ui.isLoading.saving) return;
-      const { inline, attachments } = splitInlineLocalFiles(toLocalFiles(files, { createBlobUrl, saveMediaMetadata }));
+      const localFiles = toLocalFiles(files, { createBlobUrl, saveMediaMetadata });
+      const { inline, attachments } = placement.inline ? splitInlineLocalFiles(localFiles) : { inline: [], attachments: localFiles };
       attachments.forEach((file) => dispatch(actions.addLocalFile(file)));
-      inlineImageUpload.insertLocalImages(inline, position);
+      if (placement.inline) inlineImageUpload.insertLocalImages(inline, placement.position);
     },
     [actions, createBlobUrl, dispatch, getState, inlineImageUpload.insertLocalImages, saveMediaMetadata],
+  );
+
+  const handleInsertImages = useCallback((files: File[]) => handleFiles(files, { inline: true }), [handleFiles]);
+
+  const handleEditorFiles = useCallback(
+    (files: File[], origin: EditorFileOrigin) =>
+      handleFiles(files, origin.source === "drop" ? { inline: true, position: origin.position } : { inline: false }),
+    [handleFiles],
   );
 
   const handleCancelAudioRecording = () => {
@@ -405,7 +417,7 @@ const MemoEditorImpl: React.FC<MemoEditorProps> = ({
         )}
 
         {/* Editor content grows to fill available space in focus mode */}
-        <EditorContent ref={editorRef} placeholder={placeholder} onSubmit={handleSave} onFiles={handleInsertImages} />
+        <EditorContent ref={editorRef} placeholder={placeholder} onSubmit={handleSave} onFiles={handleEditorFiles} />
 
         {isAudioRecorderOpen && (audioRecorder.isBusy || isTranscribingAudio) && (
           <AudioRecorderPanel

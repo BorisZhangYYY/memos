@@ -6,6 +6,7 @@ import MemoMentionMessage from "@/components/Inbox/MemoMentionMessage";
 import ReminderMessage from "@/components/Inbox/ReminderMessage";
 import Placeholder from "@/components/Placeholder";
 import { useAppSidebar } from "@/contexts/AppSidebarContext";
+import usePersonalFeatures from "@/hooks/usePersonalFeatures";
 import { useNotifications } from "@/hooks/useUserQueries";
 import { UserNotification, UserNotification_Status, UserNotification_Type } from "@/types/proto/api/v1/user_service_pb";
 import { useTranslate } from "@/utils/i18n";
@@ -13,11 +14,15 @@ import { useTranslate } from "@/utils/i18n";
 const Inboxes = () => {
   const t = useTranslate();
   const { inboxFilter: filter } = useAppSidebar();
+  const { remindersEnabled } = usePersonalFeatures();
 
   // Fetch notifications with React Query
   const { data: fetchedNotifications = [] } = useNotifications();
 
-  const allNotifications = sortBy(fetchedNotifications, (notification: UserNotification) => {
+  const visibleNotifications = remindersEnabled
+    ? fetchedNotifications
+    : fetchedNotifications.filter((notification) => notification.type !== UserNotification_Type.REMINDER);
+  const allNotifications = sortBy(visibleNotifications, (notification: UserNotification) => {
     return -((notification.createTime ? timestampDate(notification.createTime) : undefined)?.getTime() || 0);
   });
 

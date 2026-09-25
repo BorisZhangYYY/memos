@@ -116,6 +116,16 @@ func (s *APIV1Service) UpdateUserSetting(ctx context.Context, request *v1pb.Upda
 				updatedGeneral.Locale = incomingGeneral.Locale
 			case "save_media_metadata":
 				updatedGeneral.SaveMediaMetadata = incomingGeneral.SaveMediaMetadata
+			case "disable_reminders":
+				updatedGeneral.DisableReminders = incomingGeneral.DisableReminders
+			case "disable_finance":
+				updatedGeneral.DisableFinance = incomingGeneral.DisableFinance
+			case "disable_mood":
+				updatedGeneral.DisableMood = incomingGeneral.DisableMood
+			case "personal_feature_privacy":
+				updatedGeneral.PersonalFeaturePrivacy = incomingGeneral.PersonalFeaturePrivacy
+			case "require_password_for_private_content":
+				updatedGeneral.RequirePasswordForPrivateContent = incomingGeneral.RequirePasswordForPrivateContent
 			default:
 				// Ignore unsupported fields.
 			}

@@ -1,6 +1,7 @@
 import type { FC } from "react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import usePersonalFeatures from "@/hooks/usePersonalFeatures";
 import type { Location, Visibility } from "@/types/proto/api/v1/memo_service_pb";
 import { useTranslate } from "@/utils/i18n";
 import { validationService } from "../services";
@@ -24,6 +25,7 @@ export const EditorToolbar: FC<EditorToolbarProps> = ({
   onInsertImages,
 }) => {
   const t = useTranslate();
+  const { moodEnabled, remindersEnabled } = usePersonalFeatures();
   const { actions, dispatch } = useEditorContext();
   // Subscribe to narrow/derived slices so typing (which only changes content)
   // doesn't re-render the toolbar or the heavy InsertMenu it hosts. `valid`
@@ -68,12 +70,14 @@ export const EditorToolbar: FC<EditorToolbarProps> = ({
           onInsertImages={onInsertImages}
         />
         <VisibilitySelector value={visibility} space={space} onChange={handleVisibilityChange} />
-        <MoodSelector moodLevel={moodLevel} onChange={handleMoodChange} />
-        <ReminderSelector
-          reminders={reminders}
-          linkedReminderNames={linkedReminderNames}
-          onChange={onLinkedReminderNamesChange ?? (() => {})}
-        />
+        {moodEnabled && <MoodSelector moodLevel={moodLevel} onChange={handleMoodChange} />}
+        {remindersEnabled && (
+          <ReminderSelector
+            reminders={reminders}
+            linkedReminderNames={linkedReminderNames}
+            onChange={onLinkedReminderNamesChange ?? (() => {})}
+          />
+        )}
       </div>
 
       <div className="flex flex-row justify-end items-center gap-2">

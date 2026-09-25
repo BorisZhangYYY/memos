@@ -157,11 +157,10 @@ const render = (ui: Parameters<typeof testingLibraryRender>[0]) =>
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>{ui}</QueryClientProvider>,
   );
 
-const expectCollapsedNavPill = (pill: HTMLElement, label: string) => {
+const expectVisibleNavPill = (pill: HTMLElement, label: string) => {
   expect(pill).toHaveClass("h-[30px]", "px-[7px]");
-  const labelTrack = pill.querySelector('span[aria-hidden="true"]');
-  expect(labelTrack).toHaveClass("grid-cols-[0fr]", "pl-0");
-  expect(labelTrack).toHaveTextContent(label);
+  expect(pill.querySelector('span[aria-hidden="true"]')).toBeNull();
+  expect(pill).toHaveTextContent(label);
 };
 
 const expectActiveNavPill = (pill: HTMLElement, label: string) => {
@@ -417,7 +416,7 @@ describe("App sidebar logo", () => {
     expect(screen.queryByText("Calendar")).not.toBeInTheDocument();
   });
 
-  it("uses a compact scope menu and leaves tasks and reminders out of global navigation", async () => {
+  it("keeps every primary navigation label visible and leaves tasks and reminders out of global navigation", async () => {
     render(
       <MemoryRouter initialEntries={["/"]}>
         <AppSidebar />
@@ -440,6 +439,9 @@ describe("App sidebar logo", () => {
     expect(screen.queryByRole("button", { name: "common.all" })).not.toBeInTheDocument();
 
     const scopeTrigger = screen.getByRole("button", { name: "common.home" });
+    expectVisibleNavPill(scopeTrigger, "common.home");
+    expect(screen.queryByRole("link", { name: "personal.title" })).not.toBeInTheDocument();
+    expectVisibleNavPill(screen.getByRole("link", { name: "common.attachments" }), "common.attachments");
     fireEvent.click(scopeTrigger);
     expect(await screen.findByRole("menuitem", { name: "common.home" })).toBeInTheDocument();
     expect(screen.getByRole("menuitem", { name: "common.explore" })).toBeInTheDocument();
@@ -474,7 +476,7 @@ describe("App sidebar logo", () => {
     );
 
     const scopeTrigger = screen.getByRole("button", { name: "common.home" });
-    expectCollapsedNavPill(scopeTrigger, "common.home");
+    expectVisibleNavPill(scopeTrigger, "common.home");
 
     expect(screen.getByRole("button", { name: "User menu" }).closest("footer")).not.toBeNull();
     expect(screen.queryByRole("link", { name: "common.inbox" })).not.toBeInTheDocument();
@@ -512,7 +514,7 @@ describe("App sidebar logo", () => {
     );
 
     const scopeTrigger = screen.getByRole("button", { name: "common.explore" });
-    expectCollapsedNavPill(scopeTrigger, "common.explore");
+    expectVisibleNavPill(scopeTrigger, "common.explore");
 
     fireEvent.click(scopeTrigger);
     expectActiveNavPill(await screen.findByRole("button", { name: "common.explore", current: "page" }), "common.explore");
@@ -527,7 +529,7 @@ describe("App sidebar logo", () => {
     );
 
     const scopeTrigger = screen.getByRole("button", { name: "common.explore" });
-    expectCollapsedNavPill(scopeTrigger, "common.explore");
+    expectVisibleNavPill(scopeTrigger, "common.explore");
 
     fireEvent.click(scopeTrigger);
     expectActiveNavPill(await screen.findByRole("button", { name: "common.explore", current: "page" }), "common.explore");

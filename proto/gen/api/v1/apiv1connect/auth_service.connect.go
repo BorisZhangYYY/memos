@@ -44,6 +44,9 @@ const (
 	// AuthServiceRefreshTokenProcedure is the fully-qualified name of the AuthService's RefreshToken
 	// RPC.
 	AuthServiceRefreshTokenProcedure = "/memos.api.v1.AuthService/RefreshToken"
+	// AuthServiceVerifyPasswordProcedure is the fully-qualified name of the AuthService's
+	// VerifyPassword RPC.
+	AuthServiceVerifyPasswordProcedure = "/memos.api.v1.AuthService/VerifyPassword"
 )
 
 // AuthServiceClient is a client for the memos.api.v1.AuthService service.
@@ -63,6 +66,9 @@ type AuthServiceClient interface {
 	// The refresh token is read from the HttpOnly cookie.
 	// Returns a new short-lived access token.
 	RefreshToken(context.Context, *connect.Request[v1.RefreshTokenRequest]) (*connect.Response[v1.RefreshTokenResponse], error)
+	// VerifyPassword checks the authenticated user's account password without
+	// creating or replacing a session.
+	VerifyPassword(context.Context, *connect.Request[v1.VerifyPasswordRequest]) (*connect.Response[emptypb.Empty], error)
 }
 
 // NewAuthServiceClient constructs a client for the memos.api.v1.AuthService service. By default, it
@@ -100,6 +106,12 @@ func NewAuthServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(authServiceMethods.ByName("RefreshToken")),
 			connect.WithClientOptions(opts...),
 		),
+		verifyPassword: connect.NewClient[v1.VerifyPasswordRequest, emptypb.Empty](
+			httpClient,
+			baseURL+AuthServiceVerifyPasswordProcedure,
+			connect.WithSchema(authServiceMethods.ByName("VerifyPassword")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -109,6 +121,7 @@ type authServiceClient struct {
 	signIn         *connect.Client[v1.SignInRequest, v1.SignInResponse]
 	signOut        *connect.Client[v1.SignOutRequest, emptypb.Empty]
 	refreshToken   *connect.Client[v1.RefreshTokenRequest, v1.RefreshTokenResponse]
+	verifyPassword *connect.Client[v1.VerifyPasswordRequest, emptypb.Empty]
 }
 
 // GetCurrentUser calls memos.api.v1.AuthService.GetCurrentUser.
@@ -131,6 +144,11 @@ func (c *authServiceClient) RefreshToken(ctx context.Context, req *connect.Reque
 	return c.refreshToken.CallUnary(ctx, req)
 }
 
+// VerifyPassword calls memos.api.v1.AuthService.VerifyPassword.
+func (c *authServiceClient) VerifyPassword(ctx context.Context, req *connect.Request[v1.VerifyPasswordRequest]) (*connect.Response[emptypb.Empty], error) {
+	return c.verifyPassword.CallUnary(ctx, req)
+}
+
 // AuthServiceHandler is an implementation of the memos.api.v1.AuthService service.
 type AuthServiceHandler interface {
 	// GetCurrentUser returns the authenticated user's information.
@@ -148,6 +166,9 @@ type AuthServiceHandler interface {
 	// The refresh token is read from the HttpOnly cookie.
 	// Returns a new short-lived access token.
 	RefreshToken(context.Context, *connect.Request[v1.RefreshTokenRequest]) (*connect.Response[v1.RefreshTokenResponse], error)
+	// VerifyPassword checks the authenticated user's account password without
+	// creating or replacing a session.
+	VerifyPassword(context.Context, *connect.Request[v1.VerifyPasswordRequest]) (*connect.Response[emptypb.Empty], error)
 }
 
 // NewAuthServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -181,6 +202,12 @@ func NewAuthServiceHandler(svc AuthServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(authServiceMethods.ByName("RefreshToken")),
 		connect.WithHandlerOptions(opts...),
 	)
+	authServiceVerifyPasswordHandler := connect.NewUnaryHandler(
+		AuthServiceVerifyPasswordProcedure,
+		svc.VerifyPassword,
+		connect.WithSchema(authServiceMethods.ByName("VerifyPassword")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/memos.api.v1.AuthService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case AuthServiceGetCurrentUserProcedure:
@@ -191,6 +218,8 @@ func NewAuthServiceHandler(svc AuthServiceHandler, opts ...connect.HandlerOption
 			authServiceSignOutHandler.ServeHTTP(w, r)
 		case AuthServiceRefreshTokenProcedure:
 			authServiceRefreshTokenHandler.ServeHTTP(w, r)
+		case AuthServiceVerifyPasswordProcedure:
+			authServiceVerifyPasswordHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -214,4 +243,8 @@ func (UnimplementedAuthServiceHandler) SignOut(context.Context, *connect.Request
 
 func (UnimplementedAuthServiceHandler) RefreshToken(context.Context, *connect.Request[v1.RefreshTokenRequest]) (*connect.Response[v1.RefreshTokenResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AuthService.RefreshToken is not implemented"))
+}
+
+func (UnimplementedAuthServiceHandler) VerifyPassword(context.Context, *connect.Request[v1.VerifyPasswordRequest]) (*connect.Response[emptypb.Empty], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("memos.api.v1.AuthService.VerifyPassword is not implemented"))
 }

@@ -20,11 +20,11 @@ export const reminderKeys = {
   stats: (parent: string, startDate: string, endDate: string) => [...reminderKeys.all, "stats", parent, startDate, endDate] as const,
 };
 
-export const useReminderLists = (parent?: string) =>
+export const useReminderLists = (parent?: string, options?: { enabled?: boolean }) =>
   useQuery({
     queryKey: reminderKeys.lists(parent ?? ""),
     queryFn: () => reminderServiceClient.listReminderLists({ parent, state: State.NORMAL }),
-    enabled: !!parent,
+    enabled: !!parent && (options?.enabled ?? true),
     select: (response) => response.reminderLists,
   });
 

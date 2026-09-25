@@ -14,8 +14,8 @@ import {
   WrenchIcon,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { Button, buttonVariants } from "@/components/ui/button";
+import FinanceSettings from "@/components/Settings/FinanceSettings";
+import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -27,7 +27,6 @@ import {
 } from "@/hooks/useFinanceQueries";
 import { financeRange, formatCNY } from "@/lib/finance";
 import { cn } from "@/lib/utils";
-import { ROUTES } from "@/router/routes";
 import { FinanceTransaction_Type } from "@/types/proto/api/v1/finance_service_pb";
 import { useTranslate } from "@/utils/i18n";
 
@@ -61,6 +60,7 @@ const FinanceDashboard = ({ parent, onAdd, embedded = false }: Props) => {
   const t = useTranslate();
   const timeZone = useMemo(() => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC", []);
   const todayRange = useMemo(() => financeRange("today"), []);
+  const [managementOpen, setManagementOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [detailsView, setDetailsView] = useState<"7" | "30" | "history">("7");
   const detailsWindow = detailsView === "7" ? 7 : 30;
@@ -210,6 +210,15 @@ const FinanceDashboard = ({ parent, onAdd, embedded = false }: Props) => {
             <Button
               size="icon-sm"
               variant="ghost"
+              onClick={() => setManagementOpen(true)}
+              title={t("setting.finance.label")}
+              aria-label={t("setting.finance.label")}
+            >
+              <SettingsIcon />
+            </Button>
+            <Button
+              size="icon-sm"
+              variant="ghost"
               onClick={onAdd}
               title={t("finance.dashboard.add")}
               aria-label={t("finance.dashboard.add")}
@@ -226,10 +235,10 @@ const FinanceDashboard = ({ parent, onAdd, embedded = false }: Props) => {
         {wallets.length === 0 ? (
           <div className="mt-4 flex min-h-36 flex-1 flex-col items-center justify-center gap-3 rounded-lg border border-dashed text-sm text-muted-foreground">
             <WalletCardsIcon className="size-6" />
-            <Link to={`${ROUTES.SETTING}#finance`} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
+            <Button variant="outline" size="sm" onClick={() => setManagementOpen(true)}>
               <SettingsIcon />
               {t("finance.dashboard.setup")}
-            </Link>
+            </Button>
           </div>
         ) : (
           <>
@@ -299,6 +308,16 @@ const FinanceDashboard = ({ parent, onAdd, embedded = false }: Props) => {
           </>
         )}
       </div>
+
+      <Dialog open={managementOpen} onOpenChange={setManagementOpen}>
+        <DialogContent size="full" className="h-[min(44rem,calc(100vh-2rem))] md:max-w-4xl">
+          <DialogHeader className="pr-8">
+            <DialogTitle className="text-base">{t("setting.finance.label")}</DialogTitle>
+            <DialogDescription className="text-xs">{t("setting.finance.description")}</DialogDescription>
+          </DialogHeader>
+          <FinanceSettings />
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
         <DialogContent size="full" className="h-[min(42rem,calc(100vh-2rem))] gap-3 md:max-w-4xl">

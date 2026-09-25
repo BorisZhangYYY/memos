@@ -59,7 +59,7 @@ const ReminderMessage = ({ notification }: Props) => {
         type="button"
         className="min-w-0 flex-1 text-left"
         onClick={async () => {
-          navigate(`${ROUTES.REMINDERS}?selected=${encodeURIComponent(uid)}`);
+          navigate(`${ROUTES.HOME}?selected=${encodeURIComponent(uid)}`);
           if (unread) await archive(true);
         }}
       >

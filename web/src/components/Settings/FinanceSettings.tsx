@@ -24,7 +24,6 @@ import { FinanceCategory_Type, type FinanceWallet } from "@/types/proto/api/v1/f
 import { useTranslate } from "@/utils/i18n";
 import SettingGroup from "./SettingGroup";
 import { SettingList } from "./SettingList";
-import SettingSection from "./SettingSection";
 
 const FinanceSettings = () => {
   const t = useTranslate();
@@ -112,7 +111,7 @@ const FinanceSettings = () => {
     }
   };
   return (
-    <SettingSection title={t("setting.finance.label")} description={t("setting.finance.description")}>
+    <div className="flex min-w-0 flex-col gap-5 py-1">
       <SettingGroup title={t("finance.wallet.management")} description={t("finance.wallet.management-description")}>
         <div className="rounded-lg border border-border bg-background p-3">
           <div className="grid gap-3 lg:grid-cols-[minmax(10rem,1fr)_10rem_auto_auto] lg:items-end">
@@ -328,7 +327,7 @@ const FinanceSettings = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </SettingSection>
+    </div>
   );
 };
 

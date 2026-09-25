@@ -5,13 +5,17 @@ import { useResolvedUser } from "@/components/MemoContent/MentionResolutionConte
 import { loadMemoEditor } from "@/components/MemoEditor/loader";
 import { DEFAULT_MOOD_EMOJIS } from "@/components/MemoEditor/Toolbar/MoodSelector";
 import type { MemoEditorProps } from "@/components/MemoEditor/types";
+import PrivacyUnlockDialog from "@/components/PrivacyUnlockDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useInstance } from "@/contexts/InstanceContext";
+import { usePrivacySession } from "@/contexts/PrivacySessionContext";
 import useCurrentUser from "@/hooks/useCurrentUser";
+import usePersonalFeatures from "@/hooks/usePersonalFeatures";
 import { getMoodColor } from "@/lib/mood";
 import { findTagMetadata } from "@/lib/tag";
 import { cn } from "@/lib/utils";
 import { State } from "@/types/proto/api/v1/common_pb";
+import { UserSetting_GeneralSetting_PersonalFeaturePrivacy } from "@/types/proto/api/v1/user_service_pb";
 import { useTranslate } from "@/utils/i18n";
 import { lazyWithReload } from "@/utils/lazy";
 import { isSuperUser } from "@/utils/user";
@@ -42,9 +46,12 @@ const MemoView: React.FC<MemoViewProps> = (props: MemoViewProps) => {
   const [showEditor, setShowEditor] = useState(false);
   const [EditorComponent, setEditorComponent] = useState<ComponentType<MemoEditorProps>>();
   const [cardWidth, setCardWidth] = useState(0);
+  const [privacyUnlockOpen, setPrivacyUnlockOpen] = useState(false);
 
   const currentUser = useCurrentUser();
   const { userTagsSetting } = useAuth();
+  const { moodEnabled, remindersEnabled, privacyMode, requirePasswordForPrivateContent } = usePersonalFeatures();
+  const privacySession = usePrivacySession();
   const { memoRelatedSetting } = useInstance();
   const creator = useResolvedUser(memoData.creator, { enabled: Boolean(showCreator || props.shareImageDialogOpen) });
   const isArchived = memoData.state === State.ARCHIVED;
@@ -65,9 +72,25 @@ const MemoView: React.FC<MemoViewProps> = (props: MemoViewProps) => {
   const moodColor = getMoodColor(moodLevel, memoRelatedSetting?.moodColors);
 
   // Blur content when any tag has blur_content enabled in the current user's tag settings.
-  const [showBlurredContent, setShowBlurredContent] = useState(false);
-  const blurred = memoData.tags?.some((tag) => userTagsSetting && findTagMetadata(tag, userTagsSetting)?.blurContent) ?? false;
-  const toggleBlurVisibility = useCallback(() => setShowBlurredContent((prev) => !prev), []);
+  const [locallyRevealed, setLocallyRevealed] = useState(false);
+  const tagBlurred = memoData.tags?.some((tag) => userTagsSetting && findTagMetadata(tag, userTagsSetting)?.blurContent) ?? false;
+  const reminderBlurred =
+    remindersEnabled &&
+    privacyMode !== UserSetting_GeneralSetting_PersonalFeaturePrivacy.VISIBLE &&
+    ((props.linkedReminders?.length ?? 0) > 0 || privacySession.isReminderLinkedMemo(memoData.name));
+  const blurred = tagBlurred || reminderBlurred;
+  const passwordProtected = blurred && requirePasswordForPrivateContent;
+  const showBlurredContent = passwordProtected ? privacySession.isMemoUnlocked(memoData.name) : locallyRevealed;
+  const toggleBlurVisibility = useCallback(() => {
+    if (showBlurredContent) {
+      if (passwordProtected) privacySession.lockMemo(memoData.name);
+      else setLocallyRevealed(false);
+    } else if (passwordProtected) {
+      setPrivacyUnlockOpen(true);
+    } else {
+      setLocallyRevealed(true);
+    }
+  }, [memoData.name, passwordProtected, privacySession, showBlurredContent]);
 
   const { previewState, openPreview, setPreviewOpen } = useImagePreview();
 
@@ -155,9 +178,9 @@ const MemoView: React.FC<MemoViewProps> = (props: MemoViewProps) => {
       className={cn(MEMO_CARD_BASE_CLASSES, showCommentPreview ? "mb-0 rounded-b-none" : "mb-2", className)}
       ref={cardRef}
       tabIndex={readonly ? -1 : 0}
-      style={moodLevel > 0 && moodColor ? { borderColor: moodColor } : undefined}
+      style={moodEnabled && moodLevel > 0 && moodColor ? { borderColor: moodColor } : undefined}
     >
-      {moodLevel > 0 && (
+      {moodEnabled && moodLevel > 0 && (
         <span className="pointer-events-none absolute top-1/2 -left-3 -translate-y-1/2 text-lg leading-none" aria-hidden="true">
           {moodEmojis[moodLevel - 1]}
         </span>
@@ -226,6 +249,9 @@ const MemoView: React.FC<MemoViewProps> = (props: MemoViewProps) => {
         />
       ) : (
         memoDisplay
+      )}
+      {privacyUnlockOpen && (
+        <PrivacyUnlockDialog open onOpenChange={setPrivacyUnlockOpen} onUnlocked={() => privacySession.unlockMemo(memoData.name)} />
       )}
     </MemoViewContext.Provider>
   );

@@ -114,6 +114,53 @@ func TestGeneralUserSettingSaveMediaMetadata(t *testing.T) {
 	require.False(t, updated.GetGeneralSetting().GetSaveMediaMetadata())
 }
 
+func TestGeneralUserSettingPersonalFeatures(t *testing.T) {
+	ctx := context.Background()
+	ts := NewTestService(t)
+	defer ts.Cleanup()
+
+	user, err := ts.CreateRegularUser(ctx, "personal-features-user")
+	require.NoError(t, err)
+	userCtx := ts.CreateUserContext(ctx, user.ID)
+	settingName := "users/personal-features-user/settings/GENERAL"
+
+	updated, err := ts.Service.UpdateUserSetting(userCtx, &apiv1.UpdateUserSettingRequest{
+		Setting: &apiv1.UserSetting{
+			Name: settingName,
+			Value: &apiv1.UserSetting_GeneralSetting_{
+				GeneralSetting: &apiv1.UserSetting_GeneralSetting{
+					DisableReminders:                 true,
+					DisableFinance:                   true,
+					DisableMood:                      true,
+					PersonalFeaturePrivacy:           apiv1.UserSetting_GeneralSetting_COLLAPSED,
+					RequirePasswordForPrivateContent: true,
+				},
+			},
+		},
+		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{
+			"disable_reminders",
+			"disable_finance",
+			"disable_mood",
+			"personal_feature_privacy",
+			"require_password_for_private_content",
+		}},
+	})
+	require.NoError(t, err)
+	require.True(t, updated.GetGeneralSetting().GetDisableReminders())
+	require.True(t, updated.GetGeneralSetting().GetDisableFinance())
+	require.True(t, updated.GetGeneralSetting().GetDisableMood())
+	require.Equal(t, apiv1.UserSetting_GeneralSetting_COLLAPSED, updated.GetGeneralSetting().GetPersonalFeaturePrivacy())
+	require.True(t, updated.GetGeneralSetting().GetRequirePasswordForPrivateContent())
+
+	got, err := ts.Service.GetUserSetting(userCtx, &apiv1.GetUserSettingRequest{Name: settingName})
+	require.NoError(t, err)
+	require.True(t, got.GetGeneralSetting().GetDisableReminders())
+	require.True(t, got.GetGeneralSetting().GetDisableFinance())
+	require.True(t, got.GetGeneralSetting().GetDisableMood())
+	require.Equal(t, apiv1.UserSetting_GeneralSetting_COLLAPSED, got.GetGeneralSetting().GetPersonalFeaturePrivacy())
+	require.True(t, got.GetGeneralSetting().GetRequirePasswordForPrivateContent())
+}
+
 func TestUserTagSettings(t *testing.T) {
 	ctx := context.Background()
 	ts := NewTestService(t)

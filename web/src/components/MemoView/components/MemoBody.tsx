@@ -1,4 +1,4 @@
-import { EyeIcon } from "lucide-react";
+import { EyeIcon, LockIcon } from "lucide-react";
 import { useMemo } from "react";
 import ClampedSection from "@/components/ClampedSection";
 import { AttachmentListView, LocationDisplayView, RelationListView } from "@/components/MemoMetadata";
@@ -32,6 +32,7 @@ const BlurOverlay: React.FC<{ onClick?: () => void }> = ({ onClick }) => {
 };
 
 const MemoBody: React.FC<MemoBodyProps> = ({ compact }) => {
+  const t = useTranslate();
   const { memo, parentPage, parentScope, showBlurredContent, blurred, readonly, openEditor, openPreview, toggleBlurVisibility } =
     useMemoViewContext();
 
@@ -73,6 +74,19 @@ const MemoBody: React.FC<MemoBodyProps> = ({ compact }) => {
       </div>
 
       {blurred && !showBlurredContent && <BlurOverlay onClick={toggleBlurVisibility} />}
+      {blurred && showBlurredContent && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          className="absolute right-2 bottom-2 z-10 rounded-full bg-card/85 text-muted-foreground opacity-0 shadow-sm backdrop-blur-sm transition-opacity hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
+          title={t("memo.click-to-hide-sensitive-content")}
+          aria-label={t("memo.click-to-hide-sensitive-content")}
+          onClick={toggleBlurVisibility}
+        >
+          <LockIcon className="size-3.5" />
+        </Button>
+      )}
     </>
   );
 };

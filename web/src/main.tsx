@@ -12,6 +12,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { refreshAccessToken } from "@/connect";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { InstanceProvider, useInstance } from "@/contexts/InstanceContext";
+import { PrivacySessionProvider } from "@/contexts/PrivacySessionContext";
 import { ViewProvider } from "@/contexts/ViewContext";
 import { useLiveMemoRefresh } from "@/hooks/useLiveMemoRefresh";
 import { useTokenRefreshOnFocus } from "@/hooks/useTokenRefreshOnFocus";
@@ -67,10 +68,12 @@ function Main() {
           <AuthProvider>
             <TooltipProvider>
               <ViewProvider>
-                <AppInitializer>
-                  <RouterProvider router={router} />
-                  <Toaster position="top-right" />
-                </AppInitializer>
+                <PrivacySessionProvider>
+                  <AppInitializer>
+                    <RouterProvider router={router} />
+                    <Toaster position="top-right" />
+                  </AppInitializer>
+                </PrivacySessionProvider>
               </ViewProvider>
             </TooltipProvider>
           </AuthProvider>

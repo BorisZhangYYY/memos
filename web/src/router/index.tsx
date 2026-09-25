@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate, type RouteObject } from "react-router-dom";
+import { createBrowserRouter, Navigate, type RouteObject, useLocation } from "react-router-dom";
 import App from "@/App";
 import { ChunkLoadErrorFallback } from "@/components/ErrorBoundary";
 import MainLayout from "@/layouts/MainLayout";
@@ -19,8 +19,6 @@ const About = lazyWithReload(() => import("@/pages/About"));
 const Archived = lazyWithReload(() => import("@/pages/Archived"));
 const AuthCallback = lazyWithReload(() => import("@/pages/AuthCallback"));
 const Explore = lazyWithReload(() => import("@/pages/Explore"));
-const PersonalDashboard = lazyWithReload(() => import("@/pages/PersonalDashboard"));
-const Reminders = lazyWithReload(() => import("@/pages/Reminders"));
 const Home = lazyWithReload(() => import("@/pages/Home"));
 const Inboxes = lazyWithReload(() => import("@/pages/Inboxes"));
 const MemoDetail = lazyWithReload(() => import("@/pages/MemoDetail"));
@@ -32,6 +30,14 @@ const MemoViews = lazyWithReload(() => import("@/pages/MemoViews"));
 const SignIn = lazyWithReload(() => import("@/pages/SignIn"));
 const SignUp = lazyWithReload(() => import("@/pages/SignUp"));
 const UserProfile = lazyWithReload(() => import("@/pages/UserProfile"));
+
+const HomeRedirect = ({ openReminders = false }: { openReminders?: boolean }) => {
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  searchParams.delete("view");
+  if (openReminders && !searchParams.has("selected")) searchParams.set("reminders", "1");
+  return <Navigate to={{ pathname: ROUTES.HOME, search: searchParams.toString() }} replace />;
+};
 
 // Backward compatibility alias.
 export const Routes = ROUTES;
@@ -112,8 +118,8 @@ export const routeConfig: RouteObject[] = [
                 element: <RequireFullInitializationRoute />,
                 children: [
                   { path: Routes.ATTACHMENTS, element: <Attachments /> },
-                  { path: Routes.REMINDERS, element: <Reminders /> },
-                  { path: Routes.PERSONAL, element: <PersonalDashboard /> },
+                  { path: Routes.REMINDERS, element: <HomeRedirect openReminders /> },
+                  { path: Routes.PERSONAL, element: <HomeRedirect /> },
                   { path: "/shortcuts", element: <Navigate to={Routes.VIEWS} replace /> },
                   { path: Routes.INBOX, element: <Inboxes /> },
                   { path: Routes.SETTING, element: <Setting /> },

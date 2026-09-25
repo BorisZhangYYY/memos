@@ -41,6 +41,12 @@ message UserSetting {
 }
 
 message GeneralUserSetting {
+  enum PersonalFeaturePrivacy {
+    VISIBLE = 0;
+    BLURRED = 1;
+    COLLAPSED = 2;
+  }
+
   // The user's locale.
   string locale = 1;
   // The user's memo visibility setting.
@@ -50,6 +56,14 @@ message GeneralUserSetting {
   string theme = 3;
   // Whether the official client should save metadata from future media uploads.
   bool save_media_metadata = 4;
+  // Personal extensions are opt-out so existing users keep their current UI.
+  bool disable_reminders = 5;
+  bool disable_finance = 6;
+  bool disable_mood = 7;
+  // How personal panels are presented when Home first loads.
+  PersonalFeaturePrivacy personal_feature_privacy = 8;
+  // Require the account password before revealing private or blurred content.
+  bool require_password_for_private_content = 9;
 }
 
 message UserTagMetadata {

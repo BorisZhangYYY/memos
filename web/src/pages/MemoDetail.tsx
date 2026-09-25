@@ -14,6 +14,7 @@ import useCurrentUser from "@/hooks/useCurrentUser";
 import useMemoDetailError from "@/hooks/useMemoDetailError";
 import { useInfiniteMemoComments, useMemo } from "@/hooks/useMemoQueries";
 import { useSharedMemo, withShareAttachmentLinks } from "@/hooks/useMemoShareQueries";
+import usePersonalFeatures from "@/hooks/usePersonalFeatures";
 import { useReminderLists, useReminders } from "@/hooks/useReminderQueries";
 import { memoNamePrefix } from "@/lib/resource-names";
 import type { Attachment } from "@/types/proto/api/v1/attachment_service_pb";
@@ -50,6 +51,7 @@ const MemoDetail = () => {
   const { isInitialized: authInitialized } = useAuth();
   const { isInitialized: instanceInitialized } = useInstance();
   const currentUser = useCurrentUser();
+  const { remindersEnabled } = usePersonalFeatures();
   const [shareImageDialogOpen, setShareImageDialogOpen] = useState(false);
   const [selectedReminderName, setSelectedReminderName] = useState<string>();
   const params = useParams();
@@ -75,7 +77,7 @@ const MemoDetail = () => {
   const isLoading = isShareMode ? shareLoading : directLoading;
   const { parentPage, parentScope } = resolveMemoDetailOrigin(locationState, { memoArchived: memo?.state === State.ARCHIVED });
   const memoName = memo?.name ?? memoNameFromParams;
-  const reminderQueriesEnabled = !isShareMode && !!currentUser;
+  const reminderQueriesEnabled = remindersEnabled && !isShareMode && !!currentUser;
   const { data: pendingReminders = [] } = useReminders(currentUser?.name, {
     view: ListRemindersRequest_View.ALL,
     enabled: reminderQueriesEnabled,
@@ -184,8 +186,8 @@ const MemoDetail = () => {
               showCreator
               showVisibility
               showPinned
-              linkedReminders={linkedReminders}
-              onReminderSelect={setSelectedReminderName}
+              linkedReminders={remindersEnabled ? linkedReminders : []}
+              onReminderSelect={remindersEnabled ? setSelectedReminderName : undefined}
               showSpace
               onShareImageDialogOpenChange={setShareImageDialogOpen}
             />
@@ -202,7 +204,7 @@ const MemoDetail = () => {
             )}
           </div>
         </div>
-        {currentUser && (
+        {currentUser && remindersEnabled && (
           <ReminderDetailDialog
             reminder={selectedReminder}
             lists={reminderLists}

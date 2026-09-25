@@ -3,6 +3,8 @@ import { markdown } from "@codemirror/lang-markdown";
 import { indentUnit } from "@codemirror/language";
 import { Compartment, type Extension } from "@codemirror/state";
 import { placeholder as cmPlaceholder, dropCursor, EditorView, type KeyBinding, keymap } from "@codemirror/view";
+import { runFormattingCommand } from "@/components/MemoEditor/Editor/formatting";
+import type { EditorCommandId } from "@/components/MemoEditor/formatting/commands";
 import { memoMarkdownExtensions } from "@/utils/memo-markdown-extension";
 import { headingDecorations } from "./headingDecorations";
 import { liftListItem, sinkListItem } from "./listIndent";
@@ -28,10 +30,36 @@ const editorKeys: KeyBinding[] = [
   { key: "Shift-Tab", run: liftListItem },
 ];
 
+const formattingKey = (key: string, command: EditorCommandId): KeyBinding => ({
+  key,
+  run: (view) => {
+    runFormattingCommand(view, command);
+    return true;
+  },
+});
+
+const formattingKeys: KeyBinding[] = [
+  formattingKey("Mod-b", "bold"),
+  formattingKey("Mod-i", "italic"),
+  formattingKey("Shift-Mod-s", "strikethrough"),
+  formattingKey("Mod-e", "code"),
+  formattingKey("Mod-Alt-c", "codeBlock"),
+  formattingKey("Mod-Alt-0", "paragraph"),
+  formattingKey("Shift-Mod-7", "orderedList"),
+  formattingKey("Shift-Mod-8", "bulletList"),
+  formattingKey("Shift-Mod-9", "taskList"),
+  formattingKey("Mod-Alt-1", "heading1"),
+  formattingKey("Mod-Alt-2", "heading2"),
+  formattingKey("Mod-Alt-3", "heading3"),
+];
+
+/** The gesture that handed files to the editor: a drop lands at a document position, a paste has none. */
+export type EditorFileOrigin = { source: "paste" } | { source: "drop"; position: number };
+
 export interface EditorExtensionsOptions {
   placeholder: string;
   onChange: (markdown: string) => void;
-  onFiles: (files: File[], position: number) => void;
+  onFiles: (files: File[], origin: EditorFileOrigin) => void;
   onUpdate: () => void;
   onSubmit: () => void;
   getTags: () => string[];
@@ -81,25 +109,21 @@ export function buildEditorExtensions({
     markdown({ extensions: memoMarkdownExtensions }),
     ...memoEditorTheme,
     EditorView.lineWrapping,
-    // CodeMirror defaults to autocorrect="off" because it is primarily a code
-    // editor. Memos is a prose editor, and leaving that default in place also
-    // routes Windows TSF input (including the Win+. emoji picker) through
-    // Chrome's autocorrect-suppression path, which has dropped committed text.
-    // Restore the browser default used by the textarea editor before v0.30.
-    EditorView.contentAttributes.of({ autocorrect: "on" }),
+    // Memos is a prose editor, so restore the browser's native text assistance.
+    EditorView.contentAttributes.of({ autocorrect: "on", autocapitalize: "on", spellcheck: "true" }),
     placeholderCompartment.of(cmPlaceholder(placeholder)),
     EditorView.domEventHandlers({
-      paste: (event, view) => {
+      paste: (event) => {
         const files = clipboardFiles(event);
         if (files.length === 0) return false;
-        onFiles(files, view.state.selection.main.head);
+        onFiles(files, { source: "paste" });
         return true;
       },
       drop: (event, view) => {
         const files = Array.from(event.dataTransfer?.files ?? []);
         if (files.length === 0) return false;
         const position = view.posAtCoords({ x: event.clientX, y: event.clientY }) ?? view.state.selection.main.head;
-        onFiles(files, position);
+        onFiles(files, { source: "drop", position });
         return true;
       },
     }),
@@ -109,7 +133,7 @@ export function buildEditorExtensions({
     // tagAutocomplete must precede the editing keymap so the completion popup's
     // Enter/Tab/arrow bindings win while it is open.
     tagAutocomplete(getTags),
-    keymap.of([...submitKeys, ...editorKeys, indentWithTab, ...defaultKeymap, ...historyKeymap]),
+    keymap.of([...submitKeys, ...editorKeys, ...formattingKeys, indentWithTab, ...defaultKeymap, ...historyKeymap]),
     EditorView.updateListener.of((u) => {
       if (u.docChanged) onChange(u.state.doc.toString());
       // Toolbar active-state depends only on the doc and selection; skip the

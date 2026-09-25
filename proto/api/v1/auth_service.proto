@@ -43,6 +43,15 @@ service AuthService {
       body: "*"
     };
   }
+
+  // VerifyPassword checks the authenticated user's account password without
+  // creating or replacing a session.
+  rpc VerifyPassword(VerifyPasswordRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/api/v1/auth/password:verify"
+      body: "*"
+    };
+  }
 }
 
 message GetCurrentUserRequest {}
@@ -112,4 +121,8 @@ message RefreshTokenResponse {
 
   // When the access token expires.
   google.protobuf.Timestamp expires_at = 2;
+}
+
+message VerifyPasswordRequest {
+  string password = 1 [(google.api.field_behavior) = REQUIRED];
 }

@@ -11,7 +11,6 @@ import {
   HouseIcon,
   ImageIcon,
   InfoIcon,
-  LayoutDashboardIcon,
   LayoutListIcon,
   ListIcon,
   type LucideIcon,
@@ -49,6 +48,7 @@ import { useAttachmentLibraryStats } from "@/hooks/useAttachmentLibrary";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { type MemoStatsContext, useFilteredMemoStats } from "@/hooks/useFilteredMemoStats";
 import useMediaQuery from "@/hooks/useMediaQuery";
+import usePersonalFeatures from "@/hooks/usePersonalFeatures";
 import { useMemoViews, useNotifications, userKeys, useUser } from "@/hooks/useUserQueries";
 import { handleError } from "@/lib/error";
 import {
@@ -63,9 +63,10 @@ import { cn } from "@/lib/utils";
 import { ROUTES } from "@/router/routes";
 import { State } from "@/types/proto/api/v1/common_pb";
 import type { MemoView } from "@/types/proto/api/v1/memo_view_service_pb";
-import { User_Role, UserNotification_Status } from "@/types/proto/api/v1/user_service_pb";
+import { User_Role, UserNotification_Status, UserNotification_Type } from "@/types/proto/api/v1/user_service_pb";
 import { useTranslate } from "@/utils/i18n";
 import MemosLogo from "../MemosLogo";
+import MoodFilterSection from "./MoodFilterSection";
 import { getSidebarRouteKind, routeSupportsCollectionScope } from "./routes";
 import SidebarRow, { SIDEBAR_ROW_CLASSES, SIDEBAR_ROW_FOCUS_CLASSES, SIDEBAR_ROW_ICON_CLASSES, sidebarRowStateClasses } from "./SidebarRow";
 import SidebarSection, {
@@ -251,6 +252,7 @@ const CollectionSidebarContent = ({ context }: { context: MemoStatsContext }) =>
   const { memoFilter, selectedSpaceName } = useSpaceContext();
   const md = useMediaQuery("md");
   const { mobileOpen, setMobileOpen } = useAppSidebar();
+  const { moodEnabled } = usePersonalFeatures();
   const { isInitialized: authInitialized } = useAuth();
   const { isInitialized: instanceInitialized } = useInstance();
   const profileMatch = matchPath("/u/:username", location.pathname);
@@ -261,7 +263,7 @@ const CollectionSidebarContent = ({ context }: { context: MemoStatsContext }) =>
   // User-level collections stay aligned with their unscoped feeds even when a Space is remembered.
   const isUserLevelCollection = context === "profile" || context === "archived";
   const statsFilter = isUserLevelCollection ? undefined : memoFilter;
-  const { statistics, tags } = useFilteredMemoStats({
+  const { statistics, tags, dailyMoodStats } = useFilteredMemoStats({
     context,
     userName: statsUserName,
     filter: statsFilter,
@@ -282,10 +284,16 @@ const CollectionSidebarContent = ({ context }: { context: MemoStatsContext }) =>
     <div className={SIDEBAR_SECTION_STACK_CLASSES}>
       {context === "profile" && <ProfileMode />}
       <SidebarSection ariaLabel={t("common.statistics")}>
-        <StatisticsView statisticsData={statistics} navigationTarget={filterTarget} onDateSelect={() => setMobileOpen(false)} />
+        <StatisticsView
+          statisticsData={statistics}
+          dailyMoodStats={moodEnabled ? dailyMoodStats : undefined}
+          navigationTarget={filterTarget}
+          onDateSelect={() => setMobileOpen(false)}
+        />
       </SidebarSection>
       {showViews && <ViewsSection />}
       <TagsSection tagCount={tags} navigationTarget={filterTarget} scope={tagStateScope} onSelect={() => setMobileOpen(false)} />
+      {moodEnabled && <MoodFilterSection navigationTarget={filterTarget} onSelect={() => setMobileOpen(false)} />}
     </div>
   );
 };
@@ -339,24 +347,28 @@ const InboxSidebarContent = () => {
   const t = useTranslate();
   const { inboxFilter, setInboxFilter, setMobileOpen } = useAppSidebar();
   const { data: notifications = [] } = useNotifications();
+  const { remindersEnabled } = usePersonalFeatures();
+  const visibleNotifications = remindersEnabled
+    ? notifications
+    : notifications.filter((notification) => notification.type !== UserNotification_Type.REMINDER);
   const rows: Array<{ value: InboxFilter; icon: LucideIcon; label: string; count: number }> = [
     {
       value: "all",
       icon: ListIcon,
       label: t("common.all"),
-      count: notifications.filter((item) => item.status !== UserNotification_Status.ARCHIVED).length,
+      count: visibleNotifications.filter((item) => item.status !== UserNotification_Status.ARCHIVED).length,
     },
     {
       value: "unread",
       icon: BellIcon,
       label: t("inbox.unread"),
-      count: notifications.filter((item) => item.status === UserNotification_Status.UNREAD).length,
+      count: visibleNotifications.filter((item) => item.status === UserNotification_Status.UNREAD).length,
     },
     {
       value: "archived",
       icon: ArchiveIcon,
       label: t("common.archived"),
-      count: notifications.filter((item) => item.status === UserNotification_Status.ARCHIVED).length,
+      count: visibleNotifications.filter((item) => item.status === UserNotification_Status.ARCHIVED).length,
     },
   ];
   return (
@@ -453,7 +465,7 @@ interface GlobalNavItem {
  */
 const navPillClasses = (active: boolean) =>
   cn(
-    "relative flex h-[30px] min-w-0 items-center rounded-md px-[7px] transition-colors",
+    "relative flex h-[30px] w-full min-w-0 items-center rounded-md px-[7px] transition-colors",
     SIDEBAR_ROW_FOCUS_CLASSES,
     sidebarRowStateClasses(active),
   );
@@ -520,19 +532,12 @@ const GlobalNavigation = () => {
   const items: GlobalNavItem[] = currentUser
     ? [
         {
-          id: "personal",
-          label: t("personal.title"),
-          path: ROUTES.PERSONAL,
-          icon: LayoutDashboardIcon,
-          active: location.pathname === ROUTES.PERSONAL || location.pathname === ROUTES.REMINDERS,
-          alwaysExpanded: true,
-        },
-        {
           id: "attachments",
           label: t("common.attachments"),
           path: ROUTES.ATTACHMENTS,
           icon: PaperclipIcon,
           active: routeKind === "attachments",
+          alwaysExpanded: true,
         },
       ]
     : [
@@ -550,6 +555,7 @@ const GlobalNavigation = () => {
           path: ROUTES.ABOUT,
           icon: InfoIcon,
           active: Boolean(matchPath(ROUTES.ABOUT, location.pathname)),
+          alwaysExpanded: true,
         },
       ];
 
@@ -577,7 +583,7 @@ const GlobalNavigation = () => {
 
   return (
     <TooltipProvider>
-      <nav className={cn("flex h-9 items-center gap-1", SIDEBAR_HORIZONTAL_PADDING)} aria-label="Primary">
+      <nav className={cn("grid gap-1", SIDEBAR_HORIZONTAL_PADDING)} aria-label="Primary">
         {currentUser && (
           <DropdownMenu
             onOpenChange={(open, eventDetails) => {
@@ -605,7 +611,7 @@ const GlobalNavigation = () => {
                   }
                 >
                   <ActiveScopeIcon className="size-4 shrink-0" strokeWidth={1.8} />
-                  <NavPillLabel expanded={scopeRouteActive} label={activeScopeItem.label}>
+                  <NavPillLabel expanded label={activeScopeItem.label}>
                     <ChevronDownIcon
                       className="-mr-0.5 size-3 shrink-0 opacity-55 transition-transform duration-200 ease-out group-data-[popup-open]/scope:rotate-180 motion-reduce:transition-none"
                       strokeWidth={1.8}

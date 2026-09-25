@@ -10,21 +10,21 @@ import {
   type LucideIcon,
   MailIcon,
   Settings2Icon,
+  SlidersHorizontalIcon,
   TagsIcon,
   UserIcon,
   UsersIcon,
-  WalletCardsIcon,
   WebhookIcon,
 } from "lucide-react";
 import { type ComponentType } from "react";
 import AccessTokenSection from "@/components/Settings/AccessTokenSection";
 import AISection from "@/components/Settings/AISection";
-import FinanceSettings from "@/components/Settings/FinanceSettings";
 import InstanceSection from "@/components/Settings/InstanceSection";
 import MemberSection from "@/components/Settings/MemberSection";
 import MemoRelatedSettings from "@/components/Settings/MemoRelatedSettings";
 import MyAccountSection from "@/components/Settings/MyAccountSection";
 import NotificationSection from "@/components/Settings/NotificationSection";
+import PersonalFeaturesSection from "@/components/Settings/PersonalFeaturesSection";
 import PreferencesSection from "@/components/Settings/PreferencesSection";
 import ResourceStatsSection from "@/components/Settings/ResourceStatsSection";
 import SpacesSection from "@/components/Settings/SpacesSection";
@@ -39,7 +39,7 @@ export type SettingSectionKey =
   | "spaces"
   | "access-token"
   | "preference"
-  | "finance"
+  | "personal-features"
   | "webhook"
   | "member"
   | "system"
@@ -92,11 +92,11 @@ export const SETTINGS_SECTIONS: SettingSectionDefinition[] = [
     component: PreferencesSection,
   },
   {
-    key: "finance",
+    key: "personal-features",
     scope: "basic",
-    labelKey: "setting.finance.label",
-    icon: WalletCardsIcon,
-    component: FinanceSettings,
+    labelKey: "setting.personal-features.label",
+    icon: SlidersHorizontalIcon,
+    component: PersonalFeaturesSection,
   },
   {
     key: "webhook",

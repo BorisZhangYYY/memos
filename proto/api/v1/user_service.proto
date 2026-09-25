@@ -472,6 +472,12 @@ message UserSetting {
 
   // General user settings configuration.
   message GeneralSetting {
+    enum PersonalFeaturePrivacy {
+      VISIBLE = 0;
+      BLURRED = 1;
+      COLLAPSED = 2;
+    }
+
     // The preferred locale of the user.
     string locale = 1 [(google.api.field_behavior) = OPTIONAL];
     // The default visibility of the memo.
@@ -482,6 +488,14 @@ message UserSetting {
     string theme = 4 [(google.api.field_behavior) = OPTIONAL];
     // Whether the official client should save metadata from future media uploads.
     bool save_media_metadata = 5 [(google.api.field_behavior) = OPTIONAL];
+    // Personal extensions are opt-out so existing users keep their current UI.
+    bool disable_reminders = 6 [(google.api.field_behavior) = OPTIONAL];
+    bool disable_finance = 7 [(google.api.field_behavior) = OPTIONAL];
+    bool disable_mood = 8 [(google.api.field_behavior) = OPTIONAL];
+    // How personal panels are presented when Home first loads.
+    PersonalFeaturePrivacy personal_feature_privacy = 9 [(google.api.field_behavior) = OPTIONAL];
+    // Require the account password before revealing private or blurred content.
+    bool require_password_for_private_content = 10 [(google.api.field_behavior) = OPTIONAL];
   }
 
   // Tag metadata for user-specific display rules.

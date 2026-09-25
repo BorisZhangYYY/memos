@@ -1,6 +1,6 @@
 import { create } from "@bufbuild/protobuf";
 import { isEqual } from "lodash-es";
-import { EyeOffIcon, PaletteIcon, PlusIcon, TagIcon, TrashIcon } from "lucide-react";
+import { EyeOffIcon, PaletteIcon, PlusIcon, ShieldCheckIcon, TagIcon, TrashIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
-import { useTagCounts, useUpdateUserSetting } from "@/hooks/useUserQueries";
+import { useTagCounts, useUpdateUserGeneralSetting, useUpdateUserSetting } from "@/hooks/useUserQueries";
 import { colorToHex } from "@/lib/color";
 import { buildUserSettingName } from "@/lib/resource-names";
 import { isValidTagPattern } from "@/lib/tag";
@@ -22,7 +22,7 @@ import {
 import { ColorSchema } from "@/types/proto/google/type/color_pb";
 import { useTranslate } from "@/utils/i18n";
 import SettingGroup from "./SettingGroup";
-import { SettingList, SettingPanel } from "./SettingList";
+import { SettingList, SettingListItem, SettingPanel } from "./SettingList";
 import SettingSection from "./SettingSection";
 
 const DEFAULT_TAG_COLOR = "#ffffff";
@@ -50,8 +50,9 @@ const toLocalTagMeta = (meta: {
 
 const TagsSection = () => {
   const t = useTranslate();
-  const { currentUser, userTagsSetting, refetchSettings } = useAuth();
+  const { currentUser, userGeneralSetting, userTagsSetting, refetchSettings } = useAuth();
   const { mutateAsync: updateUserSetting } = useUpdateUserSetting();
+  const { mutateAsync: updateGeneralSetting, isPending: updatingGeneralSetting } = useUpdateUserGeneralSetting(currentUser?.name);
   const { data: tagCounts = {} } = useTagCounts(true);
   const originalSetting = useMemo(() => userTagsSetting ?? create(UserSetting_TagsSettingSchema, {}), [userTagsSetting]);
 
@@ -274,6 +275,27 @@ const TagsSection = () => {
               ))}
             </>
           )}
+        </SettingList>
+      </SettingGroup>
+
+      <SettingGroup title={t("setting.tags.unlock-method")} description={t("setting.tags.password-unlock-description")} showSeparator>
+        <SettingList>
+          <SettingListItem
+            icon={<ShieldCheckIcon className="size-4" />}
+            label={t("setting.tags.require-password")}
+            description={t("setting.personal-features.password-unlock-description")}
+          >
+            <Switch
+              checked={userGeneralSetting?.requirePasswordForPrivateContent ?? false}
+              disabled={updatingGeneralSetting}
+              onCheckedChange={(enabled) =>
+                void updateGeneralSetting(
+                  { generalSetting: { requirePasswordForPrivateContent: enabled }, updateMask: ["require_password_for_private_content"] },
+                  { onSuccess: () => void refetchSettings() },
+                )
+              }
+            />
+          </SettingListItem>
         </SettingList>
       </SettingGroup>
 
