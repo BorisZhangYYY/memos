@@ -40,6 +40,9 @@ func New(t *testing.T, buckets ...string) *Server {
 	if testing.Short() {
 		t.Skip("skipping MinIO integration test in short mode")
 	}
+	if os.Getenv("SKIP_MINIO_TESTS") == "1" {
+		t.Skip("skipping MinIO integration test (SKIP_MINIO_TESTS=1)")
+	}
 	if os.Getenv("SKIP_CONTAINER_TESTS") == "1" {
 		t.Skip("skipping MinIO integration test (SKIP_CONTAINER_TESTS=1)")
 	}
