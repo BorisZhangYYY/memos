@@ -1,13 +1,5 @@
 # Changelog
 
-## [0.34.1](https://github.com/BorisZhangYYY/memos/compare/v0.34.0...v0.34.1) (2026-09-25)
-
-### Release Engineering
-
-* Keep the release migration matrix running when the retired historical MinIO
-  test image is unavailable, without skipping SQLite, MySQL, or PostgreSQL
-  upgrade coverage.
-
 ## [0.34.0](https://github.com/BorisZhangYYY/memos/compare/v0.33.6...v0.34.0) (2026-09-25)
 
 ### Summary
