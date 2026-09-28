@@ -5615,6 +5615,17 @@ components:
                     description: |-
                         The CEL filter expression for the memo view, using the same grammar as the
                          ListMemos `filter` argument. Reuse it by passing this value to ListMemos.
+                icon:
+                    allOf:
+                        - $ref: '#/components/schemas/MemoView_Icon'
+                    description: Optional display icon. Omit with the "icon" update mask to reset it.
+        MemoView_Icon:
+            type: object
+            properties:
+                emoji:
+                    type: string
+                lucide:
+                    type: string
         Memo_Property:
             type: object
             properties:

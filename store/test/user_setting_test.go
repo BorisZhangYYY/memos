@@ -949,11 +949,11 @@ func TestUserMemoViewConcurrentPartialUpdates(t *testing.T) {
 
 	wg.Go(func() {
 		<-start
-		_, errs[0] = ts.UpdateUserMemoView(ctx, user.ID, "work", &updatedTitle, nil)
+		_, errs[0] = ts.UpdateUserMemoView(ctx, user.ID, "work", &updatedTitle, nil, nil)
 	})
 	wg.Go(func() {
 		<-start
-		_, errs[1] = ts.UpdateUserMemoView(ctx, user.ID, "work", nil, &updatedFilter)
+		_, errs[1] = ts.UpdateUserMemoView(ctx, user.ID, "work", nil, &updatedFilter, nil)
 	})
 	close(start)
 	wg.Wait()

@@ -1064,10 +1064,11 @@ func (x *PersonalAccessTokensUserSetting_PersonalAccessToken) GetLastUsedAt() *t
 }
 
 type MemoViewsUserSetting_MemoView struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
-	Filter        string                 `protobuf:"bytes,3,opt,name=filter,proto3" json:"filter,omitempty"`
+	state         protoimpl.MessageState              `protogen:"open.v1"`
+	Id            string                              `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Title         string                              `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	Filter        string                              `protobuf:"bytes,3,opt,name=filter,proto3" json:"filter,omitempty"`
+	Icon          *MemoViewsUserSetting_MemoView_Icon `protobuf:"bytes,4,opt,name=icon,proto3" json:"icon,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1123,6 +1124,95 @@ func (x *MemoViewsUserSetting_MemoView) GetFilter() string {
 	return ""
 }
 
+func (x *MemoViewsUserSetting_MemoView) GetIcon() *MemoViewsUserSetting_MemoView_Icon {
+	if x != nil {
+		return x.Icon
+	}
+	return nil
+}
+
+type MemoViewsUserSetting_MemoView_Icon struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Value:
+	//
+	//	*MemoViewsUserSetting_MemoView_Icon_Emoji
+	//	*MemoViewsUserSetting_MemoView_Icon_Lucide
+	Value         isMemoViewsUserSetting_MemoView_Icon_Value `protobuf_oneof:"value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MemoViewsUserSetting_MemoView_Icon) Reset() {
+	*x = MemoViewsUserSetting_MemoView_Icon{}
+	mi := &file_store_user_setting_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MemoViewsUserSetting_MemoView_Icon) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MemoViewsUserSetting_MemoView_Icon) ProtoMessage() {}
+
+func (x *MemoViewsUserSetting_MemoView_Icon) ProtoReflect() protoreflect.Message {
+	mi := &file_store_user_setting_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MemoViewsUserSetting_MemoView_Icon.ProtoReflect.Descriptor instead.
+func (*MemoViewsUserSetting_MemoView_Icon) Descriptor() ([]byte, []int) {
+	return file_store_user_setting_proto_rawDescGZIP(), []int{7, 0, 0}
+}
+
+func (x *MemoViewsUserSetting_MemoView_Icon) GetValue() isMemoViewsUserSetting_MemoView_Icon_Value {
+	if x != nil {
+		return x.Value
+	}
+	return nil
+}
+
+func (x *MemoViewsUserSetting_MemoView_Icon) GetEmoji() string {
+	if x != nil {
+		if x, ok := x.Value.(*MemoViewsUserSetting_MemoView_Icon_Emoji); ok {
+			return x.Emoji
+		}
+	}
+	return ""
+}
+
+func (x *MemoViewsUserSetting_MemoView_Icon) GetLucide() string {
+	if x != nil {
+		if x, ok := x.Value.(*MemoViewsUserSetting_MemoView_Icon_Lucide); ok {
+			return x.Lucide
+		}
+	}
+	return ""
+}
+
+type isMemoViewsUserSetting_MemoView_Icon_Value interface {
+	isMemoViewsUserSetting_MemoView_Icon_Value()
+}
+
+type MemoViewsUserSetting_MemoView_Icon_Emoji struct {
+	Emoji string `protobuf:"bytes,1,opt,name=emoji,proto3,oneof"`
+}
+
+type MemoViewsUserSetting_MemoView_Icon_Lucide struct {
+	Lucide string `protobuf:"bytes,2,opt,name=lucide,proto3,oneof"`
+}
+
+func (*MemoViewsUserSetting_MemoView_Icon_Emoji) isMemoViewsUserSetting_MemoView_Icon_Value() {}
+
+func (*MemoViewsUserSetting_MemoView_Icon_Lucide) isMemoViewsUserSetting_MemoView_Icon_Value() {}
+
 type WebhooksUserSetting_Webhook struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Unique identifier for the webhook
@@ -1139,7 +1229,7 @@ type WebhooksUserSetting_Webhook struct {
 
 func (x *WebhooksUserSetting_Webhook) Reset() {
 	*x = WebhooksUserSetting_Webhook{}
-	mi := &file_store_user_setting_proto_msgTypes[14]
+	mi := &file_store_user_setting_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1151,7 +1241,7 @@ func (x *WebhooksUserSetting_Webhook) String() string {
 func (*WebhooksUserSetting_Webhook) ProtoMessage() {}
 
 func (x *WebhooksUserSetting_Webhook) ProtoReflect() protoreflect.Message {
-	mi := &file_store_user_setting_proto_msgTypes[14]
+	mi := &file_store_user_setting_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1287,14 +1377,19 @@ const file_store_user_setting_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12<\n" +
 	"\flast_used_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"lastUsedAt\"\xab\x01\n" +
+	"lastUsedAt\"\xb4\x02\n" +
 	"\x14MemoViewsUserSetting\x12I\n" +
 	"\n" +
-	"memo_views\x18\x01 \x03(\v2*.memos.store.MemoViewsUserSetting.MemoViewR\tmemoViews\x1aH\n" +
+	"memo_views\x18\x01 \x03(\v2*.memos.store.MemoViewsUserSetting.MemoViewR\tmemoViews\x1a\xd0\x01\n" +
 	"\bMemoView\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x16\n" +
-	"\x06filter\x18\x03 \x01(\tR\x06filter\"\xc5\x01\n" +
+	"\x06filter\x18\x03 \x01(\tR\x06filter\x12C\n" +
+	"\x04icon\x18\x04 \x01(\v2/.memos.store.MemoViewsUserSetting.MemoView.IconR\x04icon\x1aA\n" +
+	"\x04Icon\x12\x16\n" +
+	"\x05emoji\x18\x01 \x01(\tH\x00R\x05emoji\x12\x18\n" +
+	"\x06lucide\x18\x02 \x01(\tH\x00R\x06lucideB\a\n" +
+	"\x05value\"\xc5\x01\n" +
 	"\x13WebhooksUserSetting\x12D\n" +
 	"\bwebhooks\x18\x01 \x03(\v2(.memos.store.WebhooksUserSetting.WebhookR\bwebhooks\x1ah\n" +
 	"\aWebhook\x12\x0e\n" +
@@ -1317,7 +1412,7 @@ func file_store_user_setting_proto_rawDescGZIP() []byte {
 }
 
 var file_store_user_setting_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_store_user_setting_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_store_user_setting_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_store_user_setting_proto_goTypes = []any{
 	(UserSetting_Key)(0),                                        // 0: memos.store.UserSetting.Key
 	(GeneralUserSetting_PersonalFeaturePrivacy)(0),              // 1: memos.store.GeneralUserSetting.PersonalFeaturePrivacy
@@ -1335,9 +1430,10 @@ var file_store_user_setting_proto_goTypes = []any{
 	(*RefreshTokensUserSetting_ClientInfo)(nil),                 // 13: memos.store.RefreshTokensUserSetting.ClientInfo
 	(*PersonalAccessTokensUserSetting_PersonalAccessToken)(nil), // 14: memos.store.PersonalAccessTokensUserSetting.PersonalAccessToken
 	(*MemoViewsUserSetting_MemoView)(nil),                       // 15: memos.store.MemoViewsUserSetting.MemoView
-	(*WebhooksUserSetting_Webhook)(nil),                         // 16: memos.store.WebhooksUserSetting.Webhook
-	(*color.Color)(nil),                                         // 17: google.type.Color
-	(*timestamppb.Timestamp)(nil),                               // 18: google.protobuf.Timestamp
+	(*MemoViewsUserSetting_MemoView_Icon)(nil),                  // 16: memos.store.MemoViewsUserSetting.MemoView.Icon
+	(*WebhooksUserSetting_Webhook)(nil),                         // 17: memos.store.WebhooksUserSetting.Webhook
+	(*color.Color)(nil),                                         // 18: google.type.Color
+	(*timestamppb.Timestamp)(nil),                               // 19: google.protobuf.Timestamp
 }
 var file_store_user_setting_proto_depIdxs = []int32{
 	0,  // 0: memos.store.UserSetting.key:type_name -> memos.store.UserSetting.Key
@@ -1349,24 +1445,25 @@ var file_store_user_setting_proto_depIdxs = []int32{
 	5,  // 6: memos.store.UserSetting.tags:type_name -> memos.store.TagsUserSetting
 	6,  // 7: memos.store.UserSetting.persona:type_name -> memos.store.PersonaUserSetting
 	1,  // 8: memos.store.GeneralUserSetting.personal_feature_privacy:type_name -> memos.store.GeneralUserSetting.PersonalFeaturePrivacy
-	17, // 9: memos.store.UserTagMetadata.background_color:type_name -> google.type.Color
+	18, // 9: memos.store.UserTagMetadata.background_color:type_name -> google.type.Color
 	11, // 10: memos.store.TagsUserSetting.tags:type_name -> memos.store.TagsUserSetting.TagsEntry
 	12, // 11: memos.store.RefreshTokensUserSetting.refresh_tokens:type_name -> memos.store.RefreshTokensUserSetting.RefreshToken
 	14, // 12: memos.store.PersonalAccessTokensUserSetting.tokens:type_name -> memos.store.PersonalAccessTokensUserSetting.PersonalAccessToken
 	15, // 13: memos.store.MemoViewsUserSetting.memo_views:type_name -> memos.store.MemoViewsUserSetting.MemoView
-	16, // 14: memos.store.WebhooksUserSetting.webhooks:type_name -> memos.store.WebhooksUserSetting.Webhook
+	17, // 14: memos.store.WebhooksUserSetting.webhooks:type_name -> memos.store.WebhooksUserSetting.Webhook
 	4,  // 15: memos.store.TagsUserSetting.TagsEntry.value:type_name -> memos.store.UserTagMetadata
-	18, // 16: memos.store.RefreshTokensUserSetting.RefreshToken.expires_at:type_name -> google.protobuf.Timestamp
-	18, // 17: memos.store.RefreshTokensUserSetting.RefreshToken.created_at:type_name -> google.protobuf.Timestamp
+	19, // 16: memos.store.RefreshTokensUserSetting.RefreshToken.expires_at:type_name -> google.protobuf.Timestamp
+	19, // 17: memos.store.RefreshTokensUserSetting.RefreshToken.created_at:type_name -> google.protobuf.Timestamp
 	13, // 18: memos.store.RefreshTokensUserSetting.RefreshToken.client_info:type_name -> memos.store.RefreshTokensUserSetting.ClientInfo
-	18, // 19: memos.store.PersonalAccessTokensUserSetting.PersonalAccessToken.expires_at:type_name -> google.protobuf.Timestamp
-	18, // 20: memos.store.PersonalAccessTokensUserSetting.PersonalAccessToken.created_at:type_name -> google.protobuf.Timestamp
-	18, // 21: memos.store.PersonalAccessTokensUserSetting.PersonalAccessToken.last_used_at:type_name -> google.protobuf.Timestamp
-	22, // [22:22] is the sub-list for method output_type
-	22, // [22:22] is the sub-list for method input_type
-	22, // [22:22] is the sub-list for extension type_name
-	22, // [22:22] is the sub-list for extension extendee
-	0,  // [0:22] is the sub-list for field type_name
+	19, // 19: memos.store.PersonalAccessTokensUserSetting.PersonalAccessToken.expires_at:type_name -> google.protobuf.Timestamp
+	19, // 20: memos.store.PersonalAccessTokensUserSetting.PersonalAccessToken.created_at:type_name -> google.protobuf.Timestamp
+	19, // 21: memos.store.PersonalAccessTokensUserSetting.PersonalAccessToken.last_used_at:type_name -> google.protobuf.Timestamp
+	16, // 22: memos.store.MemoViewsUserSetting.MemoView.icon:type_name -> memos.store.MemoViewsUserSetting.MemoView.Icon
+	23, // [23:23] is the sub-list for method output_type
+	23, // [23:23] is the sub-list for method input_type
+	23, // [23:23] is the sub-list for extension type_name
+	23, // [23:23] is the sub-list for extension extendee
+	0,  // [0:23] is the sub-list for field type_name
 }
 
 func init() { file_store_user_setting_proto_init() }
@@ -1383,13 +1480,17 @@ func file_store_user_setting_proto_init() {
 		(*UserSetting_Tags)(nil),
 		(*UserSetting_Persona)(nil),
 	}
+	file_store_user_setting_proto_msgTypes[14].OneofWrappers = []any{
+		(*MemoViewsUserSetting_MemoView_Icon_Emoji)(nil),
+		(*MemoViewsUserSetting_MemoView_Icon_Lucide)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_store_user_setting_proto_rawDesc), len(file_store_user_setting_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   15,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

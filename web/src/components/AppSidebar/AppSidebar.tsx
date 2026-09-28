@@ -31,6 +31,7 @@ import { Link, matchPath, useLocation, useNavigate, useSearchParams } from "reac
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { MemoDetailSidebar } from "@/components/MemoDetailSidebar";
 import MemoDisplaySettingMenu from "@/components/MemoDisplaySettingMenu";
+import MemoViewIcon from "@/components/MemoViewIcon";
 import { DEFAULT_SETTING_SECTION, SETTINGS_SECTIONS } from "@/components/Settings/settingSections";
 import StatisticsView from "@/components/StatisticsView";
 import UserMenu from "@/components/UserMenu";
@@ -178,6 +179,7 @@ const ViewsSection = ({ manageActive = false }: { manageActive?: boolean }) => {
               aria-pressed={active || undefined}
               className="flex h-full min-w-0 flex-1 items-center gap-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
             >
+              <MemoViewIcon icon={memoView.icon} className="size-4" />
               <span className="min-w-0 flex-1 truncate">{memoView.title}</span>
             </button>
             <DropdownMenu>

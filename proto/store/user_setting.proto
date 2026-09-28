@@ -148,6 +148,14 @@ message MemoViewsUserSetting {
     string id = 1;
     string title = 2;
     string filter = 3;
+    Icon icon = 4;
+
+    message Icon {
+      oneof value {
+        string emoji = 1;
+        string lucide = 2;
+      }
+    }
   }
   repeated MemoView memo_views = 1;
 }
