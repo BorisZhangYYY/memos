@@ -534,6 +534,8 @@ func TestBuildToolFromOperationExposesCreateAttachment(t *testing.T) {
 
 	tool, operation := buildToolFromOperation(registry["AttachmentService_CreateAttachment"])
 	require.Equal(t, "attachment_create_attachment", tool.Name)
+	require.Contains(t, tool.Description, "body.memo")
+	require.Contains(t, tool.Description, "base64")
 	require.Equal(t, "POST", operation.Method)
 	require.False(t, tool.Annotations.ReadOnlyHint)
 	require.False(t, *tool.Annotations.DestructiveHint)
@@ -551,12 +553,14 @@ func TestBuildToolFromOperationExposesCreateAttachment(t *testing.T) {
 	require.True(t, ok)
 	require.Contains(t, body["properties"], "filename")
 	require.Contains(t, body["properties"], "content")
+	require.Contains(t, body["properties"], "memo")
 
 	err = validateToolArguments(input, map[string]any{
 		"body": map[string]any{
 			"filename": "screenshot.png",
 			"type":     "image/png",
 			"content":  "aGVsbG8=",
+			"memo":     "memos/example",
 		},
 	})
 	require.NoError(t, err)
