@@ -83,6 +83,9 @@ jobs:
           esac
         env:
           DRIVER: ${{ matrix.test-group == 'store' && '' || 'sqlite' }}
+          # The historical MinIO CE image is no longer published. Keep all
+          # other backend tests running until a maintained test image exists.
+          SKIP_MINIO_TESTS: "1"
 
       - name: Upload coverage
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
