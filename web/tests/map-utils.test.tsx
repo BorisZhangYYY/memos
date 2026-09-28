@@ -1,6 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { createMarkerIcon, MinimalAttributionControl, OpenStreetMapTileLayer } from "@/components/map/map-utils";
+import { createMarkerIcon, MinimalAttributionControl, OpenStreetMapTileLayer, ThemedTileLayer } from "@/components/map/map-utils";
+
+vi.mock("@/contexts/AuthContext", () => ({
+  useAuth: () => ({ userGeneralSetting: { theme: "light" } }),
+}));
 
 vi.mock("leaflet", () => ({
   DivIcon: class {
@@ -20,6 +24,14 @@ vi.mock("react-leaflet", () => ({
 }));
 
 describe("OpenStreetMapTileLayer", () => {
+  it("uses a reachable keyless basemap by default", () => {
+    render(<ThemedTileLayer />);
+
+    const tileLayer = screen.getByTestId("tile-layer");
+    expect(tileLayer).toHaveAttribute("data-url", "https://tile.openstreetmap.de/{z}/{x}/{y}.png");
+    expect(tileLayer.getAttribute("data-attribution")).toContain("OpenStreetMap Deutschland");
+  });
+
   it("uses the standard keyless tile endpoint with the required attribution", () => {
     render(<OpenStreetMapTileLayer />);
 
