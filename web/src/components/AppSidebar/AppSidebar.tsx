@@ -440,8 +440,8 @@ const MemoDetailSidebarContent = () => {
 const RouteSidebarContent = () => {
   const location = useLocation();
   const kind = getSidebarRouteKind(location.pathname);
-  if (kind === "home" || kind === "archived" || kind === "explore" || kind === "profile" || kind === "calendar") {
-    return <CollectionSidebarContent context={kind === "calendar" ? "home" : kind} />;
+  if (kind === "home" || kind === "archived" || kind === "explore" || kind === "profile" || kind === "calendar" || kind === "map") {
+    return <CollectionSidebarContent context={kind === "calendar" || kind === "map" ? "home" : kind} />;
   }
   if (kind === "views") return <ViewsSection manageActive />;
   if (kind === "attachments") return <AttachmentsSidebarContent />;
@@ -539,6 +539,14 @@ const GlobalNavigation = () => {
           path: ROUTES.CALENDAR,
           icon: CalendarDaysIcon,
           active: routeKind === "calendar",
+          alwaysExpanded: true,
+        },
+        {
+          id: "map",
+          label: t("common.map"),
+          path: ROUTES.MAP,
+          icon: MapIcon,
+          active: routeKind === "map",
           alwaysExpanded: true,
         },
         {

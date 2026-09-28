@@ -74,6 +74,18 @@ describe("UserMemoMap", () => {
     expect(screen.getByTestId("map-layer")).toBeInTheDocument();
   });
 
+  it("limits the dedicated map to located memos in the selected Space", () => {
+    render(
+      <MemoryRouter>
+        <UserMemoMap creator="users/1" scopeFilter={'space == "spaces/work"'} />
+      </MemoryRouter>,
+    );
+
+    const request = mocks.useInfiniteMemos.mock.calls[0][0];
+    expect(request.filter).toContain('space == "spaces/work"');
+    expect(request.filter).toContain("has_location");
+  });
+
   it("caps automatic zoom and gives memo markers an accessible name", () => {
     mocks.useInfiniteMemos.mockReturnValue({
       data: {
