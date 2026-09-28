@@ -7,6 +7,7 @@ import {
   CopyIcon,
   Edit3Icon,
   FileTextIcon,
+  FolderInputIcon,
   LinkIcon,
   // ListChecksIcon,
   // ListRestartIcon,
@@ -25,9 +26,11 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import useCurrentUser from "@/hooks/useCurrentUser";
 import { State } from "@/types/proto/api/v1/common_pb";
 import { useTranslate } from "@/utils/i18n";
 import { useMemoActionHandlers } from "./hooks";
+import MemoMoveDialog from "./MemoMoveDialog";
 import type { MemoActionMenuProps } from "./types";
 
 const MemoActionMenu = (props: MemoActionMenuProps) => {
@@ -36,9 +39,12 @@ const MemoActionMenu = (props: MemoActionMenuProps) => {
 
   // Dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [moveDialogOpen, setMoveDialogOpen] = useState(false);
+  const currentUser = useCurrentUser();
 
   // Derived state
   const isComment = Boolean(memo.parent);
+  const canMove = currentUser?.name === memo.creator && !isComment;
   const isArchived = memo.state === State.ARCHIVED;
   // Legacy Markdown task bulk actions are disabled in favor of structured reminders.
   // const canMutateTasks = !readonly && !isArchived && Boolean(memo.property?.hasTaskList);
@@ -128,6 +134,13 @@ const MemoActionMenu = (props: MemoActionMenuProps) => {
           )}
         */}
 
+        {canMove && (
+          <DropdownMenuItem onClick={() => setMoveDialogOpen(true)}>
+            <FolderInputIcon className="w-4 h-auto" />
+            {t("memo.move.title")}
+          </DropdownMenuItem>
+        )}
+
         {/* Write actions (non-readonly) */}
         {!readonly && (
           <>
@@ -147,6 +160,8 @@ const MemoActionMenu = (props: MemoActionMenuProps) => {
           </>
         )}
       </DropdownMenuContent>
+
+      {moveDialogOpen && <MemoMoveDialog memo={memo} onOpenChange={setMoveDialogOpen} />}
 
       {/* Delete confirmation dialog */}
       <ConfirmDialog
