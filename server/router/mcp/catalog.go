@@ -254,7 +254,7 @@ var operationDescriptionOverrides = map[string]string{
 	"MemoService_UpdateMemo":                  "Update general fields on one existing memo, such as body.content, body.visibility, or body.pinned. For a mood-only change, prefer memo_set_memo_mood; use instance_update_memo_mood_display only for the instance-wide display emoji or color.",
 	"MemoService_SetMemoMood":                 "Set the mood recorded on one existing memo. Use body.moodLevel from 1 through 7, or 0 to clear the memo's mood. This changes only that memo; it does not change the instance-wide display emoji or color.",
 	"MemoService_SetMemoAttachments":          "Replace the memo's complete attachment set. Existing attachments omitted from body.attachments are permanently deleted, not merely unlinked.",
-	"AttachmentService_CreateAttachment":     "Upload an image or other file from base64 bytes. Set body.filename, body.type (MIME type), and body.content (base64 without a data-URL prefix). Set body.memo to an existing memos/{id} to attach it immediately; otherwise use memo_set_memo_attachments afterward. To embed an uploaded image in memo Markdown, use ![alt](/file/{returned attachment.name}/{filename}).",
+	"AttachmentService_CreateAttachment":      "Upload an image or other file from base64 bytes. Set body.filename, body.type (MIME type), and body.content (base64 without a data-URL prefix). Set body.memo to an existing memos/{id} to attach it immediately; otherwise use memo_set_memo_attachments afterward. To embed an uploaded image in memo Markdown, use ![alt](/file/{returned attachment.name}/{filename}).",
 	"ReminderService_CreateReminder":          "Create a reminder. Use body.remindTime for an exact notification timestamp or body.dueDate for a date-only reminder; there is no details field.",
 	"FinanceService_CreateFinanceWallet":      "Create a private wallet. Set its opening balance with body.initialBalanceMinor; the current balance is output-only.",
 	"FinanceService_CreateFinanceTransaction": "Record an income, expense, or transfer. body.occurTime is required and must be an RFC 3339 timestamp.",
@@ -269,6 +269,10 @@ var operationDescriptionOverrides = map[string]string{
 type requestBodySchemaRefinement func(jsonSchema)
 
 var requestBodySchemaRefinements = map[string]requestBodySchemaRefinement{
+	"MemoService_CreateMemo":                refineMemoRelationsInputSchema,
+	"MemoService_CreateMemoComment":         refineMemoRelationsInputSchema,
+	"MemoService_SetMemoRelations":          refineMemoRelationsInputSchema,
+	"MemoService_UpdateMemo":                refineMemoRelationsInputSchema,
 	"MemoService_SetMemoMood":               refineSetMemoMoodInputSchema,
 	"InstanceService_UpdateMemoMoodDisplay": refineMemoMoodDisplayInputSchema,
 }
@@ -512,6 +516,50 @@ func requestBodySchema(operation *openAPIOperation) jsonSchema {
 		refine(schema)
 	}
 	return schema
+}
+
+// The relation components are finite, but some LLM providers mistake their
+// $ref/allOf chain for recursion. Inline only this small input shape so the
+// MCP contract stays compatible with the REST API's object-valued relations.
+func refineMemoRelationsInputSchema(schema jsonSchema) {
+	properties := maps.Clone(schemaProperties(schema["properties"]))
+	relations, ok := asSchemaMap(properties["relations"])
+	if !ok {
+		return
+	}
+	relations = maps.Clone(relations)
+	newMemoReference := func(description string) jsonSchema {
+		return jsonSchema{
+			"type":                 "object",
+			"description":          description,
+			"additionalProperties": false,
+			"properties": map[string]any{
+				"name": jsonSchema{"type": "string", "description": "The resource name of the memo. Format: memos/{memo}."},
+			},
+			"required": []string{"name"},
+		}
+	}
+	relations["items"] = jsonSchema{
+		"type":                 "object",
+		"additionalProperties": false,
+		"properties": map[string]any{
+			"memo":        newMemoReference("The memo in the relation."),
+			"relatedMemo": newMemoReference("The related memo."),
+			"type":        jsonSchema{"type": "string", "enum": []string{"TYPE_UNSPECIFIED", "REFERENCE", "COMMENT"}},
+		},
+		"required": []string{"memo", "relatedMemo", "type"},
+	}
+	properties["relations"] = jsonSchema(relations)
+	schema["properties"] = properties
+
+	defs := maps.Clone(schemaProperties(schema["$defs"]))
+	delete(defs, "MemoRelation")
+	delete(defs, "MemoRelation_Memo")
+	if len(defs) == 0 {
+		delete(schema, "$defs")
+	} else {
+		schema["$defs"] = defs
+	}
 }
 
 func refineMemoMoodDisplayInputSchema(schema jsonSchema) {
