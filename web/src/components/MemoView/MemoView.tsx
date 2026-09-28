@@ -37,6 +37,7 @@ const MemoView: React.FC<MemoViewProps> = (props: MemoViewProps) => {
     parentPage: parentPageProp,
     parentScope: parentScopeProp,
     compact,
+    timeDisplay,
     showCreator,
     showVisibility,
     showPinned,
@@ -186,6 +187,7 @@ const MemoView: React.FC<MemoViewProps> = (props: MemoViewProps) => {
         </span>
       )}
       <MemoHeader
+        timeDisplay={timeDisplay}
         showCreator={showCreator}
         showVisibility={showVisibility}
         showPinned={showPinned}

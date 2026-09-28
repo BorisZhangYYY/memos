@@ -6,6 +6,7 @@ export type FilterFactor =
   | "tagSearch"
   | "visibility"
   | "contentSearch"
+  | "celSearch"
   | "displayTime"
   | "pinned"
   | "property.hasLink"
@@ -41,6 +42,15 @@ export const parseFilterQuery = (query: string | null): MemoFilter[] => {
 export const stringifyFilters = (filters: MemoFilter[]): string => {
   return filters.map((filter) => `${filter.factor}:${encodeURIComponent(filter.value)}`).join(",");
 };
+
+/** The `?filter=` search string that carries these filters in a URL, or "" when there are none. */
+export const getFilterSearch = (filters: MemoFilter[]): string => {
+  const filterQuery = stringifyFilters(filters);
+  return filterQuery ? `?${new URLSearchParams({ filter: filterQuery })}` : "";
+};
+
+/** Search filters carry the user's query itself (plain words or a CEL expression), as opposed to facets. */
+export const isSearchFilter = (filter: MemoFilter): boolean => filter.factor === "contentSearch" || filter.factor === "celSearch";
 
 export const replaceFiltersByFactor = (filters: MemoFilter[], factor: FilterFactor, replacements: MemoFilter[]): MemoFilter[] => [
   ...filters.filter((filter) => filter.factor !== factor),
@@ -173,3 +183,17 @@ export function useMemoFilterContext() {
 
 // Alias for backwards compatibility during migration
 export const useMemoFilter = useMemoFilterContext;
+
+const NO_TERMS: string[] = [];
+
+/**
+ * The words of the active plain-text search, in the order the user typed them. Safe outside a
+ * provider (share previews, tests), where there is no search and therefore nothing to match.
+ */
+export function useContentSearchTerms(): string[] {
+  const filters = useContext(MemoFilterContext)?.filters;
+  return useMemo(() => {
+    const terms = (filters ?? []).filter((filter) => filter.factor === "contentSearch").map((filter) => filter.value);
+    return terms.length > 0 ? terms : NO_TERMS;
+  }, [filters]);
+}

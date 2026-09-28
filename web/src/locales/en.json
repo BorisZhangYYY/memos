@@ -30,6 +30,16 @@
     "checkbox": "Checkbox",
     "content-syntax": "Content syntax"
   },
+  "calendar": {
+    "close-day": "Close day",
+    "more-memos": "+{{count}} more",
+    "new-memo-on-day": "New memo on this day",
+    "next-year": "Next year",
+    "no-memos-in-month": "No memos in {{month}}",
+    "previous-year": "Previous year",
+    "resize-panel": "Resize day panel",
+    "select-month": "Select month"
+  },
   "editor": {
     "add-your-comment-here": "Add your comment here...",
     "new-memo": "New memo",
@@ -290,6 +300,20 @@
       "title": "Mood statistics"
     }
   },
+  "search": {
+    "access-error": "You don’t have access to these memos.",
+    "clear-query": "Clear query",
+    "edit-query": "Edit query",
+    "expression": "Search expression",
+    "expression-mode": "Expression",
+    "invalid-expression": "Search expression couldn’t be applied",
+    "keyboard-hint": "Enter to search · Shift+Enter for a new line",
+    "load-error": "Couldn’t load memos",
+    "mode": "Search mode",
+    "retry": "Retry",
+    "syntax-help": "Search syntax",
+    "text": "Text"
+  },
   "setting": {
     "preference": {
       "appearance-title": "Appearance",
@@ -406,6 +430,47 @@
       "title": "Webhooks",
       "no-webhooks-found": "No webhooks found."
     },
+    "memo-archive": {
+      "description": "Move your memos and attachments between Memos instances with a single archive file.",
+      "export-action": "Export",
+      "export-description": "Download every memo you created, including comments, archived memos, and attachment files, as a Memo Archive.",
+      "export-detail": "A ZIP file with one Markdown file and one JSON record per memo.",
+      "export-failed": "Export failed.",
+      "export-label": "Download archive",
+      "export-success": "Your archive is downloading.",
+      "export-title": "Export",
+      "exporting": "Exporting…",
+      "import-action": "Choose file",
+      "import-another": "Import another archive",
+      "import-confirm": "Import {{count}} memos",
+      "import-description": "Import a Memo Archive from this or another Memos instance. Memos keep their identifiers, so importing the same archive twice does not create duplicates.",
+      "import-detail": "Select a memos-archive-*.zip file.",
+      "import-failed": "Import failed.",
+      "import-label": "Upload archive",
+      "import-success": "Imported {{created}} new and updated {{updated}} memos.",
+      "import-title": "Import",
+      "importing": "Importing…",
+      "label": "Export & Import",
+      "policy-duplicate": "Create a copy",
+      "policy-duplicate-description": "Keep the existing memos and add the archive versions as new memos.",
+      "policy-question": "{{count}} of these memos already exist in your account. What should happen to them?",
+      "policy-replace": "Replace with the archive",
+      "policy-replace-description": "Overwrite their content and settings with the archive.",
+      "policy-skip": "Keep mine",
+      "policy-skip-description": "Leave the existing memos as they are.",
+      "reading": "Reading archive…",
+      "report-created": "Created",
+      "report-failed": "Failed",
+      "report-skipped": "Skipped",
+      "report-title": "Last import",
+      "report-updated": "Updated",
+      "review-attachments": "Attachment files",
+      "review-existing": "Already in your account",
+      "review-exported": "Exported by",
+      "review-file": "File",
+      "review-memos": "Memos in archive",
+      "review-new": "Will be created"
+    },
     "my-account": {
       "label": "My Account"
     },
@@ -480,6 +545,8 @@
       "week-start-day-description": "Controls the first day shown in calendar-style views."
     },
     "account": {
+      "attachment-storage": "Attachment storage",
+      "storage-usage-error": "Your attachment storage is unavailable.",
       "danger-area-description": "Irreversible account actions live here. Review them carefully before continuing.",
       "update-information": "Update Information",
       "openapi-reset": "Reset OpenAPI Key",
@@ -860,6 +927,7 @@
       "label": "Finance"
     },
     "memo-view": {
+      "change-icon": "Change view icon",
       "delete-confirm": "Are you sure you want to delete view `{{title}}`?",
       "delete-success": "View `{{title}}` deleted successfully"
     }
@@ -919,9 +987,16 @@
     "title": "Details"
   },
   "inbox": {
+    "delete-all-archived": "Delete all archived",
+    "delete-all-archived-confirm": "Permanently delete {{count}} archived notifications? This cannot be undone.",
+    "delete-archived-failed": "Could not delete {{count}} notifications. You can try again.",
+    "deleted-archived": "Deleted {{count}} archived notifications",
     "failed-to-load": "Failed to load inbox item",
     "memo-comment": "{{user}} has a comment on your {{memo}}.",
     "no-archived": "No archived notifications",
+    "space-invitation": "invited you to join a space",
+    "space-invitation-accepted": "You joined this space.",
+    "space-invitation-open": "Open space",
     "unread": "Unread",
     "no-unread": "No unread notifications"
   },
@@ -1173,6 +1248,15 @@
   },
   "memo": {
     "copy-link": "Copy Link",
+    "move": {
+      "title": "Move to Space",
+      "description": "Choose where this memo belongs and who can read it.",
+      "unassigned": "Unassigned",
+      "confirm": "Move",
+      "success": "Memo moved",
+      "space-audience": "Members of {{space}} will be able to read this memo.",
+      "history": "Existing reactions stay with this memo. Comments and linked memos keep their own access rules."
+    },
     "show-less": "Show less",
     "click-to-show-sensitive-content": "Click to show sensitive content",
     "task-actions": {
@@ -1380,10 +1464,10 @@
       "context-section": "How we work together",
       "context-section-description": "These longer fields support Markdown. Use lists, emphasis, links, and headings when they make the profile clearer.",
       "create": "Create profile",
-      "edit-description": "Everything is optional. This private context helps your agents work with you in a way that feels natural.",
+      "edit-description": "Everything is optional. Use this private space to record what matters to you.",
       "edit-tab": "Edit",
       "edit-title": "Edit my profile",
-      "empty-description": "Add the context you want Memos and your agents to know. Leave anything blank and change it whenever you like.",
+      "empty-description": "Write down the background, preferences, and goals you want to keep in one place. Leave anything blank and change it whenever you like.",
       "empty-title": "Make Memos feel more like yours",
       "export": "Export JSON",
       "goals": "Current directions",
@@ -1400,7 +1484,7 @@
       "life-stage-placeholder": "What season of life are you in right now?",
       "live-preview": "Live preview",
       "preferred-address": "Preferred name",
-      "preferred-address-placeholder": "How should Memos and your agents address you?",
+      "preferred-address-placeholder": "What name would you like to use here?",
       "private-note": "Only visible to you",
       "remove-interest-tag": "Remove interest {{tag}}",
       "preview-tab": "Preview",
@@ -1412,6 +1496,20 @@
     }
   },
   "space": {
+    "icon": {
+      "change": "Change space icon",
+      "kind": "Icon type",
+      "icons": "Icons",
+      "emoji": "Emoji",
+      "search-icons": "Search icons…",
+      "search-emoji": "Search or paste emoji…",
+      "no-results": "No matches",
+      "emoji-help": "Choose a common emoji or paste your own.",
+      "reset": "Reset to default",
+      "use-emoji": "Use {{emoji}}"
+    },
+    "unavailable": "This space does not exist or you don’t have access to it.",
+    "back-to-memos": "Back to Memos",
     "create": "Create space",
     "create-description": "Create a shared place for memos and members.",
     "create-success": "Space created",

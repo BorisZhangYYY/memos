@@ -49,6 +49,16 @@
     "sso-signup-tip": "使用下方提供者登入以建立帳號。",
     "welcome-back": "歡迎回來。"
   },
+  "calendar": {
+    "close-day": "關閉當天",
+    "more-memos": "還有 {{count}} 條",
+    "new-memo-on-day": "在這一天新增備忘錄",
+    "next-year": "下一年",
+    "no-memos-in-month": "{{month}} 沒有備忘錄",
+    "previous-year": "上一年",
+    "resize-panel": "調整當天面板寬度",
+    "select-month": "選擇月份"
+  },
   "demo": {
     "banner-description": "這裡的改動是暫時的，可能會被重置。",
     "banner-title": "Memos demo",
@@ -549,6 +559,8 @@
       "web-clipper-title": "搭配 Memos 網頁剪藏器使用令牌"
     },
     "account": {
+      "attachment-storage": "附件佔用空間",
+      "storage-usage-error": "暫時無法取得你的附件佔用空間。",
       "change-password": "變更密碼",
       "danger-area": "危險區域",
       "danger-area-description": "此處為不可逆的帳號操作。請在繼續之前仔細檢閱。",

@@ -22,6 +22,7 @@ import type { MemoHeaderProps } from "../types";
 import MemoSpaceBadge from "./MemoSpaceBadge";
 
 const MemoHeader: React.FC<MemoHeaderProps> = ({
+  timeDisplay = "relative",
   showCreator,
   showVisibility,
   showPinned,
@@ -46,6 +47,8 @@ const MemoHeader: React.FC<MemoHeaderProps> = ({
 
   const timeValue = isArchived ? (
     memoDisplayTime?.toLocaleString(i18n.language)
+  ) : timeDisplay === "time" ? (
+    memoDisplayTime?.toLocaleTimeString(i18n.language, { hour: "numeric", minute: "2-digit" })
   ) : (
     <RelativeTime date={memoDisplayTime} format={relativeTimeFormat} />
   );

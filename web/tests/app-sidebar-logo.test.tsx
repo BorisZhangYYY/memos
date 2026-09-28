@@ -91,6 +91,7 @@ vi.mock("@/contexts/InstanceContext", () => ({
 }));
 
 vi.mock("@/contexts/MemoFilterContext", () => ({
+  getFilterSearch: () => "",
   stringifyFilters: () => "",
   replaceFiltersByFactor: (filters: unknown[]) => filters,
   useMemoFilterContext: () => ({
@@ -199,7 +200,7 @@ describe("App sidebar logo", () => {
     expect(screen.getByRole("button", { name: "space.switch: common.memos" })).toHaveTextContent("Memos logo");
     fireEvent.click(screen.getByRole("button", { name: "editor.new-memo" }));
     expect(globalEditorState.openEditor).toHaveBeenCalledOnce();
-    expect(screen.queryByText("common.calendar")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "common.calendar" })).toBeInTheDocument();
   });
 
   it.each([
@@ -485,9 +486,8 @@ describe("App sidebar logo", () => {
     expectActiveNavPill(attachments, "common.attachments");
 
     fireEvent.click(scopeTrigger);
-    expect(await screen.findByText("Calendar")).toBeInTheDocument();
-    expectActiveNavPill(screen.getByRole("button", { name: "common.home" }), "common.home");
-    expect(screen.queryByRole("menuitem", { name: "common.explore" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "common.calendar" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "common.home" })).toBeInTheDocument();
   });
 
   it.each([

@@ -217,7 +217,8 @@ export function useUpdateMemo() {
       });
       return memo;
     },
-    onMutate: async ({ update }) => {
+    onMutate: async ({ update, updateMask }) => {
+      if (updateMask.includes("space")) return { previousMemo: undefined };
       if (!update.name) {
         return { previousMemo: undefined };
       }
@@ -247,7 +248,10 @@ export function useUpdateMemo() {
         queryClient.invalidateQueries({ queryKey: memoKeys.all });
       }
     },
-    onSuccess: (updatedMemo) => {
+    onSuccess: (updatedMemo, { updateMask }) => {
+      if (updateMask.includes("space")) {
+        queryClient.invalidateQueries({ queryKey: memoKeys.all });
+      }
       // Update cache with server response
       queryClient.setQueryData(memoKeys.detail(updatedMemo.name), updatedMemo);
       patchMemoInCollectionQueries(queryClient, updatedMemo);

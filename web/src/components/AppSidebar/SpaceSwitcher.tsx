@@ -95,7 +95,7 @@ function SpaceSwitcher({ className }: { className?: string }) {
           <span className="flex min-w-0 flex-1 items-center overflow-hidden">
             {selectedSpaceName ? (
               <>
-                <SpaceMark />
+                <SpaceMark icon={selectedSpace?.icon} />
                 <span className="ms-1.5 flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
                   <span className="block truncate text-[14px] font-medium leading-4 tracking-[-0.01em] text-foreground">
                     {selectedSpace?.title || t("space.current")}
@@ -144,7 +144,7 @@ function SpaceSwitcher({ className }: { className?: string }) {
                       onSelect={() => selectSpace(space)}
                       ariaLabel={showUid && uid ? `${space.title} (${uid})` : space.title}
                     >
-                      <SpaceMark size="sm" />
+                      <SpaceMark icon={space.icon} size="sm" />
                       <span className="min-w-0 flex-1 overflow-hidden">
                         <span className="block max-w-full truncate font-medium">{space.title}</span>
                         {showUid && uid ? (

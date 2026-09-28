@@ -33,7 +33,9 @@ type MemoView struct {
 	Title string `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
 	// The CEL filter expression for the memo view, using the same grammar as the
 	// ListMemos `filter` argument. Reuse it by passing this value to ListMemos.
-	Filter        string `protobuf:"bytes,3,opt,name=filter,proto3" json:"filter,omitempty"`
+	Filter string `protobuf:"bytes,3,opt,name=filter,proto3" json:"filter,omitempty"`
+	// Optional display icon. Omit with the "icon" update mask to reset it.
+	Icon          *MemoView_Icon `protobuf:"bytes,4,opt,name=icon,proto3" json:"icon,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -87,6 +89,13 @@ func (x *MemoView) GetFilter() string {
 		return x.Filter
 	}
 	return ""
+}
+
+func (x *MemoView) GetIcon() *MemoView_Icon {
+	if x != nil {
+		return x.Icon
+	}
+	return nil
 }
 
 type ListMemoViewsRequest struct {
@@ -390,15 +399,102 @@ func (x *DeleteMemoViewRequest) GetName() string {
 	return ""
 }
 
+type MemoView_Icon struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Value:
+	//
+	//	*MemoView_Icon_Emoji
+	//	*MemoView_Icon_Lucide
+	Value         isMemoView_Icon_Value `protobuf_oneof:"value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MemoView_Icon) Reset() {
+	*x = MemoView_Icon{}
+	mi := &file_api_v1_memo_view_service_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MemoView_Icon) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MemoView_Icon) ProtoMessage() {}
+
+func (x *MemoView_Icon) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_memo_view_service_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MemoView_Icon.ProtoReflect.Descriptor instead.
+func (*MemoView_Icon) Descriptor() ([]byte, []int) {
+	return file_api_v1_memo_view_service_proto_rawDescGZIP(), []int{0, 0}
+}
+
+func (x *MemoView_Icon) GetValue() isMemoView_Icon_Value {
+	if x != nil {
+		return x.Value
+	}
+	return nil
+}
+
+func (x *MemoView_Icon) GetEmoji() string {
+	if x != nil {
+		if x, ok := x.Value.(*MemoView_Icon_Emoji); ok {
+			return x.Emoji
+		}
+	}
+	return ""
+}
+
+func (x *MemoView_Icon) GetLucide() string {
+	if x != nil {
+		if x, ok := x.Value.(*MemoView_Icon_Lucide); ok {
+			return x.Lucide
+		}
+	}
+	return ""
+}
+
+type isMemoView_Icon_Value interface {
+	isMemoView_Icon_Value()
+}
+
+type MemoView_Icon_Emoji struct {
+	Emoji string `protobuf:"bytes,1,opt,name=emoji,proto3,oneof"`
+}
+
+type MemoView_Icon_Lucide struct {
+	Lucide string `protobuf:"bytes,2,opt,name=lucide,proto3,oneof"`
+}
+
+func (*MemoView_Icon_Emoji) isMemoView_Icon_Value() {}
+
+func (*MemoView_Icon_Lucide) isMemoView_Icon_Value() {}
+
 var File_api_v1_memo_view_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_memo_view_service_proto_rawDesc = "" +
 	"\n" +
-	"\x1eapi/v1/memo_view_service.proto\x12\fmemos.api.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x17google/api/client.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\"\x9f\x01\n" +
+	"\x1eapi/v1/memo_view_service.proto\x12\fmemos.api.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x17google/api/client.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\"\x98\x02\n" +
 	"\bMemoView\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12\x19\n" +
 	"\x05title\x18\x02 \x01(\tB\x03\xe0A\x02R\x05title\x12\x1b\n" +
-	"\x06filter\x18\x03 \x01(\tB\x03\xe0A\x02R\x06filter:B\xeaA?\n" +
+	"\x06filter\x18\x03 \x01(\tB\x03\xe0A\x02R\x06filter\x124\n" +
+	"\x04icon\x18\x04 \x01(\v2\x1b.memos.api.v1.MemoView.IconB\x03\xe0A\x01R\x04icon\x1aA\n" +
+	"\x04Icon\x12\x16\n" +
+	"\x05emoji\x18\x01 \x01(\tH\x00R\x05emoji\x12\x18\n" +
+	"\x06lucide\x18\x02 \x01(\tH\x00R\x06lucideB\a\n" +
+	"\x05value:B\xeaA?\n" +
 	"\x15memos.api.v1/MemoView\x12\x19users/{user}/views/{view}*\x05views2\x04view\"M\n" +
 	"\x14ListMemoViewsRequest\x125\n" +
 	"\x06parent\x18\x01 \x01(\tB\x1d\xe0A\x02\xfaA\x17\x12\x15memos.api.v1/MemoViewR\x06parent\"N\n" +
@@ -439,7 +535,7 @@ func file_api_v1_memo_view_service_proto_rawDescGZIP() []byte {
 	return file_api_v1_memo_view_service_proto_rawDescData
 }
 
-var file_api_v1_memo_view_service_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_api_v1_memo_view_service_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_api_v1_memo_view_service_proto_goTypes = []any{
 	(*MemoView)(nil),              // 0: memos.api.v1.MemoView
 	(*ListMemoViewsRequest)(nil),  // 1: memos.api.v1.ListMemoViewsRequest
@@ -448,29 +544,31 @@ var file_api_v1_memo_view_service_proto_goTypes = []any{
 	(*CreateMemoViewRequest)(nil), // 4: memos.api.v1.CreateMemoViewRequest
 	(*UpdateMemoViewRequest)(nil), // 5: memos.api.v1.UpdateMemoViewRequest
 	(*DeleteMemoViewRequest)(nil), // 6: memos.api.v1.DeleteMemoViewRequest
-	(*fieldmaskpb.FieldMask)(nil), // 7: google.protobuf.FieldMask
-	(*emptypb.Empty)(nil),         // 8: google.protobuf.Empty
+	(*MemoView_Icon)(nil),         // 7: memos.api.v1.MemoView.Icon
+	(*fieldmaskpb.FieldMask)(nil), // 8: google.protobuf.FieldMask
+	(*emptypb.Empty)(nil),         // 9: google.protobuf.Empty
 }
 var file_api_v1_memo_view_service_proto_depIdxs = []int32{
-	0, // 0: memos.api.v1.ListMemoViewsResponse.memo_views:type_name -> memos.api.v1.MemoView
-	0, // 1: memos.api.v1.CreateMemoViewRequest.memo_view:type_name -> memos.api.v1.MemoView
-	0, // 2: memos.api.v1.UpdateMemoViewRequest.memo_view:type_name -> memos.api.v1.MemoView
-	7, // 3: memos.api.v1.UpdateMemoViewRequest.update_mask:type_name -> google.protobuf.FieldMask
-	1, // 4: memos.api.v1.MemoViewService.ListMemoViews:input_type -> memos.api.v1.ListMemoViewsRequest
-	3, // 5: memos.api.v1.MemoViewService.GetMemoView:input_type -> memos.api.v1.GetMemoViewRequest
-	4, // 6: memos.api.v1.MemoViewService.CreateMemoView:input_type -> memos.api.v1.CreateMemoViewRequest
-	5, // 7: memos.api.v1.MemoViewService.UpdateMemoView:input_type -> memos.api.v1.UpdateMemoViewRequest
-	6, // 8: memos.api.v1.MemoViewService.DeleteMemoView:input_type -> memos.api.v1.DeleteMemoViewRequest
-	2, // 9: memos.api.v1.MemoViewService.ListMemoViews:output_type -> memos.api.v1.ListMemoViewsResponse
-	0, // 10: memos.api.v1.MemoViewService.GetMemoView:output_type -> memos.api.v1.MemoView
-	0, // 11: memos.api.v1.MemoViewService.CreateMemoView:output_type -> memos.api.v1.MemoView
-	0, // 12: memos.api.v1.MemoViewService.UpdateMemoView:output_type -> memos.api.v1.MemoView
-	8, // 13: memos.api.v1.MemoViewService.DeleteMemoView:output_type -> google.protobuf.Empty
-	9, // [9:14] is the sub-list for method output_type
-	4, // [4:9] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	7,  // 0: memos.api.v1.MemoView.icon:type_name -> memos.api.v1.MemoView.Icon
+	0,  // 1: memos.api.v1.ListMemoViewsResponse.memo_views:type_name -> memos.api.v1.MemoView
+	0,  // 2: memos.api.v1.CreateMemoViewRequest.memo_view:type_name -> memos.api.v1.MemoView
+	0,  // 3: memos.api.v1.UpdateMemoViewRequest.memo_view:type_name -> memos.api.v1.MemoView
+	8,  // 4: memos.api.v1.UpdateMemoViewRequest.update_mask:type_name -> google.protobuf.FieldMask
+	1,  // 5: memos.api.v1.MemoViewService.ListMemoViews:input_type -> memos.api.v1.ListMemoViewsRequest
+	3,  // 6: memos.api.v1.MemoViewService.GetMemoView:input_type -> memos.api.v1.GetMemoViewRequest
+	4,  // 7: memos.api.v1.MemoViewService.CreateMemoView:input_type -> memos.api.v1.CreateMemoViewRequest
+	5,  // 8: memos.api.v1.MemoViewService.UpdateMemoView:input_type -> memos.api.v1.UpdateMemoViewRequest
+	6,  // 9: memos.api.v1.MemoViewService.DeleteMemoView:input_type -> memos.api.v1.DeleteMemoViewRequest
+	2,  // 10: memos.api.v1.MemoViewService.ListMemoViews:output_type -> memos.api.v1.ListMemoViewsResponse
+	0,  // 11: memos.api.v1.MemoViewService.GetMemoView:output_type -> memos.api.v1.MemoView
+	0,  // 12: memos.api.v1.MemoViewService.CreateMemoView:output_type -> memos.api.v1.MemoView
+	0,  // 13: memos.api.v1.MemoViewService.UpdateMemoView:output_type -> memos.api.v1.MemoView
+	9,  // 14: memos.api.v1.MemoViewService.DeleteMemoView:output_type -> google.protobuf.Empty
+	10, // [10:15] is the sub-list for method output_type
+	5,  // [5:10] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_memo_view_service_proto_init() }
@@ -478,13 +576,17 @@ func file_api_v1_memo_view_service_proto_init() {
 	if File_api_v1_memo_view_service_proto != nil {
 		return
 	}
+	file_api_v1_memo_view_service_proto_msgTypes[7].OneofWrappers = []any{
+		(*MemoView_Icon_Emoji)(nil),
+		(*MemoView_Icon_Lucide)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_memo_view_service_proto_rawDesc), len(file_api_v1_memo_view_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

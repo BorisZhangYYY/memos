@@ -168,7 +168,7 @@ auth operation is the read-only `AuthService_GetCurrentUser` ("whoami").
 | `MemoService_ListMemoRelations` | `memo_list_memo_relations` | Read memo relations. |
 | `MemoService_SetMemoRelations` | `memo_set_memo_relations` | Replace memo relations. |
 | `AttachmentService_ListAttachments` | `attachment_list_attachments` | List the user's attachments. |
-| `AttachmentService_CreateAttachment` | `attachment_create_attachment` | Upload an attachment. |
+| `AttachmentService_CreateAttachment` | `attachment_create_attachment` | Upload an image or file, optionally attaching it to an existing memo. |
 | `AttachmentService_GetAttachment` | `attachment_get_attachment` | Read attachment metadata/content. |
 | `AttachmentService_DeleteAttachment` | `attachment_delete_attachment` | Delete an attachment. |
 | `ShortcutService_ListShortcuts` | `shortcut_list_shortcuts` | Reuse saved CEL filters for memo queries. |
@@ -201,6 +201,18 @@ auth operation is the read-only `AuthService_GetCurrentUser` ("whoami").
 | `UserService_GetUserSetting` | `user_get_user_setting` | Read the caller's `GENERAL`, `TAGS`, or `PERSONA` setting (uppercase key). |
 | `UserService_UpdateUserSetting` | `user_update_user_setting` | Update `GENERAL`, `TAGS`, or `PERSONA`; field masks use proto snake_case names. |
 | `AuthService_GetCurrentUser` | `auth_get_current_user` | Resolve the authenticated user. |
+
+To write an illustrated memo, call `memo_create_memo` first, then call
+`attachment_create_attachment` with `body.filename`, `body.type` (for example
+`image/png`), `body.content` (base64 bytes without a `data:` prefix), and
+`body.memo` set to the new memo's name. The response contains the attachment
+name. An inline image can be added to the memo content with
+`![description](/file/{attachment.name}/{filename})`. The upload tool was
+already in the allowlist; its description now makes this sequence discoverable.
+
+The personal profile is available to MCP clients through
+`user_get_user_setting` with `setting: "PERSONA"`. This does not require any
+agent-facing text in the Memos interface.
 
 The allowlist deliberately excludes sign-in/out and token refresh, user
 administration, webhooks (including the generic user-setting path), personal access tokens, linked identities and SSO,

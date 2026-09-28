@@ -198,9 +198,9 @@ export function useCreateSpace(viewerName: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ title, description, spaceId }: { title: string; description?: string; spaceId: string }) =>
+    mutationFn: ({ title, description, spaceId, icon }: { title: string; description?: string; spaceId: string; icon?: Space["icon"] }) =>
       spaceServiceClient.createSpace({
-        space: create(SpaceSchema, { title, description }),
+        space: create(SpaceSchema, { title, description, icon }),
         spaceId,
       }),
     onSuccess: (space) => {
@@ -299,6 +299,8 @@ export function useAcceptSpaceInvitation(viewerName: string) {
       // promote that summary into the member list; refresh the authoritative list.
       void queryClient.invalidateQueries({ queryKey: spaceKeys.list(viewerName), exact: true });
       invalidateMembershipSensitiveQueries(queryClient);
+      // The server resolves the matching inbox notification.
+      void queryClient.invalidateQueries({ queryKey: userKeys.notifications() });
     },
   });
 }
@@ -321,6 +323,8 @@ export function useDeclineSpaceInvitation(viewerName: string) {
           removeByName(invitations, name),
         );
       }
+      // The server removes the matching inbox notification.
+      void queryClient.invalidateQueries({ queryKey: userKeys.notifications() });
     },
   });
 }

@@ -24,12 +24,19 @@ message InboxMessage {
     string time_zone = 6;
   }
 
+  message SpaceInvitationPayload {
+    // The space the receiver was invited to join. The offered role and the
+    // invitation state are resolved from the space membership at read time.
+    int32 space_id = 1;
+  }
+
   // The type of the inbox message.
   Type type = 1;
   oneof payload {
     MemoCommentPayload memo_comment = 2;
     MemoMentionPayload memo_mention = 3;
     ReminderPayload reminder = 4;
+    SpaceInvitationPayload space_invitation = 5;
   }
 
   enum Type {
@@ -40,5 +47,7 @@ message InboxMessage {
     MEMO_MENTION = 2;
     // Scheduled reminder notification.
     REMINDER = 3;
+    // Space invitation notification.
+    SPACE_INVITATION = 4;
   }
 }

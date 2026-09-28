@@ -201,6 +201,55 @@ func TestBuildToolFromOperationIncludesRequestBodySchema(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestMemoRelationInputsAreInlineForLLMProviders(t *testing.T) {
+	spec, err := loadOpenAPISpec("../../../proto/gen/openapi.yaml")
+	require.NoError(t, err)
+	registry, err := buildOperationRegistry(spec)
+	require.NoError(t, err)
+
+	for _, operationID := range []string{
+		"MemoService_CreateMemo",
+		"MemoService_CreateMemoComment",
+		"MemoService_SetMemoRelations",
+		"MemoService_UpdateMemo",
+	} {
+		t.Run(operationID, func(t *testing.T) {
+			tool, _ := buildToolFromOperation(registry[operationID])
+			input := requireJSONSchema(t, tool.InputSchema)
+			body := requireJSONSchema(t, schemaProperties(input["properties"])["body"])
+			relations := requireJSONSchema(t, schemaProperties(body["properties"])["relations"])
+			items := requireJSONSchema(t, relations["items"])
+			itemJSON, err := json.Marshal(items)
+			require.NoError(t, err)
+			require.NotContains(t, string(itemJSON), `"$ref"`)
+			require.NotContains(t, string(itemJSON), `"allOf"`)
+			require.NotContains(t, schemaProperties(input["$defs"]), "MemoRelation")
+			require.NotContains(t, schemaProperties(input["$defs"]), "MemoRelation_Memo")
+
+			bodyArguments := map[string]any{"relations": []any{map[string]any{
+				"memo":        map[string]any{"name": "memos/one"},
+				"relatedMemo": map[string]any{"name": "memos/two"},
+				"type":        "REFERENCE",
+			}}}
+			arguments := map[string]any{"body": bodyArguments}
+			if operationID == "MemoService_CreateMemo" || operationID == "MemoService_CreateMemoComment" {
+				bodyArguments["content"] = "A memo"
+			}
+			if operationID != "MemoService_CreateMemo" {
+				arguments["memo"] = "memos/one"
+			}
+			require.NoError(t, validateToolArguments(input, arguments))
+
+			bodyArguments["relations"] = []any{map[string]any{
+				"memo":        "memos/one",
+				"relatedMemo": map[string]any{"name": "memos/two"},
+				"type":        "REFERENCE",
+			}}
+			require.Error(t, validateToolArguments(input, arguments))
+		})
+	}
+}
+
 func TestBuildToolFromOperationTailorsRequestBodySchemas(t *testing.T) {
 	spec, err := loadOpenAPISpec("../../../proto/gen/openapi.yaml")
 	require.NoError(t, err)
@@ -534,6 +583,8 @@ func TestBuildToolFromOperationExposesCreateAttachment(t *testing.T) {
 
 	tool, operation := buildToolFromOperation(registry["AttachmentService_CreateAttachment"])
 	require.Equal(t, "attachment_create_attachment", tool.Name)
+	require.Contains(t, tool.Description, "body.memo")
+	require.Contains(t, tool.Description, "base64")
 	require.Equal(t, "POST", operation.Method)
 	require.False(t, tool.Annotations.ReadOnlyHint)
 	require.False(t, *tool.Annotations.DestructiveHint)
@@ -551,12 +602,14 @@ func TestBuildToolFromOperationExposesCreateAttachment(t *testing.T) {
 	require.True(t, ok)
 	require.Contains(t, body["properties"], "filename")
 	require.Contains(t, body["properties"], "content")
+	require.Contains(t, body["properties"], "memo")
 
 	err = validateToolArguments(input, map[string]any{
 		"body": map[string]any{
 			"filename": "screenshot.png",
 			"type":     "image/png",
 			"content":  "aGVsbG8=",
+			"memo":     "memos/example",
 		},
 	})
 	require.NoError(t, err)

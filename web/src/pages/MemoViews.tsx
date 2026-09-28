@@ -9,6 +9,7 @@ import {
   FilterIcon,
   MapPinIcon,
   MoreVerticalIcon,
+  ParenthesesIcon,
   PencilIcon,
   PinIcon,
   PlusIcon,
@@ -23,6 +24,8 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useLocation, useNavigate } from "react-router-dom";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import CustomIconPicker from "@/components/CustomIconPicker";
+import MemoViewIcon from "@/components/MemoViewIcon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -37,7 +40,7 @@ import { useMemoViews, userKeys } from "@/hooks/useUserQueries";
 import { handleError } from "@/lib/error";
 import { getMemoViewId } from "@/lib/memo-views";
 import { cn } from "@/lib/utils";
-import { MemoView, MemoViewSchema } from "@/types/proto/api/v1/memo_view_service_pb";
+import { MemoView, MemoView_IconSchema, MemoViewSchema } from "@/types/proto/api/v1/memo_view_service_pb";
 import { useTranslate } from "@/utils/i18n";
 
 const memoViewExamples = [
@@ -271,6 +274,7 @@ const MemoViews = () => {
           name: state.memoView.name,
           title: state.memoView.title,
           filter: state.memoView.filter,
+          icon: state.memoView.icon,
         }),
       );
       setIsCreateFormOpen(true);
@@ -292,6 +296,7 @@ const MemoViews = () => {
         name: draft.name,
         title: draft.title || example.title,
         filter: example.filter,
+        icon: draft.icon,
       }),
     );
     setIsCreateFormOpen(true);
@@ -313,6 +318,7 @@ const MemoViews = () => {
         name: memoView.name,
         title: memoView.title,
         filter: memoView.filter,
+        icon: memoView.icon,
       }),
     );
     setIsCreateFormOpen(true);
@@ -332,7 +338,7 @@ const MemoViews = () => {
       validateState.setLoading();
       await memoViewServiceClient.createMemoView({
         parent: user.name,
-        memoView: { name: "", title: draft.title, filter: draft.filter },
+        memoView: { name: "", title: draft.title, filter: draft.filter, icon: draft.icon },
         validateOnly: true,
       });
       validateState.setFinish();
@@ -361,7 +367,7 @@ const MemoViews = () => {
       createState.setLoading();
       await memoViewServiceClient.createMemoView({
         parent: user.name,
-        memoView: { name: "", title: draft.title, filter: draft.filter },
+        memoView: { name: "", title: draft.title, filter: draft.filter, icon: draft.icon },
       });
       await queryClient.invalidateQueries({ queryKey: userKeys.memoViews(user.name) });
       createState.setFinish();
@@ -386,7 +392,7 @@ const MemoViews = () => {
       updateState.setLoading();
       await memoViewServiceClient.updateMemoView({
         memoView: draft,
-        updateMask: create(FieldMaskSchema, { paths: ["title", "filter"] }),
+        updateMask: create(FieldMaskSchema, { paths: ["title", "filter", "icon"] }),
       });
       await queryClient.invalidateQueries({ queryKey: userKeys.memoViews(user?.name) });
       updateState.setFinish();
@@ -475,15 +481,21 @@ const MemoViews = () => {
               <div className="grid gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="view-title">{t("common.title")}</Label>
-                  <Input
-                    id="view-title"
-                    value={draft.title}
-                    placeholder="Pinned, Recent notes, Work"
-                    onChange={(event) => setDraftState({ title: event.target.value })}
-                  />
-                  <p className="text-xs leading-5 text-muted-foreground">
-                    Prefix the title with an emoji if you want it to appear in the sidebar.
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <CustomIconPicker
+                      value={draft.icon}
+                      onChange={(icon) => setDraftState({ icon: icon ? create(MemoView_IconSchema, icon) : undefined })}
+                      label={t("setting.memo-view.change-icon")}
+                      fallback={ParenthesesIcon}
+                      disabled={isSaving}
+                    />
+                    <Input
+                      id="view-title"
+                      value={draft.title}
+                      placeholder="Pinned, Recent notes, Work"
+                      onChange={(event) => setDraftState({ title: event.target.value })}
+                    />
+                  </div>
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="view-filter">{t("common.filter")}</Label>
@@ -538,7 +550,10 @@ const MemoViews = () => {
                     className="grid gap-3 bg-background px-4 py-3 sm:grid-cols-[minmax(10rem,14rem)_minmax(0,1fr)_2rem]"
                   >
                     <div className="min-w-0">
-                      <div className="truncate text-sm font-medium text-foreground">{memoView.title}</div>
+                      <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                        <MemoViewIcon icon={memoView.icon} className="size-4 text-base" />
+                        <span className="truncate">{memoView.title}</span>
+                      </div>
                       <div className="mt-1 font-mono text-xs text-muted-foreground">{getMemoViewId(memoView.name)}</div>
                     </div>
                     <pre className="min-w-0 overflow-x-auto rounded-md bg-muted/50 px-3 py-2 font-mono text-xs leading-5 text-muted-foreground">

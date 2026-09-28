@@ -4,6 +4,7 @@ import {
   ArchiveIcon,
   ArrowRightIcon,
   BellIcon,
+  CalendarDaysIcon,
   ChevronDownIcon,
   EarthIcon,
   FileAudioIcon,
@@ -30,6 +31,7 @@ import { Link, matchPath, useLocation, useNavigate, useSearchParams } from "reac
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { MemoDetailSidebar } from "@/components/MemoDetailSidebar";
 import MemoDisplaySettingMenu from "@/components/MemoDisplaySettingMenu";
+import MemoViewIcon from "@/components/MemoViewIcon";
 import { DEFAULT_SETTING_SECTION, SETTINGS_SECTIONS } from "@/components/Settings/settingSections";
 import StatisticsView from "@/components/StatisticsView";
 import UserMenu from "@/components/UserMenu";
@@ -42,7 +44,7 @@ import { type AttachmentSection, type InboxFilter, useAppSidebar } from "@/conte
 import { useAuth } from "@/contexts/AuthContext";
 import { useGlobalMemoEditor } from "@/contexts/GlobalMemoEditorContext";
 import { useInstance } from "@/contexts/InstanceContext";
-import { stringifyFilters, useMemoFilterContext } from "@/contexts/MemoFilterContext";
+import { getFilterSearch, useMemoFilterContext } from "@/contexts/MemoFilterContext";
 import { useSpaceContext } from "@/contexts/SpaceContext";
 import { useAttachmentLibraryStats } from "@/hooks/useAttachmentLibrary";
 import useCurrentUser from "@/hooks/useCurrentUser";
@@ -55,7 +57,7 @@ import {
   BUILTIN_TASKS_VIEW_ID,
   getMemoScopePath,
   getMemoViewId,
-  isMemoScopeRoute,
+  isMemoCollectionRoute,
   type PrimaryMemoScope,
   resolveMemoScope,
 } from "@/lib/memo-views";
@@ -118,7 +120,7 @@ const ViewsSection = ({ manageActive = false }: { manageActive?: boolean }) => {
 
   const handleView = (viewId: string) => {
     setMemoView(selectedMemoView === viewId ? undefined : viewId);
-    if (!isMemoScopeRoute(location.pathname)) navigate(ROUTES.HOME);
+    if (!isMemoCollectionRoute(location.pathname)) navigate(ROUTES.HOME);
     setMobileOpen(false);
   };
 
@@ -177,6 +179,7 @@ const ViewsSection = ({ manageActive = false }: { manageActive?: boolean }) => {
               aria-pressed={active || undefined}
               className="flex h-full min-w-0 flex-1 items-center gap-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
             >
+              <MemoViewIcon icon={memoView.icon} className="size-4" />
               <span className="min-w-0 flex-1 truncate">{memoView.title}</span>
             </button>
             <DropdownMenu>
@@ -274,7 +277,7 @@ const CollectionSidebarContent = ({ context }: { context: MemoStatsContext }) =>
 
   // Off the collection routes (the library shown as fallback content), calendar and tag
   // clicks must land somewhere that renders the filtered feed.
-  const onCollectionRoute = isMemoScopeRoute(location.pathname) || !!profileMatch;
+  const onCollectionRoute = isMemoCollectionRoute(location.pathname) || !!profileMatch;
   const filterTarget = onCollectionRoute ? undefined : context === "explore" ? ROUTES.EXPLORE : ROUTES.HOME;
   const tagStateScope = isUserLevelCollection
     ? (statsUserName ?? context)
@@ -437,8 +440,8 @@ const MemoDetailSidebarContent = () => {
 const RouteSidebarContent = () => {
   const location = useLocation();
   const kind = getSidebarRouteKind(location.pathname);
-  if (kind === "home" || kind === "archived" || kind === "explore" || kind === "profile") {
-    return <CollectionSidebarContent context={kind} />;
+  if (kind === "home" || kind === "archived" || kind === "explore" || kind === "profile" || kind === "calendar" || kind === "map") {
+    return <CollectionSidebarContent context={kind === "calendar" || kind === "map" ? "home" : kind} />;
   }
   if (kind === "views") return <ViewsSection manageActive />;
   if (kind === "attachments") return <AttachmentsSidebarContent />;
@@ -523,14 +526,29 @@ const GlobalNavigation = () => {
   const ActiveScopeIcon = activeScopeItem.icon;
 
   const navigateToScope = (scope: PrimaryMemoScope) => {
-    const filterQuery = stringifyFilters(filters);
     setMemoScope(scope);
-    navigate({ pathname: getMemoScopePath(scope), search: filterQuery ? `?filter=${filterQuery}` : "" });
+    navigate({ pathname: getMemoScopePath(scope), search: getFilterSearch(filters) });
     setMobileOpen(false);
   };
 
   const items: GlobalNavItem[] = currentUser
     ? [
+        {
+          id: "calendar",
+          label: t("common.calendar"),
+          path: ROUTES.CALENDAR,
+          icon: CalendarDaysIcon,
+          active: routeKind === "calendar",
+          alwaysExpanded: true,
+        },
+        {
+          id: "map",
+          label: t("common.map"),
+          path: ROUTES.MAP,
+          icon: MapIcon,
+          active: routeKind === "map",
+          alwaysExpanded: true,
+        },
         {
           id: "attachments",
           label: t("common.attachments"),

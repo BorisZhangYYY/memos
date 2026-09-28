@@ -11,6 +11,7 @@ import MemoSpaceBadge from "@/components/MemoView/components/MemoSpaceBadge";
 import { createMemoNavigationState } from "@/components/MemoView/navigation";
 import { defaultMarkerIcon, MinimalAttributionControl, ThemedTileLayer } from "@/components/map/map-utils";
 import { useInfiniteMemos } from "@/hooks/useMemoQueries";
+import { combineCELFilters } from "@/lib/cel-filter";
 import { buildMemoCreatorFilter } from "@/lib/resource-names";
 import { cn } from "@/lib/utils";
 import { State } from "@/types/proto/api/v1/common_pb";
@@ -19,6 +20,7 @@ import { useTranslate } from "@/utils/i18n";
 
 interface Props {
   creator: string;
+  scopeFilter?: string;
   className?: string;
 }
 
@@ -50,21 +52,25 @@ const MapFitBounds = ({ memos }: { memos: Memo[] }) => {
   return null;
 };
 
-const UserMemoMap = ({ creator, className }: Props) => {
+const UserMemoMap = ({ creator, scopeFilter, className }: Props) => {
   const t = useTranslate();
   const location = useLocation();
   const parentPage = `${location.pathname}${location.search}`;
   const creatorFilter = useMemo(() => buildMemoCreatorFilter(creator), [creator]);
 
-  const { data, isLoading, isError } = useInfiniteMemos(
+  const { data, isLoading, isError, isFetching, hasNextPage, fetchNextPage } = useInfiniteMemos(
     {
       state: State.NORMAL,
       orderBy: "create_time desc",
       pageSize: 1000,
-      filter: creatorFilter,
+      filter: combineCELFilters(creatorFilter, scopeFilter, "has_location"),
     },
     { enabled: Boolean(creatorFilter) },
   );
+
+  useEffect(() => {
+    if (hasNextPage && !isFetching && !isError) void fetchNextPage();
+  }, [hasNextPage, isFetching, isError, fetchNextPage]);
 
   const memosWithLocation = useMemo(() => data?.pages.flatMap((page) => page.memos).filter((memo) => memo.location) || [], [data]);
 
