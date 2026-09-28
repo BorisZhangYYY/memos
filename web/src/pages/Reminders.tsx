@@ -779,7 +779,7 @@ const Reminders = ({ embedded = false, onOpenReminder }: Props) => {
                       />
                     ))}
                     {draftVisible && group.list?.name === draftGroupName && renderDraft(group.reminders.length > 0)}
-                    {showPerListCreateTargets && !draftVisible && group.list && (
+                    {showPerListCreateTargets && group.list && (!draftVisible || group.list.name !== draftGroupName) && (
                       <button
                         type="button"
                         data-reminder-list-create
