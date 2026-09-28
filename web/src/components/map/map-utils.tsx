@@ -5,13 +5,14 @@ import { AttributionControl, TileLayer } from "react-leaflet";
 import { useAuth } from "@/contexts/AuthContext";
 import { resolveTheme } from "@/utils/theme";
 
+const DEFAULT_TILE_URL = "https://tile.openstreetmap.de/{z}/{x}/{y}.png";
 const TILE_URLS = {
-  light: import.meta.env.VITE_MAP_TILE_URL_LIGHT || "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-  dark: import.meta.env.VITE_MAP_TILE_URL_DARK || "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+  light: import.meta.env.VITE_MAP_TILE_URL_LIGHT || DEFAULT_TILE_URL,
+  dark: import.meta.env.VITE_MAP_TILE_URL_DARK || DEFAULT_TILE_URL,
 } as const;
 const TILE_ATTRIBUTION =
   import.meta.env.VITE_MAP_TILE_ATTRIBUTION ||
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a> | <a href="https://www.openstreetmap.de/">OpenStreetMap Deutschland</a>';
 
 export const ThemedTileLayer = () => {
   const { userGeneralSetting } = useAuth();
