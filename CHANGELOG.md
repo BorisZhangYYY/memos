@@ -1,5 +1,39 @@
 # Changelog
 
+## [0.35.0](https://github.com/BorisZhangYYY/memos/compare/v0.34.0...v0.35.0) (2026-09-29)
+
+### Summary
+
+This release brings selected upstream organization, discovery, search, archive,
+and attachment features into the fork, and finishes the notification, map, and
+reminder interactions reviewed in the test environment.
+
+### Features
+
+* **Spaces:** receive invitation notifications, move Memos between Spaces, and
+  choose custom icons or emoji for Spaces.
+* **Calendar and map:** browse Memos by month and view located Memos on a
+  dedicated map.
+* **Search and views:** assign icons to Saved Views, use CEL expressions in
+  Quick Find, and highlight search matches in Memo content.
+* **Memo Archive:** export and import ZIP archives containing Memos and their
+  attachments.
+* **Attachments:** upload files in resumable chunks, see attachment storage
+  usage, and play audio at 0.5x or 0.75x speed.
+* **Notifications:** delete all archived notifications from the archived inbox.
+
+### Bug Fixes and Improvements
+
+* Use a keyless default map tile source so location maps render without a CARTO
+  API key; custom tile URL and attribution overrides remain available.
+* Keep other reminder lists' add targets visible while creating an inline
+  reminder in the All view.
+* Simplify profile text in the app and document the existing MCP profile-reading
+  and attachment-upload tools for agent clients.
+* Inline Memo relation input schemas in MCP tool definitions to avoid the
+  false recursion error reported by Moonshot's JSON Schema validator. The
+  relation argument structure remains unchanged.
+
 ## [0.34.0](https://github.com/BorisZhangYYY/memos/compare/v0.33.6...v0.34.0) (2026-09-25)
 
 ### Summary
