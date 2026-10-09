@@ -25,7 +25,7 @@ func mergeInstanceSettingMask(incoming, existing *v1pb.InstanceSetting, mask *fi
 	}
 	result := &v1pb.InstanceSetting{Name: incoming.Name}
 	if existing != nil {
-		result = proto.Clone(existing).(*v1pb.InstanceSetting)
+		proto.Merge(result, existing)
 	}
 	result.Name = incoming.Name
 	target := result.ProtoReflect()
