@@ -149,6 +149,14 @@ export const useCreateFinanceTransaction = () => {
   });
 };
 
+export const useVoidFinanceTransaction = () => {
+  const invalidate = useInvalidateFinance();
+  return useMutation({
+    mutationFn: (name: string) => financeServiceClient.deleteFinanceTransaction({ name }),
+    onSuccess: invalidate,
+  });
+};
+
 export const useAdjustFinanceWalletBalance = () => {
   const invalidate = useInvalidateFinance();
   return useMutation({

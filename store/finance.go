@@ -33,6 +33,8 @@ var (
 	ErrFinanceCategoryNotFound = errors.New("finance category not found")
 	// ErrFinanceTransactionNotFound indicates that a transaction was not found or belongs to another user.
 	ErrFinanceTransactionNotFound = errors.New("finance transaction not found")
+	// ErrFinanceTransactionVoided indicates that a transaction was already voided.
+	ErrFinanceTransactionVoided = errors.New("finance transaction already voided")
 	// ErrFinanceInsufficientBalance indicates that a wallet would become negative while negative balances are disabled.
 	ErrFinanceInsufficientBalance = errors.New("insufficient wallet balance")
 	// ErrFinanceArchivedResource indicates that an archived wallet or category was selected for a new transaction.
@@ -125,6 +127,7 @@ type FinanceTransaction struct {
 	AdjustmentDeltaMinor int64
 	BalanceBeforeMinor   int64
 	BalanceAfterMinor    int64
+	VoidedTs             *int64
 }
 
 // FindFinanceTransaction filters ledger transactions.
@@ -154,7 +157,7 @@ type UpdateFinanceTransaction struct {
 	Note                string
 }
 
-// DeleteFinanceTransaction identifies the transaction to reverse and delete.
+// DeleteFinanceTransaction identifies the transaction to void while retaining its audit snapshot.
 type DeleteFinanceTransaction struct {
 	ID        int32
 	CreatorID int32
@@ -162,6 +165,9 @@ type DeleteFinanceTransaction struct {
 
 // FinanceTransactionEffects returns signed per-wallet deltas for a transaction.
 func FinanceTransactionEffects(transaction *FinanceTransaction) map[int32]int64 {
+	if transaction.VoidedTs != nil {
+		return map[int32]int64{}
+	}
 	effects := map[int32]int64{}
 	switch transaction.Type {
 	case FinanceTransactionIncome:

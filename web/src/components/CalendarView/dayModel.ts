@@ -14,6 +14,8 @@ export interface CalendarDayEntry {
   text: string;
   /** Thumbnail of the memo's first image, when it has one. */
   thumbnailUrl?: string;
+  /** The memo's mood, when set. */
+  moodLevel?: number;
 }
 
 export interface CalendarDaySummary {
@@ -21,6 +23,8 @@ export interface CalendarDaySummary {
   memos: Memo[];
   /** Grid rows in time order, capped at MAX_DAY_ENTRIES. */
   entries: CalendarDayEntry[];
+  /** Visible moods for the day, including memo rows hidden by the grid's row cap. */
+  moodLevels: number[];
 }
 
 /** Day summaries keyed by ISO date (`YYYY-MM-DD`). Days without memos are absent. */
@@ -56,17 +60,21 @@ export const buildCalendarMonthModel = (
   const model: CalendarMonthModel = {};
   for (const { memo, time } of dated) {
     const date = dayjs(time).format(ISO_DATE_FORMAT);
-    const summary = (model[date] ??= { memos: [], entries: [] });
+    const summary = (model[date] ??= { memos: [], entries: [], moodLevels: [] });
     summary.memos.push(memo);
-    if (isRedacted?.(memo) || summary.entries.length >= MAX_DAY_ENTRIES) continue;
+    if (isRedacted?.(memo)) continue;
+    const moodLevel = memo.moodLevel >= 1 && memo.moodLevel <= 7 ? memo.moodLevel : undefined;
+    if (moodLevel) summary.moodLevels.push(moodLevel);
+    if (summary.entries.length >= MAX_DAY_ENTRIES) continue;
 
     const image = memo.attachments.find((attachment) => isImage(attachment.type));
     const text = firstLine(memo.snippet) || firstLine(memo.content);
-    if (!text && !image) continue;
+    if (!text && !image && !moodLevel) continue;
     summary.entries.push({
       memoName: memo.name,
       text,
       thumbnailUrl: image ? getAttachmentThumbnailUrl(image) : undefined,
+      moodLevel,
     });
   }
   return model;

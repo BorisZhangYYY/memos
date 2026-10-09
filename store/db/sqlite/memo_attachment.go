@@ -9,6 +9,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/usememos/memos/store"
+	"github.com/usememos/memos/store/db/moodhistory"
 )
 
 // ApplyMemoMutation atomically updates a memo, attachment bindings, and reference relations.
@@ -185,6 +186,7 @@ func replaceMemoReferenceRelations(ctx context.Context, executor memoUpdateExece
 
 type memoUpdateExecer interface {
 	ExecContext(context.Context, string, ...any) (sql.Result, error)
+	QueryRowContext(context.Context, string, ...any) *sql.Row
 }
 
 func applyMemoUpdate(ctx context.Context, executor memoUpdateExecer, update *store.UpdateMemo) error {
@@ -228,6 +230,9 @@ func applyMemoUpdate(ctx context.Context, executor memoUpdateExecer, update *sto
 	args = append(args, update.ID)
 	if _, err := executor.ExecContext(ctx, "UPDATE `memo` SET "+strings.Join(set, ", ")+" WHERE `id` = ?", args...); err != nil {
 		return errors.Wrap(err, "failed to update memo")
+	}
+	if update.Payload != nil || update.UID != nil || update.CreatedTs != nil {
+		return moodhistory.Adapter{Dialect: "sqlite"}.SyncMemo(ctx, executor, update.ID, false)
 	}
 	return nil
 }

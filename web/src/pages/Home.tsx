@@ -75,7 +75,9 @@ const Home = () => {
   );
   const updateReminder = useUpdateReminder();
   const moodPoints = useMemo(() => {
-    const timestamps = userStats?.memoCreatedTimestamps ?? [];
+    const timestamps = userStats?.moodCreatedTimestamps?.length
+      ? userStats.moodCreatedTimestamps
+      : (userStats?.memoCreatedTimestamps ?? []);
     const levels = userStats?.moodLevels ?? [];
     const memoNames = userStats?.moodMemoNames ?? [];
     const points: MoodPoint[] = [];

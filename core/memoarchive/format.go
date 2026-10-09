@@ -9,7 +9,7 @@ const (
 	// Format is the value of the manifest's format member.
 	Format = "memos-archive"
 	// FormatVersion is the newest version this package writes.
-	FormatVersion = "1.0"
+	FormatVersion = "1.1"
 	// FormatMajor is the major version this package reads.
 	FormatMajor = 1
 	// MediaType is the HTTP Content-Type of an export. It is deliberately not
@@ -68,13 +68,15 @@ type Counts struct {
 
 // Memo is the record stored at memos/<uid>.json.
 type Memo struct {
-	UID         string       `json:"uid"`
-	Creator     string       `json:"creator"`
-	CreateTime  string       `json:"createTime"`
-	UpdateTime  string       `json:"updateTime"`
-	State       string       `json:"state"`
-	Visibility  string       `json:"visibility"`
-	Pinned      bool         `json:"pinned"`
+	UID        string `json:"uid"`
+	Creator    string `json:"creator"`
+	CreateTime string `json:"createTime"`
+	UpdateTime string `json:"updateTime"`
+	State      string `json:"state"`
+	Visibility string `json:"visibility"`
+	Pinned     bool   `json:"pinned"`
+	// MoodLevel is a fork extension. Nil means an older archive did not record mood.
+	MoodLevel   *int32       `json:"moodLevel,omitempty"`
 	ContentPath string       `json:"contentPath"`
 	Tags        []string     `json:"tags,omitempty"`
 	Location    *Location    `json:"location,omitempty"`

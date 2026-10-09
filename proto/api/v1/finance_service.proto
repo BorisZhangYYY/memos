@@ -52,7 +52,7 @@ service FinanceService {
     };
   }
 
-  // Lists private ledger transactions, optionally filtered by wallet and time range.
+  // Lists private ledger transactions, including voided audit records, optionally filtered by wallet and time range.
   rpc ListFinanceTransactions(ListFinanceTransactionsRequest) returns (ListFinanceTransactionsResponse) {
     option (google.api.http) = {get: "/api/v1/{parent=users/*}/finance-transactions"};
   }
@@ -70,7 +70,7 @@ service FinanceService {
       body: "transaction"
     };
   }
-  // Deletes a ledger transaction and rebuilds affected chronological balance snapshots.
+  // Voids a ledger transaction, retains its audit record, and rebuilds active balance snapshots.
   rpc DeleteFinanceTransaction(DeleteFinanceTransactionRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {delete: "/api/v1/{name=users/*/financeTransactions/*}"};
   }
@@ -161,6 +161,8 @@ message FinanceTransaction {
   int64 adjustment_delta_minor = 11 [(google.api.field_behavior) = OUTPUT_ONLY];
   int64 balance_before_minor = 12 [(google.api.field_behavior) = OUTPUT_ONLY];
   int64 balance_after_minor = 13 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // Set when a transaction was voided. Voided rows no longer affect balances or cash-flow totals.
+  google.protobuf.Timestamp void_time = 14 [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 message FinanceDailySummary {

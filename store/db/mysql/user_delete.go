@@ -9,6 +9,7 @@ import (
 
 	storepb "github.com/usememos/memos/proto/gen/store"
 	"github.com/usememos/memos/store"
+	"github.com/usememos/memos/store/db/moodhistory"
 )
 
 const deleteUserBatchSize = 500
@@ -55,6 +56,9 @@ func (d *DB) DeleteUser(ctx context.Context, delete *store.DeleteUser) (*store.D
 
 	if err := deleteUserTargetsTx(ctx, tx, delete.ID, targets); err != nil {
 		return nil, errors.Wrap(err, "failed to delete user targets")
+	}
+	if err := (moodhistory.Adapter{Dialect: "mysql"}).PurgeUser(ctx, tx, delete.ID); err != nil {
+		return nil, errors.Wrap(err, "failed to erase mood history")
 	}
 
 	if store.GetDeleteUserFailpoint(ctx) == store.DeleteUserFailpointBeforeCommit {

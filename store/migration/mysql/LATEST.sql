@@ -65,6 +65,16 @@ CREATE TABLE `memo` (
 
 CREATE INDEX `idx_memo_space_id` ON `memo`(`space_id`, `row_status`, `created_ts`, `id`);
 
+CREATE TABLE `memo_mood_history` (
+  `memo_id` INT NOT NULL PRIMARY KEY,
+  `memo_uid` VARCHAR(256) NOT NULL,
+  `creator_id` INT NOT NULL,
+  `created_ts` BIGINT NOT NULL,
+  `mood_level` INT NOT NULL,
+  `deleted_ts` BIGINT DEFAULT NULL
+);
+CREATE INDEX `idx_memo_mood_history_creator_deleted` ON `memo_mood_history`(`creator_id`, `deleted_ts`, `created_ts` DESC);
+
 -- memo_relation
 CREATE TABLE `memo_relation` (
   `memo_id` INT NOT NULL,
@@ -200,6 +210,7 @@ CREATE TABLE `finance_transaction` (
   `adjustment_delta_minor` BIGINT NOT NULL DEFAULT 0,
   `balance_before_minor` BIGINT NOT NULL DEFAULT 0,
   `balance_after_minor` BIGINT NOT NULL DEFAULT 0,
+  `voided_ts` BIGINT DEFAULT NULL,
   FOREIGN KEY (`wallet_id`) REFERENCES `finance_wallet`(`id`),
   FOREIGN KEY (`destination_wallet_id`) REFERENCES `finance_wallet`(`id`),
   FOREIGN KEY (`category_id`) REFERENCES `finance_category`(`id`)

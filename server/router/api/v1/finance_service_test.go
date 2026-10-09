@@ -99,6 +99,42 @@ func TestFinanceServicePrivateLedgerAndSummary(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, int64(6_000), wallets.Wallets[0].BalanceMinor)
 
+	listed, err := service.ListFinanceTransactions(aliceCtx, &v1pb.ListFinanceTransactionsRequest{Parent: "users/finance-alice"})
+	require.NoError(t, err)
+	var expenseName string
+	for _, transaction := range listed.Transactions {
+		if transaction.Type == v1pb.FinanceTransaction_EXPENSE {
+			expenseName = transaction.Name
+		}
+	}
+	require.NotEmpty(t, expenseName)
+	_, err = service.DeleteFinanceTransaction(aliceCtx, &v1pb.DeleteFinanceTransactionRequest{Name: expenseName})
+	require.NoError(t, err)
+	_, err = service.DeleteFinanceTransaction(aliceCtx, &v1pb.DeleteFinanceTransactionRequest{Name: expenseName})
+	require.Equal(t, codes.FailedPrecondition, status.Code(err))
+	listed, err = service.ListFinanceTransactions(aliceCtx, &v1pb.ListFinanceTransactionsRequest{Parent: "users/finance-alice"})
+	require.NoError(t, err)
+	var voided *v1pb.FinanceTransaction
+	for _, transaction := range listed.Transactions {
+		if transaction.Name == expenseName {
+			voided = transaction
+		}
+	}
+	require.NotNil(t, voided)
+	require.NotNil(t, voided.VoidTime)
+	require.Equal(t, int64(1_299), voided.AmountMinor)
+	require.Equal(t, expenseCategory.Name, voided.Category)
+	require.Equal(t, occurred.Unix(), voided.OccurTime.AsTime().Unix())
+	summary, err = service.GetFinanceSummary(aliceCtx, &v1pb.GetFinanceSummaryRequest{
+		Parent: "users/finance-alice", TimeZone: "Asia/Shanghai",
+		StartTime: timestamppb.New(time.Date(2026, time.August, 9, 0, 0, 0, 0, time.FixedZone("UTC+8", 8*60*60))),
+		EndTime:   timestamppb.New(time.Date(2026, time.August, 10, 0, 0, 0, 0, time.FixedZone("UTC+8", 8*60*60))),
+	})
+	require.NoError(t, err)
+	require.Zero(t, summary.ExpenseMinor)
+	require.Equal(t, int64(2_500), summary.IncomeMinor)
+	require.Equal(t, int64(6_000), summary.TotalBalanceMinor)
+
 	_, err = service.ListFinanceWallets(userCtx(ctx, bob.ID), &v1pb.ListFinanceWalletsRequest{Parent: "users/finance-alice"})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 }

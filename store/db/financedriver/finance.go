@@ -313,7 +313,7 @@ func (a Adapter) ListTransactions(ctx context.Context, find *store.FindFinanceTr
 	query := `
 		SELECT id, uid, creator_id, created_ts, updated_ts, occurred_ts, type, amount_minor,
 		       wallet_id, destination_wallet_id, category_id, note, adjustment_delta_minor,
-		       balance_before_minor, balance_after_minor
+		       balance_before_minor, balance_after_minor, voided_ts
 		FROM finance_transaction WHERE ` + strings.Join(where, " AND ") + `
 		ORDER BY occurred_ts DESC, id DESC`
 	if find.Limit != nil {
@@ -353,6 +353,9 @@ func (a Adapter) UpdateTransaction(ctx context.Context, update *store.UpdateFina
 	existing, err := a.getTransaction(ctx, tx, update.ID, update.CreatorID, true)
 	if err != nil {
 		return nil, err
+	}
+	if existing.VoidedTs != nil {
+		return nil, store.ErrFinanceTransactionVoided
 	}
 	if existing.Type == store.FinanceTransactionAdjustment || update.Type == store.FinanceTransactionAdjustment {
 		return nil, store.ErrFinanceInvalidTransaction
@@ -397,10 +400,16 @@ func (a Adapter) DeleteTransaction(ctx context.Context, delete *store.DeleteFina
 	if err != nil {
 		return err
 	}
-	if _, err := a.getTransaction(ctx, tx, delete.ID, delete.CreatorID, true); err != nil {
+	existing, err := a.getTransaction(ctx, tx, delete.ID, delete.CreatorID, true)
+	if err != nil {
 		return err
 	}
-	if _, err := tx.ExecContext(ctx, a.bind("DELETE FROM finance_transaction WHERE id = ? AND creator_id = ?"), delete.ID, delete.CreatorID); err != nil {
+	if existing.VoidedTs != nil {
+		return store.ErrFinanceTransactionVoided
+	}
+	nowSec := time.Now().Unix()
+	if _, err := tx.ExecContext(ctx, a.bind("UPDATE finance_transaction SET voided_ts = ?, updated_ts = ? WHERE id = ? AND creator_id = ?"),
+		nowSec, nowSec, delete.ID, delete.CreatorID); err != nil {
 		return err
 	}
 	if err := a.rebuildLedger(ctx, tx, delete.CreatorID, wallets); err != nil {
@@ -425,10 +434,11 @@ func scanCategory(row scanner, category *store.FinanceCategory) error {
 
 func scanTransaction(row scanner, transaction *store.FinanceTransaction) error {
 	var destinationWalletID, categoryID sql.NullInt32
+	var voidedTs sql.NullInt64
 	if err := row.Scan(&transaction.ID, &transaction.UID, &transaction.CreatorID, &transaction.CreatedTs, &transaction.UpdatedTs,
 		&transaction.OccurredTs, &transaction.Type, &transaction.AmountMinor, &transaction.WalletID,
 		&destinationWalletID, &categoryID, &transaction.Note, &transaction.AdjustmentDeltaMinor,
-		&transaction.BalanceBeforeMinor, &transaction.BalanceAfterMinor); err != nil {
+		&transaction.BalanceBeforeMinor, &transaction.BalanceAfterMinor, &voidedTs); err != nil {
 		return err
 	}
 	if destinationWalletID.Valid {
@@ -438,6 +448,10 @@ func scanTransaction(row scanner, transaction *store.FinanceTransaction) error {
 	if categoryID.Valid {
 		value := categoryID.Int32
 		transaction.CategoryID = &value
+	}
+	if voidedTs.Valid {
+		value := voidedTs.Int64
+		transaction.VoidedTs = &value
 	}
 	return nil
 }
@@ -472,7 +486,7 @@ func (a Adapter) getTransaction(ctx context.Context, runner sqlRunner, id, creat
 	transaction := &store.FinanceTransaction{}
 	query := `SELECT id, uid, creator_id, created_ts, updated_ts, occurred_ts, type, amount_minor,
 	                 wallet_id, destination_wallet_id, category_id, note, adjustment_delta_minor,
-	                 balance_before_minor, balance_after_minor
+	                 balance_before_minor, balance_after_minor, voided_ts
 	          FROM finance_transaction WHERE id = ? AND creator_id = ?`
 	if lock {
 		query += a.lockSuffix()
@@ -573,8 +587,8 @@ func (a Adapter) rebuildLedger(
 
 	query := `SELECT id, uid, creator_id, created_ts, updated_ts, occurred_ts, type, amount_minor,
 	                 wallet_id, destination_wallet_id, category_id, note, adjustment_delta_minor,
-	                 balance_before_minor, balance_after_minor
-	          FROM finance_transaction WHERE creator_id = ?
+	                 balance_before_minor, balance_after_minor, voided_ts
+	          FROM finance_transaction WHERE creator_id = ? AND voided_ts IS NULL
 	          ORDER BY occurred_ts ASC, id ASC` + a.lockSuffix()
 	rows, err := tx.QueryContext(ctx, a.bind(query), creatorID)
 	if err != nil {

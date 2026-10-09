@@ -82,4 +82,19 @@ describe("calendar month model", () => {
     expect(model["2026-08-02"].memos).toHaveLength(2);
     expect(model["2026-08-02"].entries.map((entry) => entry.text)).toEqual(["public"]);
   });
+
+  it("keeps visible moods for the grid, including mood-only and row-capped memos", () => {
+    const memos = [
+      memoAt(new Date(2026, 7, 2, 8), { moodLevel: 2, snippet: "secret", tags: ["private"] }),
+      memoAt(new Date(2026, 7, 2, 9), { moodLevel: 6 }),
+      ...Array.from({ length: 8 }, (_, index) => memoAt(new Date(2026, 7, 2, index + 10), { moodLevel: 4, snippet: `memo ${index}` })),
+    ];
+    const model = buildCalendarMonthModel(memos, "create_time", { isRedacted: (memo) => memo.tags.includes("private") });
+    const day = model["2026-08-02"];
+
+    expect(day.memos).toHaveLength(10);
+    expect(day.entries).toHaveLength(8);
+    expect(day.entries[0]).toMatchObject({ moodLevel: 6, text: "" });
+    expect(day.moodLevels).toEqual([6, 4, 4, 4, 4, 4, 4, 4, 4]);
+  });
 });

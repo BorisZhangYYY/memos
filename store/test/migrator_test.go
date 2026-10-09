@@ -159,6 +159,7 @@ func TestMigrationMultiSpacesPreservesMemosAndRelations(t *testing.T) {
 	require.NoError(t, err)
 	_, err = db.ExecContext(ctx, legacySchemaFixture(driver))
 	require.NoError(t, err)
+	addLegacyFinanceTable(ctx, t, db)
 
 	basicSetting, err := protojson.Marshal(&storepb.InstanceBasicSetting{SchemaVersion: "0.36.3"})
 	require.NoError(t, err)
@@ -310,6 +311,7 @@ func TestMigrationSpaceMemberStatusBackfillsActive(t *testing.T) {
 	require.NoError(t, err)
 	_, err = db.ExecContext(ctx, "ALTER TABLE space DROP COLUMN payload")
 	require.NoError(t, err)
+	rewindFinanceAndMoodSchema(ctx, t, db)
 
 	basicSetting, err := ts.GetInstanceBasicSetting(ctx)
 	require.NoError(t, err)
@@ -534,6 +536,7 @@ func TestMigrationStorageSetting(t *testing.T) {
 			require.NoError(t, err)
 			_, err = db.ExecContext(ctx, legacySchemaFixture(driver))
 			require.NoError(t, err)
+			addLegacyFinanceTable(ctx, t, db)
 
 			basicSettingBytes, err := protojson.Marshal(&storepb.InstanceBasicSetting{SchemaVersion: "0.36.1"})
 			require.NoError(t, err)
@@ -669,6 +672,7 @@ func TestMigrationReactionMemoID(t *testing.T) {
 	require.NoError(t, err)
 	_, err = db.ExecContext(ctx, legacySchemaFixture(driver))
 	require.NoError(t, err)
+	addLegacyFinanceTable(ctx, t, db)
 
 	basicSetting, err := protojson.Marshal(&storepb.InstanceBasicSetting{SchemaVersion: "0.36.2"})
 	require.NoError(t, err)
@@ -759,6 +763,7 @@ func TestMigrationLegacyS3AttachmentMinIO(t *testing.T) {
 	require.NoError(t, err)
 	_, err = db.ExecContext(ctx, legacySchemaFixture(driver))
 	require.NoError(t, err)
+	addLegacyFinanceTable(ctx, t, db)
 
 	basicSetting, err := protojson.Marshal(&storepb.InstanceBasicSetting{SchemaVersion: "0.36.1"})
 	require.NoError(t, err)
@@ -1075,6 +1080,24 @@ func TestMigrationCaseSensitiveUsername(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEqual(t, upper.ID, lower.ID)
 	require.Equal(t, "Alice", upper.Username)
+}
+
+// The compact 0.36 fixture omits finance data, but finance_transaction already
+// existed by that version and is needed by the later void migration.
+func addLegacyFinanceTable(ctx context.Context, t *testing.T, db *sql.DB) {
+	t.Helper()
+	_, err := db.ExecContext(ctx, "CREATE TABLE finance_transaction (id INTEGER PRIMARY KEY)")
+	require.NoError(t, err)
+}
+
+// Tests that replay an older migration from LATEST must also remove schema
+// additions made after the version they are simulating.
+func rewindFinanceAndMoodSchema(ctx context.Context, t *testing.T, db *sql.DB) {
+	t.Helper()
+	_, err := db.ExecContext(ctx, "DROP TABLE memo_mood_history")
+	require.NoError(t, err)
+	_, err = db.ExecContext(ctx, "ALTER TABLE finance_transaction DROP COLUMN voided_ts")
+	require.NoError(t, err)
 }
 
 func legacySchemaFixture(driver string) string {

@@ -52,13 +52,13 @@ type FinanceServiceClient interface {
 	CreateFinanceCategory(ctx context.Context, in *CreateFinanceCategoryRequest, opts ...grpc.CallOption) (*FinanceCategory, error)
 	// Updates a finance category's display name, emoji, or archive state. The category type is immutable.
 	UpdateFinanceCategory(ctx context.Context, in *UpdateFinanceCategoryRequest, opts ...grpc.CallOption) (*FinanceCategory, error)
-	// Lists private ledger transactions, optionally filtered by wallet and time range.
+	// Lists private ledger transactions, including voided audit records, optionally filtered by wallet and time range.
 	ListFinanceTransactions(ctx context.Context, in *ListFinanceTransactionsRequest, opts ...grpc.CallOption) (*ListFinanceTransactionsResponse, error)
 	// Records income, expense, or a wallet transfer. occur_time is required.
 	CreateFinanceTransaction(ctx context.Context, in *CreateFinanceTransactionRequest, opts ...grpc.CallOption) (*FinanceTransaction, error)
 	// Corrects a ledger transaction and rebuilds affected chronological balance snapshots.
 	UpdateFinanceTransaction(ctx context.Context, in *UpdateFinanceTransactionRequest, opts ...grpc.CallOption) (*FinanceTransaction, error)
-	// Deletes a ledger transaction and rebuilds affected chronological balance snapshots.
+	// Voids a ledger transaction, retains its audit record, and rebuilds active balance snapshots.
 	DeleteFinanceTransaction(ctx context.Context, in *DeleteFinanceTransactionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Reconciles a wallet to an observed balance by creating an adjustment transaction.
 	AdjustFinanceWalletBalance(ctx context.Context, in *AdjustFinanceWalletBalanceRequest, opts ...grpc.CallOption) (*FinanceTransaction, error)
@@ -212,13 +212,13 @@ type FinanceServiceServer interface {
 	CreateFinanceCategory(context.Context, *CreateFinanceCategoryRequest) (*FinanceCategory, error)
 	// Updates a finance category's display name, emoji, or archive state. The category type is immutable.
 	UpdateFinanceCategory(context.Context, *UpdateFinanceCategoryRequest) (*FinanceCategory, error)
-	// Lists private ledger transactions, optionally filtered by wallet and time range.
+	// Lists private ledger transactions, including voided audit records, optionally filtered by wallet and time range.
 	ListFinanceTransactions(context.Context, *ListFinanceTransactionsRequest) (*ListFinanceTransactionsResponse, error)
 	// Records income, expense, or a wallet transfer. occur_time is required.
 	CreateFinanceTransaction(context.Context, *CreateFinanceTransactionRequest) (*FinanceTransaction, error)
 	// Corrects a ledger transaction and rebuilds affected chronological balance snapshots.
 	UpdateFinanceTransaction(context.Context, *UpdateFinanceTransactionRequest) (*FinanceTransaction, error)
-	// Deletes a ledger transaction and rebuilds affected chronological balance snapshots.
+	// Voids a ledger transaction, retains its audit record, and rebuilds active balance snapshots.
 	DeleteFinanceTransaction(context.Context, *DeleteFinanceTransactionRequest) (*emptypb.Empty, error)
 	// Reconciles a wallet to an observed balance by creating an adjustment transaction.
 	AdjustFinanceWalletBalance(context.Context, *AdjustFinanceWalletBalanceRequest) (*FinanceTransaction, error)

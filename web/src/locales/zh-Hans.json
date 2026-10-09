@@ -320,7 +320,13 @@
       "no-wallet": "请先在收支设置中添加一个可用钱包，再开始记账。",
       "save-error": "记账失败",
       "saved": "记账成功，钱包余额已更新",
-      "title": "新增收支"
+      "title": "新增收支",
+      "void": "作废流水",
+      "void-description": "原始流水会保留在历史中，其金额不再影响钱包余额和收支统计。",
+      "void-error": "作废流水失败",
+      "voided": "已作废",
+      "voided-at": "作废于",
+      "voided-success": "流水已作废，余额已更新"
     },
     "type": {
       "expense": "支出",

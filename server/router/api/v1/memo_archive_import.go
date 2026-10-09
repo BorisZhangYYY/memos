@@ -269,6 +269,11 @@ func (i *memoArchiveImporter) replaceMemo(record *memoarchive.Memo, existing *st
 	if err != nil {
 		return err
 	}
+	if record.MoodLevel == nil {
+		// A standard 1.0 archive has no mood field; replacing its memo must not
+		// erase a mood the importing user recorded on this instance.
+		next.Payload.MoodLevel = existing.Payload.GetMoodLevel()
+	}
 	if record.Parent != "" && (existing.ParentUID == nil || *existing.ParentUID != record.Parent) {
 		i.warn(record.UID, "comment threading of an existing memo cannot be changed; the parent from the archive was ignored")
 	}
@@ -373,6 +378,9 @@ func (i *memoArchiveImporter) buildMemo(record *memoarchive.Memo, uid string, co
 			Latitude:    record.Location.Latitude,
 			Longitude:   record.Location.Longitude,
 		}
+	}
+	if record.MoodLevel != nil {
+		memo.Payload.MoodLevel = *record.MoodLevel
 	}
 	return memo, nil
 }

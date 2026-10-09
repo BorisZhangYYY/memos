@@ -415,10 +415,13 @@ message BatchGetInstanceSettingsResponse {
 
 // Request message for UpdateInstanceSetting method.
 message UpdateInstanceSettingRequest {
-  // The instance setting resource which replaces the resource on the server.
+  // The instance setting resource. Without update_mask it replaces the stored setting.
   InstanceSetting setting = 1 [(google.api.field_behavior) = REQUIRED];
 
-  // The list of fields to update.
+  // Fields to update, relative to the selected setting or prefixed by its oneof field name.
+  // Selected fields take the supplied value, subject to setting defaults and validation;
+  // omitted fields are preserved. Empty write-only credentials preserve the stored value
+  // when their connection identity is unchanged. An omitted instance URL is preserved.
   google.protobuf.FieldMask update_mask = 2 [(google.api.field_behavior) = OPTIONAL];
 }
 

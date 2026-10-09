@@ -10,13 +10,15 @@ import {
   LoaderCircleIcon,
   PlusIcon,
   SettingsIcon,
+  Trash2Icon,
   WalletCardsIcon,
   WrenchIcon,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "react-hot-toast";
 import FinanceSettings from "@/components/Settings/FinanceSettings";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useFinanceCategories,
@@ -24,10 +26,11 @@ import {
   useFinanceTransactionHistory,
   useFinanceTransactions,
   useFinanceWallets,
+  useVoidFinanceTransaction,
 } from "@/hooks/useFinanceQueries";
 import { financeRange, formatCNY } from "@/lib/finance";
 import { cn } from "@/lib/utils";
-import { FinanceTransaction_Type } from "@/types/proto/api/v1/finance_service_pb";
+import { type FinanceTransaction, FinanceTransaction_Type } from "@/types/proto/api/v1/finance_service_pb";
 import { useTranslate } from "@/utils/i18n";
 
 interface Props {
@@ -38,16 +41,21 @@ interface Props {
 
 interface HistoryTotal {
   count: number;
+  auditCount: number;
   income: bigint;
   expense: bigint;
 }
 
-const emptyHistoryTotal = (): HistoryTotal => ({ count: 0, income: 0n, expense: 0n });
+const emptyHistoryTotal = (): HistoryTotal => ({ count: 0, auditCount: 0, income: 0n, expense: 0n });
 
-const addToHistoryTotal = (total: HistoryTotal, type: FinanceTransaction_Type, amount: bigint) => {
+const addToHistoryTotal = (total: HistoryTotal, transaction: FinanceTransaction) => {
+  if (transaction.voidTime) {
+    total.auditCount += 1;
+    return;
+  }
   total.count += 1;
-  if (type === FinanceTransaction_Type.INCOME) total.income += amount;
-  if (type === FinanceTransaction_Type.EXPENSE) total.expense += amount;
+  if (transaction.type === FinanceTransaction_Type.INCOME) total.income += transaction.amountMinor;
+  if (transaction.type === FinanceTransaction_Type.EXPENSE) total.expense += transaction.amountMinor;
 };
 
 const localDateKey = (date: Date) =>
@@ -68,10 +76,13 @@ const FinanceDashboard = ({ parent, onAdd, embedded = false }: Props) => {
   const [historyYear, setHistoryYear] = useState(todayRange.start.getFullYear());
   const [historyMonth, setHistoryMonth] = useState<number>();
   const [historyDate, setHistoryDate] = useState<string>();
+  const [voidTarget, setVoidTarget] = useState<FinanceTransaction>();
+  const { mutateAsync: voidTransaction, isPending: voidPending } = useVoidFinanceTransaction();
   const { data: wallets = [] } = useFinanceWallets(parent);
   const { data: categories = [] } = useFinanceCategories(parent);
   const { data: todaySummary } = useFinanceSummary(parent, todayRange.start, todayRange.end, timeZone);
   const { data: todayTransactions = [] } = useFinanceTransactions(parent, { start: todayRange.start, end: todayRange.end, pageSize: 100 });
+  const activeTodayTransactions = useMemo(() => todayTransactions.filter((transaction) => !transaction.voidTime), [todayTransactions]);
   const { data: detailsSummary } = useFinanceSummary(parent, detailsRange.start, detailsRange.end, timeZone);
   const { data: historyTransactions = [], isLoading: historyLoading } = useFinanceTransactionHistory(
     parent,
@@ -111,7 +122,7 @@ const FinanceDashboard = ({ parent, onAdd, embedded = false }: Props) => {
       if (!transaction.occurTime) continue;
       const date = timestampDate(transaction.occurTime);
       if (date.getFullYear() !== historyYear) continue;
-      addToHistoryTotal(totals[date.getMonth()], transaction.type, transaction.amountMinor);
+      addToHistoryTotal(totals[date.getMonth()], transaction);
     }
     return totals;
   }, [historyTransactions, historyYear]);
@@ -125,7 +136,7 @@ const FinanceDashboard = ({ parent, onAdd, embedded = false }: Props) => {
       if (date.getFullYear() !== historyYear || date.getMonth() !== historyMonth) continue;
       const key = localDateKey(date);
       const total = totals.get(key) ?? emptyHistoryTotal();
-      addToHistoryTotal(total, transaction.type, transaction.amountMinor);
+      addToHistoryTotal(total, transaction);
       totals.set(key, total);
     }
     return [...totals.entries()].map(([date, total]) => ({ date, ...total })).sort((a, b) => b.date.localeCompare(a.date));
@@ -264,13 +275,13 @@ const FinanceDashboard = ({ parent, onAdd, embedded = false }: Props) => {
               ))}
             </div>
 
-            {todayTransactions.length === 0 ? (
+            {activeTodayTransactions.length === 0 ? (
               <div className="flex min-h-24 flex-1 items-center justify-center text-sm text-muted-foreground">
                 {t("finance.dashboard.empty-today")}
               </div>
             ) : (
               <div className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
-                {todayTransactions.map((transaction) => {
+                {activeTodayTransactions.map((transaction) => {
                   const presentation = transactionPresentation(transaction);
                   const category = categoriesByName.get(transaction.category);
                   const destinationName = walletNames.get(transaction.destinationWallet);
@@ -376,7 +387,10 @@ const FinanceDashboard = ({ parent, onAdd, embedded = false }: Props) => {
                         const destinationName = walletNames.get(transaction.destinationWallet);
                         const title = transaction.note || category?.displayName || presentation.label;
                         return (
-                          <div key={transaction.name} className="flex items-center gap-3 px-3 py-2.5">
+                          <div
+                            key={transaction.name}
+                            className={cn("flex items-center gap-3 px-3 py-2.5", transaction.voidTime && "opacity-65")}
+                          >
                             <span className={cn("flex size-8 items-center justify-center rounded-full bg-muted", presentation.color)}>
                               {category?.emoji ? (
                                 <span className="text-base leading-none">{category.emoji}</span>
@@ -385,9 +399,15 @@ const FinanceDashboard = ({ parent, onAdd, embedded = false }: Props) => {
                               )}
                             </span>
                             <div className="min-w-0 flex-1">
-                              <div className="truncate text-sm font-medium">{title}</div>
+                              <div className="flex flex-wrap items-center gap-1.5 text-sm font-medium">
+                                <span className={cn("truncate", transaction.voidTime && "line-through")}>{title}</span>
+                                {transaction.voidTime && (
+                                  <span className="rounded bg-muted px-1.5 py-0.5 text-[10px]">{t("finance.transaction.voided")}</span>
+                                )}
+                              </div>
                               <div className="truncate text-xs text-muted-foreground">
                                 {walletNames.get(transaction.wallet) ?? transaction.wallet.split("/").pop()}
+                                {category ? ` · ${category.displayName}` : ""}
                                 {destinationName ? ` → ${destinationName}` : ""} ·{" "}
                                 {transaction.occurTime
                                   ? new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(
@@ -395,11 +415,37 @@ const FinanceDashboard = ({ parent, onAdd, embedded = false }: Props) => {
                                     )
                                   : ""}
                               </div>
+                              {transaction.voidTime && (
+                                <div className="text-[11px] text-muted-foreground">
+                                  {t("finance.transaction.voided-at")}{" "}
+                                  {new Intl.DateTimeFormat(undefined, { dateStyle: "short", timeStyle: "short" }).format(
+                                    timestampDate(transaction.voidTime),
+                                  )}
+                                </div>
+                              )}
                             </div>
                             <div className="text-right">
-                              <div className={cn("font-mono text-sm font-semibold", presentation.color)}>{presentation.amount}</div>
+                              <div
+                                className={cn(
+                                  "font-mono text-sm font-semibold",
+                                  presentation.color,
+                                  transaction.voidTime && "line-through",
+                                )}
+                              >
+                                {presentation.amount}
+                              </div>
                               <div className="text-[11px] text-muted-foreground">{formatCNY(transaction.balanceAfterMinor)}</div>
                             </div>
+                            {!transaction.voidTime && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label={t("finance.transaction.void")}
+                                onClick={() => setVoidTarget(transaction)}
+                              >
+                                <Trash2Icon className="size-4" />
+                              </Button>
+                            )}
                           </div>
                         );
                       })}
@@ -430,13 +476,15 @@ const FinanceDashboard = ({ parent, onAdd, embedded = false }: Props) => {
                         <button
                           type="button"
                           key={month}
-                          disabled={total.count === 0}
+                          disabled={total.count + total.auditCount === 0}
                           onClick={() => setHistoryMonth(month)}
                           className="rounded-lg border bg-background p-3 text-left transition-colors hover:bg-accent disabled:cursor-default disabled:opacity-45"
                         >
                           <div className="text-sm font-medium">{monthLabel(historyYear, month)}</div>
                           <div className="mt-2 text-[11px] text-muted-foreground">
-                            {total.count > 0 ? `${total.count} ${t("finance.insights.entries")}` : t("finance.insights.empty-history")}
+                            {total.count + total.auditCount > 0
+                              ? `${total.count} ${t("finance.insights.entries")}${total.auditCount ? ` · ${total.auditCount} ${t("finance.transaction.voided")}` : ""}`
+                              : t("finance.insights.empty-history")}
                           </div>
                           {total.count > 0 && (
                             <div className="mt-1 flex flex-wrap gap-x-2 font-mono text-[11px]">
@@ -477,6 +525,7 @@ const FinanceDashboard = ({ parent, onAdd, embedded = false }: Props) => {
                                 </span>
                                 <span className="text-[11px] text-muted-foreground">
                                   {day.count} {t("finance.insights.entries")}
+                                  {day.auditCount ? ` · ${day.auditCount} ${t("finance.transaction.voided")}` : ""}
                                 </span>
                               </div>
                               <div className="mt-2 grid grid-cols-3 gap-2 text-right font-mono text-[11px]">
@@ -563,6 +612,35 @@ const FinanceDashboard = ({ parent, onAdd, embedded = false }: Props) => {
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={!!voidTarget} onOpenChange={(open) => !open && setVoidTarget(undefined)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("finance.transaction.void")}</DialogTitle>
+            <DialogDescription>{t("finance.transaction.void-description")}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setVoidTarget(undefined)}>
+              {t("common.cancel")}
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={voidPending}
+              onClick={async () => {
+                if (!voidTarget) return;
+                try {
+                  await voidTransaction(voidTarget.name);
+                  toast.success(t("finance.transaction.voided-success"));
+                  setVoidTarget(undefined);
+                } catch (error) {
+                  toast.error(error instanceof Error ? error.message : t("finance.transaction.void-error"));
+                }
+              }}
+            >
+              {t("finance.transaction.void")}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>

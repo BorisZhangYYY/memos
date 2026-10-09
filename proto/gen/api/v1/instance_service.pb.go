@@ -767,9 +767,12 @@ func (x *BatchGetInstanceSettingsResponse) GetSettings() []*InstanceSetting {
 // Request message for UpdateInstanceSetting method.
 type UpdateInstanceSettingRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// The instance setting resource which replaces the resource on the server.
+	// The instance setting resource. Without update_mask it replaces the stored setting.
 	Setting *InstanceSetting `protobuf:"bytes,1,opt,name=setting,proto3" json:"setting,omitempty"`
-	// The list of fields to update.
+	// Fields to update, relative to the selected setting or prefixed by its oneof field name.
+	// Selected fields take the supplied value, subject to setting defaults and validation;
+	// omitted fields are preserved. Empty write-only credentials preserve the stored value
+	// when their connection identity is unchanged. An omitted instance URL is preserved.
 	UpdateMask    *fieldmaskpb.FieldMask `protobuf:"bytes,2,opt,name=update_mask,json=updateMask,proto3" json:"update_mask,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

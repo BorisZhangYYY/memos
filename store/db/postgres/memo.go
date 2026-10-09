@@ -12,6 +12,7 @@ import (
 	"github.com/usememos/memos/internal/filter"
 	storepb "github.com/usememos/memos/proto/gen/store"
 	"github.com/usememos/memos/store"
+	"github.com/usememos/memos/store/db/moodhistory"
 )
 
 func (d *DB) CreateMemo(ctx context.Context, create *store.Memo) (*store.Memo, error) {
@@ -63,7 +64,7 @@ func insertPostgresMemo(ctx context.Context, tx *sql.Tx, create *store.Memo) err
 	); err != nil {
 		return err
 	}
-	return nil
+	return moodhistory.Adapter{Dialect: "postgres"}.SyncMemo(ctx, tx, create.ID, false)
 }
 
 func validatePostgresMemoCreate(ctx context.Context, tx *sql.Tx, create *store.Memo) error {
@@ -274,16 +275,15 @@ func (d *DB) GetMemo(ctx context.Context, find *store.FindMemo) (*store.Memo, er
 }
 
 func (d *DB) UpdateMemo(ctx context.Context, update *store.UpdateMemo) error {
-	if update.Policy == nil {
-		return applyMemoUpdate(ctx, d.db, update)
-	}
 	tx, err := d.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
 	defer func() { _ = tx.Rollback() }()
-	if err := validatePostgresMemoWritePolicy(ctx, tx, update.ID, update.Policy, update); err != nil {
-		return err
+	if update.Policy != nil {
+		if err := validatePostgresMemoWritePolicy(ctx, tx, update.ID, update.Policy, update); err != nil {
+			return err
+		}
 	}
 	if err := applyMemoUpdate(ctx, tx, update); err != nil {
 		return err
@@ -302,6 +302,9 @@ func (d *DB) DeleteMemo(ctx context.Context, delete *store.DeleteMemo) error {
 
 	if _, err := tx.ExecContext(ctx, "UPDATE reminder SET memo_id = NULL WHERE memo_id = $1", delete.ID); err != nil {
 		return errors.Wrap(err, "failed to detach private reminders")
+	}
+	if err := (moodhistory.Adapter{Dialect: "postgres"}).SyncMemo(ctx, tx, delete.ID, true); err != nil {
+		return errors.Wrap(err, "failed to preserve memo mood")
 	}
 
 	if _, err := tx.ExecContext(ctx, "DELETE FROM memo WHERE id = "+placeholder(1), delete.ID); err != nil {

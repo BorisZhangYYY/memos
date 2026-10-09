@@ -31,4 +31,14 @@ describe("dailyMoodStatsFromLevels", () => {
     });
     expect(dailyMoodStatsFromLevels(misaligned)).toEqual({});
   });
+
+  it("keeps deleted memo moods without adding memo activity", () => {
+    const stats = create(UserStatsSchema, {
+      memoCreatedTimestamps: [],
+      moodCreatedTimestamps: [timestampFromDate(new Date(2026, 7, 7, 12, 0))],
+      moodLevels: [6],
+      moodMemoNames: ["memos/deleted-entry"],
+    });
+    expect(dailyMoodStatsFromLevels(stats)).toEqual({ "2026-08-07": 6 });
+  });
 });

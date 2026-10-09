@@ -8,7 +8,11 @@ Existing domain language: [Memos context](../../CONTEXT.md)
 
 Related: [Multi-Spaces Design](multi-spaces.md), [ADR 0002: Username Format and References](../adr/0002-username-format-and-references.md), [ADR 0003: Space UID Allocation and Format](../adr/0003-space-uid-allocation-and-format.md)
 
-Normative schemas: [`memo-archive/1.0/manifest.schema.json`](memo-archive/1.0/manifest.schema.json), [`memo-archive/1.0/memo.schema.json`](memo-archive/1.0/memo.schema.json)
+Normative schemas: [`memo-archive/1.0/manifest.schema.json`](memo-archive/1.0/manifest.schema.json), [`memo-archive/1.0/memo.schema.json`](memo-archive/1.0/memo.schema.json). This fork's 1.1 extension uses [`memo-archive/1.1/manifest.schema.json`](memo-archive/1.1/manifest.schema.json) and [`memo-archive/1.1/memo.schema.json`](memo-archive/1.1/memo.schema.json).
+
+## Fork 1.1 extension
+
+This fork writes `formatVersion: "1.1"` and includes `moodLevel` (an integer from 0 to 7) in every Memo record. Zero explicitly means no mood. Older 1.0 archives omit this field: creating a Memo from one gives it no mood, while replacing an existing Memo preserves its current mood. A 1.1 archive replaces the existing mood, including when its value is zero. Readers that know only 1.0 may ignore this optional field, so importing into an unmodified upstream instance does not preserve mood. Finance, reminders, and personal settings remain outside Memo Archive.
 
 ## Summary
 
@@ -176,6 +180,7 @@ The manifest carries no per-memo index. The `memos/` directory is the index, whi
 | `state` | yes | yes | |
 | `visibility` | yes | yes | `SPACE` requires a resolvable `space`; otherwise the importer falls back to `PRIVATE` with a warning. |
 | `pinned` | yes | yes | |
+| `moodLevel` | 1.1 writer only | yes in this fork | Integer 0–7. Zero clears the mood; absence in a 1.0 archive preserves an existing mood on replace. |
 | `contentPath` | yes | yes | Archive path of the content file. Writers use `memos/<uid>.md`. Readers follow the field, never the convention, so a minor version can move the layout. |
 | `tags` | no | derived | Informational. Tags are derived from content on import; readers never write them. |
 | `location` | no | yes | Mirrors the API `Location` message. `latitude` and `longitude` are WGS 84 decimal degrees. |
