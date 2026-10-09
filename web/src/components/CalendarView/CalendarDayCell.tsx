@@ -17,6 +17,8 @@ export const CELL_ROW_HEIGHT = 18;
 export interface CalendarDayCellProps {
   day: CalendarDayCellData;
   summary?: CalendarDaySummary;
+  /** Configured emojis for mood levels 1–7; absent when the feature is disabled. */
+  moodEmojis?: string[];
   /** Memo rows the cell has room for; 0 below md, where the cell only shows a dot. */
   visibleRows: number;
   /** The month's memos are still loading; `day.count` from statistics is all we know. */
@@ -37,7 +39,7 @@ const CORNER_CLASSES = { ss: "rounded-ss-lg", se: "rounded-se-lg", es: "rounded-
  * it carries an image. The whole cell is one link so its aria-label speaks for the day.
  */
 export const CalendarDayCell = memo(
-  ({ day, summary, visibleRows, pending, timeBasis, tabIndex, isLastColumn, isLastRow, corner }: CalendarDayCellProps) => {
+  ({ day, summary, moodEmojis, visibleRows, pending, timeBasis, tabIndex, isLastColumn, isLastRow, corner }: CalendarDayCellProps) => {
     const t = useTranslate();
     const count = summary ? summary.memos.length : day.count;
     const entries = summary?.entries ?? [];
@@ -46,13 +48,16 @@ export const CalendarDayCell = memo(
     const shownEntries = entries.slice(0, overflows ? Math.max(visibleRows - 1, 0) : visibleRows);
     const showMore = overflows && visibleRows >= 1;
     const showSkeleton = pending && day.isCurrentMonth && day.count > 0;
+    const moodLevels = summary?.moodLevels ?? [];
+    const averageMood = moodLevels.length > 0 ? Math.round(moodLevels.reduce((sum, level) => sum + level, 0) / moodLevels.length) : 0;
+    const dayMoodEmoji = day.isCurrentMonth && averageMood > 0 ? moodEmojis?.[averageMood - 1] : undefined;
 
     return (
       <CalendarLink
         to={buildCalendarPath(getMonthOfDate(day.date), day.date)}
         data-calendar-date={day.date}
         tabIndex={tabIndex}
-        aria-label={getTooltipText(count, day.date, t, timeBasis)}
+        aria-label={`${getTooltipText(count, day.date, t, timeBasis)}${dayMoodEmoji ? `, ${t("mood.level")} ${averageMood}` : ""}`}
         aria-current={day.isSelected ? "page" : undefined}
         className={cn(
           "group/day relative flex min-h-14 min-w-0 flex-col overflow-hidden border-border/70 px-3 py-2 text-start no-underline transition-colors sm:min-h-20 md:min-h-[5.5rem]",
@@ -83,12 +88,23 @@ export const CalendarDayCell = memo(
           </span>
         </span>
 
+        {dayMoodEmoji && (
+          <span aria-hidden="true" className="mt-1 flex h-4 items-center justify-center text-sm leading-none md:hidden">
+            {dayMoodEmoji}
+          </span>
+        )}
+
         {showSkeleton && <span aria-hidden="true" className="mt-1.5 hidden h-2 w-2/3 animate-pulse rounded bg-muted md:block" />}
 
         {day.isCurrentMonth && (shownEntries.length > 0 || showMore) && (
           <ul className="mt-1 flex min-w-0 flex-col">
             {shownEntries.map((entry) => (
               <li key={entry.memoName} className="flex h-4.5 min-w-0 items-center gap-1.5 text-xs leading-4 text-foreground/75">
+                {entry.moodLevel && moodEmojis?.[entry.moodLevel - 1] && (
+                  <span aria-hidden="true" className="shrink-0 text-xs leading-none">
+                    {moodEmojis[entry.moodLevel - 1]}
+                  </span>
+                )}
                 {entry.thumbnailUrl && (
                   <img
                     src={entry.thumbnailUrl}
@@ -113,7 +129,7 @@ export const CalendarDayCell = memo(
           </ul>
         )}
 
-        {count > 0 && (
+        {count > 0 && !dayMoodEmoji && (
           <span aria-hidden="true" className={cn("mt-1 size-1.5 rounded-full bg-primary/70", day.isCurrentMonth && "md:hidden")} />
         )}
       </CalendarLink>

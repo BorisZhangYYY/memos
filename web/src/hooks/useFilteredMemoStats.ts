@@ -32,13 +32,14 @@ const toDateString = (date: Date) => dayjs(date).format("YYYY-MM-DD");
 
 /**
  * Averages each day's mood levels into a browser-local "YYYY-MM-DD" keyed map,
- * mirroring the activity heatmap bucketing. mood_levels mirrors
- * memo_created_timestamps order, so the two arrays are zipped by index.
+ * mirroring the activity heatmap bucketing. Mood history has independent
+ * timestamps so deleting a memo does not change its past mood entry.
  */
 export const dailyMoodStatsFromLevels = (stats: UserStats): Record<string, number> => {
   const sums: Record<string, number> = {};
   const counts: Record<string, number> = {};
-  (stats.memoCreatedTimestamps ?? []).forEach((ts, index) => {
+  const timestamps = stats.moodCreatedTimestamps?.length ? stats.moodCreatedTimestamps : (stats.memoCreatedTimestamps ?? []);
+  timestamps.forEach((ts, index) => {
     const level = (stats.moodLevels ?? [])[index];
     if (!level || level <= 0 || !ts) return;
     const date = toDateString(timestampDate(ts));

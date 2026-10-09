@@ -84,6 +84,18 @@ func TestFinanceLedgerMaintainsWalletBalances(t *testing.T) {
 	require.Equal(t, int64(13_000), transfer.BalanceAfterMinor)
 
 	require.NoError(t, ts.DeleteFinanceTransaction(ctx, &store.DeleteFinanceTransaction{ID: expense.ID, CreatorID: user.ID}))
+	voidedExpense := financeTransactionByUID(ctx, t, ts, expense.UID, user.ID)
+	require.NotNil(t, voidedExpense.VoidedTs)
+	require.Equal(t, int64(500), voidedExpense.AmountMinor)
+	require.Equal(t, expenseCategory.ID, *voidedExpense.CategoryID)
+	require.Equal(t, nowSec, voidedExpense.OccurredTs)
+	require.Equal(t, map[int32]int64{}, store.FinanceTransactionEffects(voidedExpense))
+	require.ErrorIs(t, ts.DeleteFinanceTransaction(ctx, &store.DeleteFinanceTransaction{ID: expense.ID, CreatorID: user.ID}), store.ErrFinanceTransactionVoided)
+	_, err = ts.UpdateFinanceTransaction(ctx, &store.UpdateFinanceTransaction{
+		ID: expense.ID, CreatorID: user.ID, UpdatedTs: nowSec + 2, OccurredTs: nowSec,
+		Type: store.FinanceTransactionExpense, AmountMinor: 500, WalletID: wallet.ID, CategoryID: &expenseCategory.ID,
+	})
+	require.ErrorIs(t, err, store.ErrFinanceTransactionVoided)
 	require.Equal(t, int64(4_000), financeWalletBalance(ctx, t, ts, wallet.ID, user.ID))
 	income = financeTransactionByUID(ctx, t, ts, income.UID, user.ID)
 	transfer = financeTransactionByUID(ctx, t, ts, transfer.UID, user.ID)

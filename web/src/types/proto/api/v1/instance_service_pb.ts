@@ -1083,14 +1083,17 @@ export const BatchGetInstanceSettingsResponseSchema: GenMessage<BatchGetInstance
  */
 export type UpdateInstanceSettingRequest = Message<"memos.api.v1.UpdateInstanceSettingRequest"> & {
   /**
-   * The instance setting resource which replaces the resource on the server.
+   * The instance setting resource. Without update_mask it replaces the stored setting.
    *
    * @generated from field: memos.api.v1.InstanceSetting setting = 1;
    */
   setting?: InstanceSetting | undefined;
 
   /**
-   * The list of fields to update.
+   * Fields to update, relative to the selected setting or prefixed by its oneof field name.
+   * Selected fields take the supplied value, subject to setting defaults and validation;
+   * omitted fields are preserved. Empty write-only credentials preserve the stored value
+   * when their connection identity is unchanged. An omitted instance URL is preserved.
    *
    * @generated from field: google.protobuf.FieldMask update_mask = 2;
    */

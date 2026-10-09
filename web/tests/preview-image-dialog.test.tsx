@@ -182,6 +182,87 @@ describe("<PreviewImageDialog>", () => {
     expect(screen.getByRole("button", { name: /next item/i })).toBeInTheDocument();
   });
 
+  it("switches images with a horizontal touch swipe at fit zoom", () => {
+    render(
+      <PreviewImageDialog
+        open
+        onOpenChange={vi.fn()}
+        items={[
+          { id: "image-1", kind: "image", sourceUrl: "/image-1.jpg", filename: "image-1.jpg" },
+          { id: "image-2", kind: "image", sourceUrl: "/image-2.jpg", filename: "image-2.jpg" },
+        ]}
+      />,
+    );
+
+    const surface = screen.getByTestId("preview-zoom-surface");
+    fireEvent.pointerDown(surface, { pointerId: 1, pointerType: "touch", clientX: 180, clientY: 100 });
+    fireEvent.pointerMove(surface, { pointerId: 1, pointerType: "touch", clientX: 80, clientY: 105 });
+    fireEvent.pointerUp(surface, { pointerId: 1, pointerType: "touch", clientX: 80, clientY: 105 });
+
+    expect(screen.getByAltText("Preview image 2 of 2")).toBeInTheDocument();
+  });
+
+  it("pinches to zoom and pans the zoomed image within the preview bounds", () => {
+    render(
+      <PreviewImageDialog
+        open
+        onOpenChange={vi.fn()}
+        items={[{ id: "image-1", kind: "image", sourceUrl: "/image.jpg", filename: "image.jpg" }]}
+      />,
+    );
+
+    const surface = screen.getByTestId("preview-zoom-surface");
+    const image = screen.getByAltText("Preview image 1 of 1");
+    Object.defineProperties(surface, { clientWidth: { configurable: true, value: 200 }, clientHeight: { configurable: true, value: 200 } });
+    Object.defineProperties(image, { offsetWidth: { configurable: true, value: 200 }, offsetHeight: { configurable: true, value: 200 } });
+    vi.spyOn(image.parentElement as HTMLElement, "getBoundingClientRect").mockReturnValue({
+      left: 0,
+      top: 0,
+      width: 200,
+      height: 200,
+    } as DOMRect);
+
+    fireEvent.pointerDown(surface, { pointerId: 1, pointerType: "touch", clientX: 50, clientY: 100 });
+    fireEvent.pointerDown(surface, { pointerId: 2, pointerType: "touch", clientX: 150, clientY: 100 });
+    fireEvent.pointerMove(surface, { pointerId: 2, pointerType: "touch", clientX: 250, clientY: 100 });
+    expect(screen.getByText("200%")).toBeInTheDocument();
+
+    fireEvent.pointerUp(surface, { pointerId: 2, pointerType: "touch", clientX: 250, clientY: 100 });
+    fireEvent.pointerMove(surface, { pointerId: 1, pointerType: "touch", clientX: 500, clientY: 100 });
+    expect(image).toHaveStyle({ transform: "translate3d(100px, 0px, 0) scale(2)" });
+
+    fireEvent.pointerUp(surface, { pointerId: 1, pointerType: "touch", clientX: 500, clientY: 100 });
+    fireEvent.click(screen.getByRole("button", { name: /reset zoom/i }));
+    expect(image).toHaveStyle({ transform: "translate3d(0px, 0px, 0) scale(1)" });
+  });
+
+  it("keeps the image point under the fingers in place during a pinch", () => {
+    render(
+      <PreviewImageDialog
+        open
+        onOpenChange={vi.fn()}
+        items={[{ id: "image-1", kind: "image", sourceUrl: "/image.jpg", filename: "image.jpg" }]}
+      />,
+    );
+
+    const surface = screen.getByTestId("preview-zoom-surface");
+    const image = screen.getByAltText("Preview image 1 of 1");
+    Object.defineProperties(surface, { clientWidth: { configurable: true, value: 400 }, clientHeight: { configurable: true, value: 400 } });
+    Object.defineProperties(image, { offsetWidth: { configurable: true, value: 300 }, offsetHeight: { configurable: true, value: 300 } });
+    vi.spyOn(image.parentElement as HTMLElement, "getBoundingClientRect").mockReturnValue({
+      left: 100,
+      top: 100,
+      width: 200,
+      height: 200,
+    } as DOMRect);
+
+    fireEvent.pointerDown(surface, { pointerId: 1, pointerType: "touch", clientX: 200, clientY: 250 });
+    fireEvent.pointerDown(surface, { pointerId: 2, pointerType: "touch", clientX: 300, clientY: 250 });
+    fireEvent.pointerMove(surface, { pointerId: 2, pointerType: "touch", clientX: 400, clientY: 250 });
+
+    expect(image).toHaveStyle({ transform: "translate3d(0px, -50px, 0) scale(2)" });
+  });
+
   it("shows saved media details on demand with grouped, lean facts", () => {
     const attachment = buildAttachmentWithPhotoMetadata();
     render(

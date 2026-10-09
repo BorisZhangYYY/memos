@@ -200,6 +200,9 @@ func convertFinanceTransactionFromStore(
 	if transaction.CategoryID != nil {
 		message.Category = financeCategoryName(username, categoryUIDs[*transaction.CategoryID])
 	}
+	if transaction.VoidedTs != nil {
+		message.VoidTime = timestamppb.New(time.Unix(*transaction.VoidedTs, 0))
+	}
 	return message
 }
 
@@ -233,7 +236,7 @@ func financeStoreError(err error) error {
 	switch {
 	case errors.Is(err, store.ErrFinanceWalletNotFound), errors.Is(err, store.ErrFinanceCategoryNotFound), errors.Is(err, store.ErrFinanceTransactionNotFound):
 		return status.Error(codes.NotFound, err.Error())
-	case errors.Is(err, store.ErrFinanceInsufficientBalance), errors.Is(err, store.ErrFinanceArchivedResource):
+	case errors.Is(err, store.ErrFinanceInsufficientBalance), errors.Is(err, store.ErrFinanceArchivedResource), errors.Is(err, store.ErrFinanceTransactionVoided):
 		return status.Error(codes.FailedPrecondition, err.Error())
 	case errors.Is(err, store.ErrFinanceAmountOutOfRange), errors.Is(err, store.ErrFinanceInvalidTransaction):
 		return status.Error(codes.InvalidArgument, err.Error())
@@ -759,6 +762,9 @@ func (s *APIV1Service) GetFinanceSummary(ctx context.Context, request *v1pb.GetF
 	}
 	daily := map[string]*v1pb.FinanceDailySummary{}
 	for _, transaction := range transactions {
+		if transaction.VoidedTs != nil {
+			continue
+		}
 		date := time.Unix(transaction.OccurredTs, 0).In(location).Format(time.DateOnly)
 		day := daily[date]
 		if day == nil {

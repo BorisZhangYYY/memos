@@ -1409,7 +1409,13 @@
       "no-wallet": "Add an active wallet in Finance settings before recording an entry.",
       "save-error": "Failed to save entry",
       "saved": "Entry saved and wallet balance updated",
-      "title": "Add income or expense"
+      "title": "Add income or expense",
+      "void": "Void entry",
+      "void-description": "This keeps the original entry in history and removes its effect from wallet balances and totals.",
+      "void-error": "Failed to void entry",
+      "voided": "Voided",
+      "voided-at": "Voided at",
+      "voided-success": "Entry voided and balances updated"
     },
     "type": {
       "expense": "Expense",

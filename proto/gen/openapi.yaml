@@ -691,7 +691,11 @@ paths:
                     type: string
                 - name: updateMask
                   in: query
-                  description: The list of fields to update.
+                  description: |-
+                    Fields to update, relative to the selected setting or prefixed by its oneof field name.
+                     Selected fields take the supplied value, subject to setting defaults and validation;
+                     omitted fields are preserved. Empty write-only credentials preserve the stored value
+                     when their connection identity is unchanged. An omitted instance URL is preserved.
                   schema:
                     type: string
                     format: field-mask
@@ -2268,7 +2272,7 @@ paths:
         get:
             tags:
                 - FinanceService
-            description: Lists private ledger transactions, optionally filtered by wallet and time range.
+            description: Lists private ledger transactions, including voided audit records, optionally filtered by wallet and time range.
             operationId: FinanceService_ListFinanceTransactions
             parameters:
                 - name: user
@@ -2406,7 +2410,7 @@ paths:
         delete:
             tags:
                 - FinanceService
-            description: Deletes a ledger transaction and rebuilds affected chronological balance snapshots.
+            description: Voids a ledger transaction, retains its audit record, and rebuilds active balance snapshots.
             operationId: FinanceService_DeleteFinanceTransaction
             parameters:
                 - name: user
@@ -4716,6 +4720,11 @@ components:
                 balanceAfterMinor:
                     readOnly: true
                     type: string
+                voidTime:
+                    readOnly: true
+                    type: string
+                    description: Set when a transaction was voided. Voided rows no longer affect balances or cash-flow totals.
+                    format: date-time
         FinanceWallet:
             required:
                 - displayName
@@ -7067,15 +7076,21 @@ components:
                         type: integer
                         format: int32
                     description: |-
-                        The mood levels of the user's memos, one per memo.
-                         Mirrors memo_created_timestamps order; 0 means no mood set.
+                        Mood levels for the owner's live and deleted memos.
+                         Mirrors mood_created_timestamps order and is returned only to the owner.
                 moodMemoNames:
                     type: array
                     items:
                         type: string
                     description: |-
-                        The resource names of the user's memos, one per memo.
-                         Mirrors memo_created_timestamps order and is returned only to the owner.
+                        Original memo resource names for the owner's mood records, including deleted memos.
+                         Mirrors mood_created_timestamps order; deleted names may return NOT_FOUND when opened.
+                moodCreatedTimestamps:
+                    type: array
+                    items:
+                        type: string
+                        format: date-time
+                    description: Creation times of the owner's mood records, independent of memo activity timestamps.
                 pinnedMemos:
                     type: array
                     items:

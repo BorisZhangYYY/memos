@@ -65,6 +65,16 @@ CREATE TABLE memo (
 
 CREATE INDEX idx_memo_space_id ON memo(space_id, row_status, created_ts DESC, id DESC);
 
+CREATE TABLE memo_mood_history (
+  memo_id INTEGER PRIMARY KEY,
+  memo_uid TEXT NOT NULL,
+  creator_id INTEGER NOT NULL,
+  created_ts BIGINT NOT NULL,
+  mood_level INTEGER NOT NULL,
+  deleted_ts BIGINT DEFAULT NULL
+);
+CREATE INDEX idx_memo_mood_history_creator_deleted ON memo_mood_history(creator_id, deleted_ts, created_ts DESC);
+
 -- memo_relation
 CREATE TABLE memo_relation (
   memo_id INTEGER NOT NULL,
@@ -199,7 +209,8 @@ CREATE TABLE finance_transaction (
   note TEXT NOT NULL DEFAULT '',
   adjustment_delta_minor BIGINT NOT NULL DEFAULT 0,
   balance_before_minor BIGINT NOT NULL DEFAULT 0,
-  balance_after_minor BIGINT NOT NULL DEFAULT 0
+  balance_after_minor BIGINT NOT NULL DEFAULT 0,
+  voided_ts BIGINT DEFAULT NULL
 );
 
 CREATE INDEX idx_finance_transaction_creator_occurred ON finance_transaction(creator_id, occurred_ts DESC, id DESC);

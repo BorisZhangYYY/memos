@@ -115,6 +115,9 @@ func validateMemo(memo *Memo) ([]Warning, error) {
 			return nil, fail("location is out of range")
 		}
 	}
+	if memo.MoodLevel != nil && (*memo.MoodLevel < 0 || *memo.MoodLevel > 7) {
+		return nil, fail("moodLevel must be between 0 and 7")
+	}
 
 	var warnings []Warning
 	if _, ok := knownStates[memo.State]; !ok {

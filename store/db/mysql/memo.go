@@ -12,6 +12,7 @@ import (
 	"github.com/usememos/memos/internal/filter"
 	storepb "github.com/usememos/memos/proto/gen/store"
 	"github.com/usememos/memos/store"
+	"github.com/usememos/memos/store/db/moodhistory"
 )
 
 func (d *DB) CreateMemo(ctx context.Context, create *store.Memo) (*store.Memo, error) {
@@ -81,6 +82,9 @@ func insertMySQLMemo(ctx context.Context, tx *sql.Tx, create *store.Memo) (*stor
 	memo.Payload = &storepb.MemoPayload{}
 	if err := protojsonUnmarshaler.Unmarshal(payloadBytes, memo.Payload); err != nil {
 		return nil, errors.Wrap(err, "failed to unmarshal payload")
+	}
+	if err := (moodhistory.Adapter{Dialect: "mysql"}).SyncMemo(ctx, tx, memo.ID, false); err != nil {
+		return nil, err
 	}
 	return memo, nil
 }
@@ -295,16 +299,15 @@ func (d *DB) GetMemo(ctx context.Context, find *store.FindMemo) (*store.Memo, er
 }
 
 func (d *DB) UpdateMemo(ctx context.Context, update *store.UpdateMemo) error {
-	if update.Policy == nil {
-		return applyMemoUpdate(ctx, d.db, update)
-	}
 	tx, err := d.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
 	defer func() { _ = tx.Rollback() }()
-	if err := validateMySQLMemoWritePolicy(ctx, tx, update.ID, update.Policy, update); err != nil {
-		return err
+	if update.Policy != nil {
+		if err := validateMySQLMemoWritePolicy(ctx, tx, update.ID, update.Policy, update); err != nil {
+			return err
+		}
 	}
 	if err := applyMemoUpdate(ctx, tx, update); err != nil {
 		return err
@@ -323,6 +326,9 @@ func (d *DB) DeleteMemo(ctx context.Context, delete *store.DeleteMemo) error {
 
 	if _, err := tx.ExecContext(ctx, "UPDATE reminder SET memo_id = NULL WHERE memo_id = ?", delete.ID); err != nil {
 		return errors.Wrap(err, "failed to detach private reminders")
+	}
+	if err := (moodhistory.Adapter{Dialect: "mysql"}).SyncMemo(ctx, tx, delete.ID, true); err != nil {
+		return errors.Wrap(err, "failed to preserve memo mood")
 	}
 
 	if _, err := tx.ExecContext(ctx, "DELETE FROM `memo` WHERE `id` = ?", delete.ID); err != nil {

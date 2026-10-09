@@ -51,7 +51,9 @@ func TestForkUpgradePreservesPersonalData(t *testing.T) {
 	// Explicit legacy columns avoid treating additive schema changes as data loss.
 	tables := map[string]string{
 		"memo":          "id,uid,creator_id,created_ts,updated_ts,row_status,content,visibility,pinned,payload",
-		"memo_relation": "*", "attachment": "*", "finance_wallet": "*", "finance_category": "*", "finance_transaction": "*", "reminder_list": "*", "reminder": "*", "reminder_occurrence": "*",
+		"memo_relation": "*", "attachment": "*", "finance_wallet": "*", "finance_category": "*",
+		"finance_transaction": "id,uid,creator_id,created_ts,updated_ts,occurred_ts,type,amount_minor,wallet_id,destination_wallet_id,category_id,note,adjustment_delta_minor,balance_before_minor,balance_after_minor",
+		"reminder_list":       "*", "reminder": "*", "reminder_occurrence": "*",
 	}
 	snapshot := func(table, columns string) [][]string {
 		rows, err := db.QueryContext(ctx, "SELECT "+columns+" FROM "+table)
@@ -87,6 +89,14 @@ func TestForkUpgradePreservesPersonalData(t *testing.T) {
 	upgraded := NewTestingStoreWithDSN(ctx, t, driver, dsn)
 	require.NoError(t, upgraded.Migrate(ctx))
 	require.NoError(t, upgraded.Migrate(ctx), "restart must not reapply migrations")
+	var backfilledMood int32
+	var deletedTs sql.NullInt64
+	require.NoError(t, db.QueryRowContext(ctx, "SELECT mood_level, deleted_ts FROM memo_mood_history WHERE memo_id = 1").Scan(&backfilledMood, &deletedTs))
+	require.Equal(t, int32(7), backfilledMood)
+	require.False(t, deletedTs.Valid)
+	var voidedTs sql.NullInt64
+	require.NoError(t, db.QueryRowContext(ctx, "SELECT voided_ts FROM finance_transaction WHERE id = 1").Scan(&voidedTs))
+	require.False(t, voidedTs.Valid)
 	for table, columns := range tables {
 		require.Equal(t, before[table], snapshot(table, columns), "legacy data changed in %s", table)
 	}
@@ -94,6 +104,8 @@ func TestForkUpgradePreservesPersonalData(t *testing.T) {
 	require.NoError(t, db.QueryRowContext(ctx, fmt.Sprintf("SELECT value FROM user_setting WHERE user_id=1 AND %s='MEMO_VIEWS'", keyColumn)).Scan(&savedView))
 	require.JSONEq(t, `{"memoViews":[{"id":"legacy","title":"My saved filter","filter":"mood_level == 7"}]}`, savedView)
 	require.NoError(t, upgraded.DeleteMemo(ctx, &store.DeleteMemo{ID: 1}))
+	require.NoError(t, db.QueryRowContext(ctx, "SELECT deleted_ts FROM memo_mood_history WHERE memo_id = 1").Scan(&deletedTs))
+	require.True(t, deletedTs.Valid)
 	var linkedMemo sql.NullInt64
 	require.NoError(t, db.QueryRowContext(ctx, "SELECT memo_id FROM reminder WHERE id=1").Scan(&linkedMemo))
 	require.False(t, linkedMemo.Valid, "deleting a memo only detaches its private reminder")

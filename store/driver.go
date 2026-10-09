@@ -61,6 +61,7 @@ type Driver interface {
 	UpdateMemo(ctx context.Context, update *UpdateMemo) error
 	DeleteMemo(ctx context.Context, delete *DeleteMemo) error
 	DeleteMemoWithPolicy(ctx context.Context, delete *DeleteMemoWithPolicy) (*DeleteMemoWithPolicyResult, error)
+	ListDeletedMemoMoodHistory(ctx context.Context, creatorID int32) ([]*MemoMoodHistory, error)
 
 	// Space model related methods.
 	CreateSpace(ctx context.Context, create *Space, creatorID int32) (*Space, error)

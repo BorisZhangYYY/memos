@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, InfoIcon, RotateCcw, X, ZoomIn, ZoomOut } from "lucide-react";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import MediaMetadataDetails from "@/components/MediaMetadataDetails";
 import MotionPhotoPreview from "@/components/MotionPhotoPreview";
 import { Button } from "@/components/ui/button";
@@ -22,15 +22,32 @@ const MIN_ZOOM = 1;
 const MAX_ZOOM = 4;
 const ZOOM_STEP = 0.2;
 const DOUBLE_TAP_ZOOM = 2;
+const SWIPE_DISTANCE = 64;
+const NO_PAN = { x: 0, y: 0 };
 
 const clampZoom = (scale: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, scale));
+type Point = { x: number; y: number };
+type Gesture =
+  | { type: "single"; start: Point; pan: Point; canSwipe: boolean }
+  | { type: "pinch"; distance: number; midpoint: Point; center: Point; scale: number; pan: Point };
+
+const distanceBetween = (first: Point, second: Point) => Math.hypot(first.x - second.x, first.y - second.y);
+const midpointBetween = (first: Point, second: Point): Point => ({ x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 });
 
 function PreviewImageDialog({ open, onOpenChange, imgUrls = [], items, initialIndex = 0 }: Props) {
   const t = useTranslate();
   const sm = useMediaQuery("sm");
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [zoomScale, setZoomScale] = useState(MIN_ZOOM);
+  const [panOffset, setPanOffset] = useState<Point>(NO_PAN);
+  const [isInteracting, setIsInteracting] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const surfaceRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const pointersRef = useRef(new Map<number, Point>());
+  const gestureRef = useRef<Gesture | null>(null);
+  const zoomRef = useRef(MIN_ZOOM);
+  const panRef = useRef<Point>(NO_PAN);
   const previewItems = useMemo(
     () => items ?? imgUrls.map((url) => ({ id: url, kind: "image" as const, sourceUrl: url, posterUrl: url, filename: "Image" })),
     [imgUrls, items],
@@ -75,6 +92,12 @@ function PreviewImageDialog({ open, onOpenChange, imgUrls = [], items, initialIn
 
   useEffect(() => {
     setZoomScale(MIN_ZOOM);
+    setPanOffset(NO_PAN);
+    zoomRef.current = MIN_ZOOM;
+    panRef.current = NO_PAN;
+    pointersRef.current.clear();
+    gestureRef.current = null;
+    setIsInteracting(false);
   }, [currentItem?.id, open]);
 
   const handleClose = () => onOpenChange(false);
@@ -85,10 +108,26 @@ function PreviewImageDialog({ open, onOpenChange, imgUrls = [], items, initialIn
     setCurrentIndex((prev) => Math.min(prev + 1, itemCount - 1));
   };
 
-  const updateZoom = (nextScale: number) => {
-    setZoomScale(clampZoom(nextScale));
+  const clampPan = (point: Point, scale: number): Point => {
+    const surface = surfaceRef.current;
+    const image = imageRef.current;
+    if (!surface || !image || scale <= MIN_ZOOM) return NO_PAN;
+    const style = getComputedStyle(surface);
+    const width = surface.clientWidth - parseFloat(style.paddingLeft || "0") - parseFloat(style.paddingRight || "0");
+    const height = surface.clientHeight - parseFloat(style.paddingTop || "0") - parseFloat(style.paddingBottom || "0");
+    const maxX = Math.max(0, (image.offsetWidth * scale - width) / 2);
+    const maxY = Math.max(0, (image.offsetHeight * scale - height) / 2);
+    return { x: Math.max(-maxX, Math.min(maxX, point.x)), y: Math.max(-maxY, Math.min(maxY, point.y)) };
   };
-  const resetZoom = () => setZoomScale(MIN_ZOOM);
+  const updateZoom = (nextScale: number, nextPan = panRef.current) => {
+    const scale = clampZoom(nextScale);
+    const pan = clampPan(nextPan, scale);
+    zoomRef.current = scale;
+    panRef.current = pan;
+    setZoomScale(scale);
+    setPanOffset(pan);
+  };
+  const resetZoom = () => updateZoom(MIN_ZOOM);
   const handleZoomIn = () => updateZoom(zoomScale + ZOOM_STEP);
   const handleZoomOut = () => updateZoom(zoomScale - ZOOM_STEP);
   const handleWheel = (event: React.WheelEvent<HTMLDivElement>) => {
@@ -97,7 +136,72 @@ function PreviewImageDialog({ open, onOpenChange, imgUrls = [], items, initialIn
       updateZoom(zoomScale + (event.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP));
     }
   };
-  const handleDoubleClick = () => setZoomScale((scale) => (scale === MIN_ZOOM ? DOUBLE_TAP_ZOOM : MIN_ZOOM));
+  const handleDoubleClick = () => updateZoom(zoomRef.current === MIN_ZOOM ? DOUBLE_TAP_ZOOM : MIN_ZOOM);
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!isImagePreview || (event.pointerType === "mouse" && zoomRef.current === MIN_ZOOM)) return;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    const points = [...pointersRef.current.values()];
+    if (points.length === 1) {
+      gestureRef.current = {
+        type: "single",
+        start: points[0],
+        pan: panRef.current,
+        canSwipe: event.pointerType === "touch" && zoomRef.current === MIN_ZOOM,
+      };
+    } else if (points.length === 2) {
+      const rect = imageRef.current?.parentElement?.getBoundingClientRect();
+      gestureRef.current = {
+        type: "pinch",
+        distance: distanceBetween(points[0], points[1]),
+        midpoint: midpointBetween(points[0], points[1]),
+        center: rect ? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 } : NO_PAN,
+        scale: zoomRef.current,
+        pan: panRef.current,
+      };
+    }
+    setIsInteracting(true);
+  };
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!pointersRef.current.has(event.pointerId)) return;
+    if (event.pointerType === "touch") event.preventDefault();
+    pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    const gesture = gestureRef.current;
+    const points = [...pointersRef.current.values()];
+    if (gesture?.type === "pinch" && points.length === 2 && gesture.distance > 0) {
+      const midpoint = midpointBetween(points[0], points[1]);
+      const scale = clampZoom((gesture.scale * distanceBetween(points[0], points[1])) / gesture.distance);
+      const ratio = scale / gesture.scale;
+      updateZoom(scale, {
+        x: midpoint.x - gesture.center.x - (gesture.midpoint.x - gesture.center.x - gesture.pan.x) * ratio,
+        y: midpoint.y - gesture.center.y - (gesture.midpoint.y - gesture.center.y - gesture.pan.y) * ratio,
+      });
+    } else if (gesture?.type === "single" && points.length === 1 && zoomRef.current > MIN_ZOOM) {
+      updateZoom(zoomRef.current, {
+        x: gesture.pan.x + points[0].x - gesture.start.x,
+        y: gesture.pan.y + points[0].y - gesture.start.y,
+      });
+    }
+  };
+  const handlePointerEnd = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!pointersRef.current.has(event.pointerId)) return;
+    const gesture = gestureRef.current;
+    const end = { x: event.clientX, y: event.clientY };
+    pointersRef.current.delete(event.pointerId);
+    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+    if (event.type !== "pointercancel" && gesture?.type === "single" && gesture.canSwipe && zoomRef.current === MIN_ZOOM) {
+      const dx = end.x - gesture.start.x;
+      const dy = end.y - gesture.start.y;
+      if (Math.abs(dx) >= SWIPE_DISTANCE && Math.abs(dx) > Math.abs(dy) * 1.3) {
+        if (dx > 0) handlePrevious();
+        else handleNext();
+      }
+    }
+    const remaining = [...pointersRef.current.values()];
+    gestureRef.current = remaining.length === 1 ? { type: "single", start: remaining[0], pan: panRef.current, canSwipe: false } : null;
+    if (remaining.length === 0) setIsInteracting(false);
+  };
 
   if (!itemCount || !currentItem) {
     return null;
@@ -117,13 +221,13 @@ function PreviewImageDialog({ open, onOpenChange, imgUrls = [], items, initialIn
     >
       <DialogContent
         showCloseButton={false}
-        className="!h-[100vh] !w-[100vw] !max-h-[100vh] !max-w-[100vw] overflow-hidden border-0 bg-black/92 p-0 shadow-none"
+        className="!h-[100dvh] !w-[100vw] !max-h-[100dvh] !max-w-[100vw] overflow-hidden border-0 bg-black/92 p-0 shadow-none"
       >
         <VisuallyHidden>
           <DialogTitle>{currentItem.filename || "Attachment preview"}</DialogTitle>
           <DialogDescription>
             Attachment preview dialog. Press Escape to close, use left or right arrow keys to switch items, and zoom images with the
-            controls, mouse wheel, or double tap.
+            controls, mouse wheel, double tap, or a pinch gesture. Swipe horizontally to switch images.
           </DialogDescription>
         </VisuallyHidden>
 
@@ -178,6 +282,12 @@ function PreviewImageDialog({ open, onOpenChange, imgUrls = [], items, initialIn
             showDetails && "lg:pr-[26rem]",
           )}
           onWheel={handleWheel}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerEnd}
+          onPointerCancel={handlePointerEnd}
+          ref={surfaceRef}
+          style={{ touchAction: isImagePreview ? "none" : undefined }}
           onClick={(event) => {
             if (event.target === event.currentTarget && !isZoomed) {
               if (showDetails) {
@@ -195,7 +305,7 @@ function PreviewImageDialog({ open, onOpenChange, imgUrls = [], items, initialIn
                 src={currentItem.sourceUrl}
                 poster={currentItem.posterUrl}
                 className={cn(
-                  "max-h-[calc(100vh-8rem)] max-w-[calc(100vw-1.5rem)] rounded-md object-contain sm:max-h-[calc(100vh-7rem)] sm:max-w-[calc(100vw-8rem)]",
+                  "max-h-[calc(100dvh-8rem)] max-w-[calc(100vw-1.5rem)] rounded-md object-contain sm:max-h-[calc(100dvh-7rem)] sm:max-w-[calc(100vw-8rem)]",
                   showDetails && "lg:max-w-[calc(100vw-30rem)]",
                 )}
                 controls
@@ -211,21 +321,22 @@ function PreviewImageDialog({ open, onOpenChange, imgUrls = [], items, initialIn
                 presentationTimestampUs={currentItem.presentationTimestampUs}
                 badgeClassName="left-3 top-3 sm:left-4 sm:top-4"
                 mediaClassName={cn(
-                  "max-h-[calc(100vh-8rem)] max-w-[calc(100vw-1.5rem)] rounded-md object-contain sm:max-h-[calc(100vh-7rem)] sm:max-w-[calc(100vw-8rem)]",
+                  "max-h-[calc(100dvh-8rem)] max-w-[calc(100vw-1.5rem)] rounded-md object-contain sm:max-h-[calc(100dvh-7rem)] sm:max-w-[calc(100vw-8rem)]",
                   showDetails && "lg:max-w-[calc(100vw-30rem)]",
                 )}
               />
             ) : (
               <img
+                ref={imageRef}
                 src={currentItem.sourceUrl}
                 alt={`Preview image ${safeIndex + 1} of ${itemCount}`}
                 className={cn(
-                  "max-h-[calc(100vh-8rem)] max-w-[calc(100vw-1.5rem)] rounded-md object-contain select-none sm:max-h-[calc(100vh-7rem)] sm:max-w-[calc(100vw-8rem)]",
+                  "max-h-[calc(100dvh-8rem)] max-w-[calc(100vw-1.5rem)] rounded-md object-contain select-none sm:max-h-[calc(100dvh-7rem)] sm:max-w-[calc(100vw-8rem)]",
                   showDetails && "lg:max-w-[calc(100vw-30rem)]",
                 )}
                 style={{
-                  transform: `translate3d(0px, 0px, 0) scale(${zoomScale})`,
-                  transition: "transform 120ms ease-out",
+                  transform: `translate3d(${panOffset.x}px, ${panOffset.y}px, 0) scale(${zoomScale})`,
+                  transition: isInteracting ? "none" : "transform 120ms ease-out",
                   transformOrigin: "center center",
                 }}
                 onDoubleClick={handleDoubleClick}

@@ -2,8 +2,10 @@ import { useDirection } from "@base-ui/react/direction-provider";
 import dayjs from "dayjs";
 import { type KeyboardEvent, useLayoutEffect, useRef, useState } from "react";
 import { type CalendarData, useMonthDays, useWeekdayLabels } from "@/components/ActivityCalendar";
+import { DEFAULT_MOOD_EMOJIS } from "@/components/MemoEditor/Toolbar/MoodSelector";
 import { useInstance } from "@/contexts/InstanceContext";
 import { useView } from "@/contexts/ViewContext";
+import usePersonalFeatures from "@/hooks/usePersonalFeatures";
 import { ISO_DATE_FORMAT } from "@/lib/calendar-utils";
 import { CalendarDayCell, CELL_NUMBER_ROW, CELL_PADDING_Y, CELL_ROW_HEIGHT, CELL_ROWS_GAP } from "./CalendarDayCell";
 import type { CalendarMonthModel } from "./dayModel";
@@ -23,7 +25,7 @@ export interface CalendarGridProps {
   model: CalendarMonthModel;
   pending: boolean;
   selectedDate?: string;
-  /** Whether cells have room for memo rows; below md they only show a dot. */
+  /** Whether cells have room for memo rows; below md they show a mood or activity marker. */
   showRows: boolean;
 }
 
@@ -43,8 +45,14 @@ const cornerOf = (index: number, total: number): "ss" | "se" | "es" | "ee" | und
 
 export const CalendarGrid = ({ month, monthLabel, today, counts, model, pending, selectedDate, showRows }: CalendarGridProps) => {
   const direction = useDirection();
-  const { generalSetting } = useInstance();
+  const { generalSetting, memoRelatedSetting } = useInstance();
   const { timeBasis } = useView();
+  const { moodEnabled } = usePersonalFeatures();
+  const moodEmojis = moodEnabled
+    ? memoRelatedSetting.moodEmojis?.length === 7
+      ? memoRelatedSetting.moodEmojis
+      : DEFAULT_MOOD_EMOJIS
+    : undefined;
   const containerRef = useRef<HTMLDivElement>(null);
   const cellsRef = useRef<HTMLDivElement>(null);
   const weekdayLabels = useWeekdayLabels(generalSetting.weekStartDayOffset);
@@ -111,6 +119,7 @@ export const CalendarGrid = ({ month, monthLabel, today, counts, model, pending,
             key={day.date}
             day={day}
             summary={model[day.date]}
+            moodEmojis={moodEmojis}
             visibleRows={showRows ? visibleRows : 0}
             pending={pending}
             timeBasis={timeBasis}

@@ -63,6 +63,7 @@ func buildArchiveFixture(t *testing.T, ts *TestService, username string) *archiv
 			Content:     "# Whiteboard\n\nSee the photo. No trailing newline",
 			Visibility:  v1pb.Visibility_PRIVATE,
 			Pinned:      true,
+			MoodLevel:   5,
 			CreateTime:  timestamppb.New(mustTime(t, "2026-03-02T14:05:11Z")),
 			UpdateTime:  timestamppb.New(mustTime(t, "2026-03-02T14:20:47Z")),
 			Location:    &v1pb.Location{Placeholder: "Office", Latitude: 52.52, Longitude: 13.405},
@@ -162,6 +163,7 @@ func TestExportMemoArchive(t *testing.T) {
 
 	archive := exportArchive(t, ts, fixture.user)
 	require.Equal(t, memoarchive.ScopeKindUser, archive.Manifest.Scope.Kind)
+	require.Equal(t, "1.1", archive.Manifest.FormatVersion)
 	require.Equal(t, "exporter", archive.Manifest.Scope.User.Username)
 	require.Equal(t, &memoarchive.Counts{Memos: 5, Attachments: 1}, archive.Manifest.Counts)
 	require.Empty(t, archive.Warnings)
@@ -179,6 +181,9 @@ func TestExportMemoArchive(t *testing.T) {
 	require.Equal(t, "NORMAL", parent.State)
 	require.Equal(t, "PRIVATE", parent.Visibility)
 	require.True(t, parent.Pinned)
+	require.Equal(t, int32(5), *parent.MoodLevel)
+	require.NotNil(t, byUID["referenced1"].MoodLevel)
+	require.Zero(t, *byUID["referenced1"].MoodLevel)
 	require.Equal(t, &memoarchive.Location{Placeholder: "Office", Latitude: 52.52, Longitude: 13.405}, parent.Location)
 	require.Equal(t, []memoarchive.Relation{{Type: "REFERENCE", Memo: "referenced1"}}, parent.Relations)
 	require.Empty(t, parent.Parent)
@@ -256,6 +261,7 @@ func TestImportMemoArchiveIntoAnotherAccount(t *testing.T) {
 	parent := byContent["# Whiteboard\n\nSee the photo. No trailing newline"]
 	require.NotNil(t, parent)
 	require.True(t, parent.Pinned)
+	require.Equal(t, int32(5), parent.Payload.GetMoodLevel())
 	require.Equal(t, store.Private, parent.Visibility)
 	require.Equal(t, mustTime(t, "2026-03-02T14:05:11Z").Unix(), parent.CreatedTs)
 	require.Equal(t, mustTime(t, "2026-03-02T14:20:47Z").Unix(), parent.UpdatedTs)
@@ -360,8 +366,8 @@ func TestImportMemoArchiveConflictPolicies(t *testing.T) {
 	t.Run("replace updates in place", func(t *testing.T) {
 		// Change the memo on the instance, then bring the archive back.
 		_, err := ts.Service.UpdateMemo(fixture.userCtx, &v1pb.UpdateMemoRequest{
-			Memo:       &v1pb.Memo{Name: fixture.parent.Name, Content: "edited after export", Pinned: false},
-			UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"content", "pinned"}},
+			Memo:       &v1pb.Memo{Name: fixture.parent.Name, Content: "edited after export", Pinned: false, MoodLevel: 2},
+			UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"content", "pinned", "mood_level"}},
 		})
 		require.NoError(t, err)
 
@@ -376,11 +382,45 @@ func TestImportMemoArchiveConflictPolicies(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "# Whiteboard\n\nSee the photo. No trailing newline", restored.Content)
 		require.True(t, restored.Pinned)
+		require.Equal(t, int32(5), restored.Payload.GetMoodLevel())
 		require.Equal(t, mustTime(t, "2026-03-02T14:20:47Z").Unix(), restored.UpdatedTs)
 		attachments, err := ts.Store.ListAttachments(ctx, &store.FindAttachment{MemoID: &restored.ID})
 		require.NoError(t, err)
 		require.Len(t, attachments, 1, "the bound attachment is kept, not duplicated")
 		require.Equal(t, "photo0001", attachments[0].UID)
+	})
+
+	t.Run("older archive preserves a current mood on replace", func(t *testing.T) {
+		_, err := ts.Service.SetMemoMood(fixture.userCtx, &v1pb.SetMemoMoodRequest{Name: fixture.parent.Name, MoodLevel: 2})
+		require.NoError(t, err)
+		archive := openArchive()
+		for _, record := range archive.Memos {
+			record.MoodLevel = nil
+		}
+		report, err := ts.Service.ImportMemoArchive(fixture.userCtx, fixture.user, archive, v1pb.ImportMemosRequest_REPLACE)
+		require.NoError(t, err)
+		require.Zero(t, report.Failed)
+		uid := "parent00001"
+		restored, err := ts.Store.GetMemo(ctx, &store.FindMemo{UID: &uid})
+		require.NoError(t, err)
+		require.Equal(t, int32(2), restored.Payload.GetMoodLevel())
+	})
+
+	t.Run("explicit zero clears a current mood on replace", func(t *testing.T) {
+		archive := openArchive()
+		zero := int32(0)
+		for _, record := range archive.Memos {
+			if record.UID == "parent00001" {
+				record.MoodLevel = &zero
+			}
+		}
+		report, err := ts.Service.ImportMemoArchive(fixture.userCtx, fixture.user, archive, v1pb.ImportMemosRequest_REPLACE)
+		require.NoError(t, err)
+		require.Zero(t, report.Failed)
+		uid := "parent00001"
+		restored, err := ts.Store.GetMemo(ctx, &store.FindMemo{UID: &uid})
+		require.NoError(t, err)
+		require.Zero(t, restored.Payload.GetMoodLevel())
 	})
 
 	t.Run("duplicate creates copies", func(t *testing.T) {

@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.35.1](https://github.com/BorisZhangYYY/memos/compare/v0.35.0...v0.35.1) (2026-10-09)
+
+### Summary
+
+This release preserves personal history when source records are removed and
+improves the calendar, image preview, and Memo Archive experience on the fork.
+
+### Features and improvements
+
+* **Mood history:** retain mood snapshots after a Memo is deleted without adding
+  deleted Memos to activity counts. Existing live moods are backfilled during
+  upgrade; moods from Memos deleted before upgrade cannot be recovered.
+* **Finance audit:** void transactions instead of deleting them. Audit history
+  retains the original transaction and void time, while current balances and
+  income/expense totals exclude voided entries.
+* **Calendar:** show configured mood emoji on current Memo entries and a daily
+  mood marker in the compact month view.
+* **Mobile image preview:** add swipe navigation, pinch zoom, and panning for
+  touch screens.
+* **Memo Archive:** write format 1.1 with an optional mood level so exports and
+  imports preserve the fork's mood data; 1.0 archives remain readable.
+* **Instance settings:** honor `update_mask` for partial updates, preserving
+  unspecified fields and stored write-only credentials.
+
 ## [0.35.0](https://github.com/BorisZhangYYY/memos/compare/v0.34.0...v0.35.0) (2026-09-29)
 
 ### Summary

@@ -340,8 +340,10 @@ type FinanceTransaction struct {
 	AdjustmentDeltaMinor int64 `protobuf:"varint,11,opt,name=adjustment_delta_minor,json=adjustmentDeltaMinor,proto3" json:"adjustment_delta_minor,omitempty"`
 	BalanceBeforeMinor   int64 `protobuf:"varint,12,opt,name=balance_before_minor,json=balanceBeforeMinor,proto3" json:"balance_before_minor,omitempty"`
 	BalanceAfterMinor    int64 `protobuf:"varint,13,opt,name=balance_after_minor,json=balanceAfterMinor,proto3" json:"balance_after_minor,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
+	// Set when a transaction was voided. Voided rows no longer affect balances or cash-flow totals.
+	VoidTime      *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=void_time,json=voidTime,proto3" json:"void_time,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *FinanceTransaction) Reset() {
@@ -463,6 +465,13 @@ func (x *FinanceTransaction) GetBalanceAfterMinor() int64 {
 		return x.BalanceAfterMinor
 	}
 	return 0
+}
+
+func (x *FinanceTransaction) GetVoidTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.VoidTime
+	}
+	return nil
 }
 
 type FinanceDailySummary struct {
@@ -1502,7 +1511,7 @@ const file_api_v1_finance_service_proto_rawDesc = "" +
 	"\n" +
 	"\x06INCOME\x10\x01\x12\v\n" +
 	"\aEXPENSE\x10\x02:x\xeaAu\n" +
-	"\x1cmemos.api.v1/FinanceCategory\x121users/{user}/financeCategories/{finance_category}*\x11financeCategories2\x0ffinanceCategory\"\xe9\x06\n" +
+	"\x1cmemos.api.v1/FinanceCategory\x121users/{user}/financeCategories/{finance_category}*\x11financeCategories2\x0ffinanceCategory\"\xa7\a\n" +
 	"\x12FinanceTransaction\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12>\n" +
 	"\x04type\x18\x02 \x01(\x0e2%.memos.api.v1.FinanceTransaction.TypeB\x03\xe0A\x02R\x04type\x12&\n" +
@@ -1520,7 +1529,8 @@ const file_api_v1_finance_service_proto_rawDesc = "" +
 	"updateTime\x129\n" +
 	"\x16adjustment_delta_minor\x18\v \x01(\x03B\x03\xe0A\x03R\x14adjustmentDeltaMinor\x125\n" +
 	"\x14balance_before_minor\x18\f \x01(\x03B\x03\xe0A\x03R\x12balanceBeforeMinor\x123\n" +
-	"\x13balance_after_minor\x18\r \x01(\x03B\x03\xe0A\x03R\x11balanceAfterMinor\"S\n" +
+	"\x13balance_after_minor\x18\r \x01(\x03B\x03\xe0A\x03R\x11balanceAfterMinor\x12<\n" +
+	"\tvoid_time\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x03R\bvoidTime\"S\n" +
 	"\x04Type\x12\x14\n" +
 	"\x10TYPE_UNSPECIFIED\x10\x00\x12\n" +
 	"\n" +
@@ -1678,57 +1688,58 @@ var file_api_v1_finance_service_proto_depIdxs = []int32{
 	23, // 8: memos.api.v1.FinanceTransaction.occur_time:type_name -> google.protobuf.Timestamp
 	23, // 9: memos.api.v1.FinanceTransaction.create_time:type_name -> google.protobuf.Timestamp
 	23, // 10: memos.api.v1.FinanceTransaction.update_time:type_name -> google.protobuf.Timestamp
-	5,  // 11: memos.api.v1.FinanceSummary.daily_summaries:type_name -> memos.api.v1.FinanceDailySummary
-	22, // 12: memos.api.v1.ListFinanceWalletsRequest.state:type_name -> memos.api.v1.State
-	2,  // 13: memos.api.v1.ListFinanceWalletsResponse.wallets:type_name -> memos.api.v1.FinanceWallet
-	2,  // 14: memos.api.v1.CreateFinanceWalletRequest.wallet:type_name -> memos.api.v1.FinanceWallet
-	2,  // 15: memos.api.v1.UpdateFinanceWalletRequest.wallet:type_name -> memos.api.v1.FinanceWallet
-	24, // 16: memos.api.v1.UpdateFinanceWalletRequest.update_mask:type_name -> google.protobuf.FieldMask
-	0,  // 17: memos.api.v1.ListFinanceCategoriesRequest.type:type_name -> memos.api.v1.FinanceCategory.Type
-	22, // 18: memos.api.v1.ListFinanceCategoriesRequest.state:type_name -> memos.api.v1.State
-	3,  // 19: memos.api.v1.ListFinanceCategoriesResponse.categories:type_name -> memos.api.v1.FinanceCategory
-	3,  // 20: memos.api.v1.CreateFinanceCategoryRequest.category:type_name -> memos.api.v1.FinanceCategory
-	3,  // 21: memos.api.v1.UpdateFinanceCategoryRequest.category:type_name -> memos.api.v1.FinanceCategory
-	24, // 22: memos.api.v1.UpdateFinanceCategoryRequest.update_mask:type_name -> google.protobuf.FieldMask
-	23, // 23: memos.api.v1.ListFinanceTransactionsRequest.start_time:type_name -> google.protobuf.Timestamp
-	23, // 24: memos.api.v1.ListFinanceTransactionsRequest.end_time:type_name -> google.protobuf.Timestamp
-	1,  // 25: memos.api.v1.ListFinanceTransactionsRequest.type:type_name -> memos.api.v1.FinanceTransaction.Type
-	4,  // 26: memos.api.v1.ListFinanceTransactionsResponse.transactions:type_name -> memos.api.v1.FinanceTransaction
-	4,  // 27: memos.api.v1.CreateFinanceTransactionRequest.transaction:type_name -> memos.api.v1.FinanceTransaction
-	4,  // 28: memos.api.v1.UpdateFinanceTransactionRequest.transaction:type_name -> memos.api.v1.FinanceTransaction
-	24, // 29: memos.api.v1.UpdateFinanceTransactionRequest.update_mask:type_name -> google.protobuf.FieldMask
-	23, // 30: memos.api.v1.AdjustFinanceWalletBalanceRequest.occur_time:type_name -> google.protobuf.Timestamp
-	23, // 31: memos.api.v1.GetFinanceSummaryRequest.start_time:type_name -> google.protobuf.Timestamp
-	23, // 32: memos.api.v1.GetFinanceSummaryRequest.end_time:type_name -> google.protobuf.Timestamp
-	7,  // 33: memos.api.v1.FinanceService.ListFinanceWallets:input_type -> memos.api.v1.ListFinanceWalletsRequest
-	9,  // 34: memos.api.v1.FinanceService.CreateFinanceWallet:input_type -> memos.api.v1.CreateFinanceWalletRequest
-	10, // 35: memos.api.v1.FinanceService.UpdateFinanceWallet:input_type -> memos.api.v1.UpdateFinanceWalletRequest
-	11, // 36: memos.api.v1.FinanceService.ListFinanceCategories:input_type -> memos.api.v1.ListFinanceCategoriesRequest
-	13, // 37: memos.api.v1.FinanceService.CreateFinanceCategory:input_type -> memos.api.v1.CreateFinanceCategoryRequest
-	14, // 38: memos.api.v1.FinanceService.UpdateFinanceCategory:input_type -> memos.api.v1.UpdateFinanceCategoryRequest
-	15, // 39: memos.api.v1.FinanceService.ListFinanceTransactions:input_type -> memos.api.v1.ListFinanceTransactionsRequest
-	17, // 40: memos.api.v1.FinanceService.CreateFinanceTransaction:input_type -> memos.api.v1.CreateFinanceTransactionRequest
-	18, // 41: memos.api.v1.FinanceService.UpdateFinanceTransaction:input_type -> memos.api.v1.UpdateFinanceTransactionRequest
-	19, // 42: memos.api.v1.FinanceService.DeleteFinanceTransaction:input_type -> memos.api.v1.DeleteFinanceTransactionRequest
-	20, // 43: memos.api.v1.FinanceService.AdjustFinanceWalletBalance:input_type -> memos.api.v1.AdjustFinanceWalletBalanceRequest
-	21, // 44: memos.api.v1.FinanceService.GetFinanceSummary:input_type -> memos.api.v1.GetFinanceSummaryRequest
-	8,  // 45: memos.api.v1.FinanceService.ListFinanceWallets:output_type -> memos.api.v1.ListFinanceWalletsResponse
-	2,  // 46: memos.api.v1.FinanceService.CreateFinanceWallet:output_type -> memos.api.v1.FinanceWallet
-	2,  // 47: memos.api.v1.FinanceService.UpdateFinanceWallet:output_type -> memos.api.v1.FinanceWallet
-	12, // 48: memos.api.v1.FinanceService.ListFinanceCategories:output_type -> memos.api.v1.ListFinanceCategoriesResponse
-	3,  // 49: memos.api.v1.FinanceService.CreateFinanceCategory:output_type -> memos.api.v1.FinanceCategory
-	3,  // 50: memos.api.v1.FinanceService.UpdateFinanceCategory:output_type -> memos.api.v1.FinanceCategory
-	16, // 51: memos.api.v1.FinanceService.ListFinanceTransactions:output_type -> memos.api.v1.ListFinanceTransactionsResponse
-	4,  // 52: memos.api.v1.FinanceService.CreateFinanceTransaction:output_type -> memos.api.v1.FinanceTransaction
-	4,  // 53: memos.api.v1.FinanceService.UpdateFinanceTransaction:output_type -> memos.api.v1.FinanceTransaction
-	25, // 54: memos.api.v1.FinanceService.DeleteFinanceTransaction:output_type -> google.protobuf.Empty
-	4,  // 55: memos.api.v1.FinanceService.AdjustFinanceWalletBalance:output_type -> memos.api.v1.FinanceTransaction
-	6,  // 56: memos.api.v1.FinanceService.GetFinanceSummary:output_type -> memos.api.v1.FinanceSummary
-	45, // [45:57] is the sub-list for method output_type
-	33, // [33:45] is the sub-list for method input_type
-	33, // [33:33] is the sub-list for extension type_name
-	33, // [33:33] is the sub-list for extension extendee
-	0,  // [0:33] is the sub-list for field type_name
+	23, // 11: memos.api.v1.FinanceTransaction.void_time:type_name -> google.protobuf.Timestamp
+	5,  // 12: memos.api.v1.FinanceSummary.daily_summaries:type_name -> memos.api.v1.FinanceDailySummary
+	22, // 13: memos.api.v1.ListFinanceWalletsRequest.state:type_name -> memos.api.v1.State
+	2,  // 14: memos.api.v1.ListFinanceWalletsResponse.wallets:type_name -> memos.api.v1.FinanceWallet
+	2,  // 15: memos.api.v1.CreateFinanceWalletRequest.wallet:type_name -> memos.api.v1.FinanceWallet
+	2,  // 16: memos.api.v1.UpdateFinanceWalletRequest.wallet:type_name -> memos.api.v1.FinanceWallet
+	24, // 17: memos.api.v1.UpdateFinanceWalletRequest.update_mask:type_name -> google.protobuf.FieldMask
+	0,  // 18: memos.api.v1.ListFinanceCategoriesRequest.type:type_name -> memos.api.v1.FinanceCategory.Type
+	22, // 19: memos.api.v1.ListFinanceCategoriesRequest.state:type_name -> memos.api.v1.State
+	3,  // 20: memos.api.v1.ListFinanceCategoriesResponse.categories:type_name -> memos.api.v1.FinanceCategory
+	3,  // 21: memos.api.v1.CreateFinanceCategoryRequest.category:type_name -> memos.api.v1.FinanceCategory
+	3,  // 22: memos.api.v1.UpdateFinanceCategoryRequest.category:type_name -> memos.api.v1.FinanceCategory
+	24, // 23: memos.api.v1.UpdateFinanceCategoryRequest.update_mask:type_name -> google.protobuf.FieldMask
+	23, // 24: memos.api.v1.ListFinanceTransactionsRequest.start_time:type_name -> google.protobuf.Timestamp
+	23, // 25: memos.api.v1.ListFinanceTransactionsRequest.end_time:type_name -> google.protobuf.Timestamp
+	1,  // 26: memos.api.v1.ListFinanceTransactionsRequest.type:type_name -> memos.api.v1.FinanceTransaction.Type
+	4,  // 27: memos.api.v1.ListFinanceTransactionsResponse.transactions:type_name -> memos.api.v1.FinanceTransaction
+	4,  // 28: memos.api.v1.CreateFinanceTransactionRequest.transaction:type_name -> memos.api.v1.FinanceTransaction
+	4,  // 29: memos.api.v1.UpdateFinanceTransactionRequest.transaction:type_name -> memos.api.v1.FinanceTransaction
+	24, // 30: memos.api.v1.UpdateFinanceTransactionRequest.update_mask:type_name -> google.protobuf.FieldMask
+	23, // 31: memos.api.v1.AdjustFinanceWalletBalanceRequest.occur_time:type_name -> google.protobuf.Timestamp
+	23, // 32: memos.api.v1.GetFinanceSummaryRequest.start_time:type_name -> google.protobuf.Timestamp
+	23, // 33: memos.api.v1.GetFinanceSummaryRequest.end_time:type_name -> google.protobuf.Timestamp
+	7,  // 34: memos.api.v1.FinanceService.ListFinanceWallets:input_type -> memos.api.v1.ListFinanceWalletsRequest
+	9,  // 35: memos.api.v1.FinanceService.CreateFinanceWallet:input_type -> memos.api.v1.CreateFinanceWalletRequest
+	10, // 36: memos.api.v1.FinanceService.UpdateFinanceWallet:input_type -> memos.api.v1.UpdateFinanceWalletRequest
+	11, // 37: memos.api.v1.FinanceService.ListFinanceCategories:input_type -> memos.api.v1.ListFinanceCategoriesRequest
+	13, // 38: memos.api.v1.FinanceService.CreateFinanceCategory:input_type -> memos.api.v1.CreateFinanceCategoryRequest
+	14, // 39: memos.api.v1.FinanceService.UpdateFinanceCategory:input_type -> memos.api.v1.UpdateFinanceCategoryRequest
+	15, // 40: memos.api.v1.FinanceService.ListFinanceTransactions:input_type -> memos.api.v1.ListFinanceTransactionsRequest
+	17, // 41: memos.api.v1.FinanceService.CreateFinanceTransaction:input_type -> memos.api.v1.CreateFinanceTransactionRequest
+	18, // 42: memos.api.v1.FinanceService.UpdateFinanceTransaction:input_type -> memos.api.v1.UpdateFinanceTransactionRequest
+	19, // 43: memos.api.v1.FinanceService.DeleteFinanceTransaction:input_type -> memos.api.v1.DeleteFinanceTransactionRequest
+	20, // 44: memos.api.v1.FinanceService.AdjustFinanceWalletBalance:input_type -> memos.api.v1.AdjustFinanceWalletBalanceRequest
+	21, // 45: memos.api.v1.FinanceService.GetFinanceSummary:input_type -> memos.api.v1.GetFinanceSummaryRequest
+	8,  // 46: memos.api.v1.FinanceService.ListFinanceWallets:output_type -> memos.api.v1.ListFinanceWalletsResponse
+	2,  // 47: memos.api.v1.FinanceService.CreateFinanceWallet:output_type -> memos.api.v1.FinanceWallet
+	2,  // 48: memos.api.v1.FinanceService.UpdateFinanceWallet:output_type -> memos.api.v1.FinanceWallet
+	12, // 49: memos.api.v1.FinanceService.ListFinanceCategories:output_type -> memos.api.v1.ListFinanceCategoriesResponse
+	3,  // 50: memos.api.v1.FinanceService.CreateFinanceCategory:output_type -> memos.api.v1.FinanceCategory
+	3,  // 51: memos.api.v1.FinanceService.UpdateFinanceCategory:output_type -> memos.api.v1.FinanceCategory
+	16, // 52: memos.api.v1.FinanceService.ListFinanceTransactions:output_type -> memos.api.v1.ListFinanceTransactionsResponse
+	4,  // 53: memos.api.v1.FinanceService.CreateFinanceTransaction:output_type -> memos.api.v1.FinanceTransaction
+	4,  // 54: memos.api.v1.FinanceService.UpdateFinanceTransaction:output_type -> memos.api.v1.FinanceTransaction
+	25, // 55: memos.api.v1.FinanceService.DeleteFinanceTransaction:output_type -> google.protobuf.Empty
+	4,  // 56: memos.api.v1.FinanceService.AdjustFinanceWalletBalance:output_type -> memos.api.v1.FinanceTransaction
+	6,  // 57: memos.api.v1.FinanceService.GetFinanceSummary:output_type -> memos.api.v1.FinanceSummary
+	46, // [46:58] is the sub-list for method output_type
+	34, // [34:46] is the sub-list for method input_type
+	34, // [34:34] is the sub-list for extension type_name
+	34, // [34:34] is the sub-list for extension extendee
+	0,  // [0:34] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_finance_service_proto_init() }

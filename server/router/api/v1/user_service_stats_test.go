@@ -57,10 +57,11 @@ func TestGetUserStats_MoodLevels(t *testing.T) {
 	stats, err := svc.GetUserStats(authorCtx, &v1pb.GetUserStatsRequest{Name: "users/author"})
 	require.NoError(t, err)
 
-	// mood_levels mirrors memo_created_timestamps one-to-one.
-	require.Len(t, stats.MoodLevels, len(stats.MemoCreatedTimestamps))
-	require.Len(t, stats.MoodMemoNames, len(stats.MemoCreatedTimestamps))
-	require.Len(t, stats.MoodLevels, 4)
+	// Mood history has its own timestamps and excludes memos without a mood.
+	require.Len(t, stats.MemoCreatedTimestamps, 4)
+	require.Len(t, stats.MoodLevels, len(stats.MoodCreatedTimestamps))
+	require.Len(t, stats.MoodMemoNames, len(stats.MoodCreatedTimestamps))
+	require.Len(t, stats.MoodLevels, 3)
 	assert.Contains(t, stats.MoodMemoNames, "memos/moody-past")
 	for _, name := range stats.MoodMemoNames {
 		assert.Regexp(t, `^memos/.+`, name)
@@ -68,13 +69,13 @@ func TestGetUserStats_MoodLevels(t *testing.T) {
 
 	// Group moods by the browser-visible date derived from each timestamp.
 	moodsByDate := map[string][]int32{}
-	for i, ts := range stats.MemoCreatedTimestamps {
+	for i, ts := range stats.MoodCreatedTimestamps {
 		date := ts.AsTime().Format("2006-01-02")
 		moodsByDate[date] = append(moodsByDate[date], stats.MoodLevels[i])
 	}
 	today := now.Format("2006-01-02")
 	pastDay := now.AddDate(0, 0, -2).Format("2006-01-02")
-	assert.ElementsMatch(t, []int32{0, 3, 5}, moodsByDate[today])
+	assert.ElementsMatch(t, []int32{3, 5}, moodsByDate[today])
 	assert.ElementsMatch(t, []int32{7}, moodsByDate[pastDay])
 }
 
@@ -96,9 +97,44 @@ func TestListAllUserStats_MoodLevels(t *testing.T) {
 	require.Len(t, response.Stats, 1)
 
 	stats := response.Stats[0]
-	require.Len(t, stats.MoodLevels, len(stats.MemoCreatedTimestamps))
-	require.Len(t, stats.MoodMemoNames, len(stats.MemoCreatedTimestamps))
+	require.Len(t, stats.MoodLevels, len(stats.MoodCreatedTimestamps))
+	require.Len(t, stats.MoodMemoNames, len(stats.MoodCreatedTimestamps))
 	assert.ElementsMatch(t, []int32{1, 6}, stats.MoodLevels)
+}
+
+func TestGetUserStatsRetainsDeletedMoodWithoutMemoActivity(t *testing.T) {
+	ctx := context.Background()
+	svc := newIntegrationService(t)
+	owner, err := svc.Store.CreateUser(ctx, &store.User{Username: "mood-owner", Role: store.RoleAdmin})
+	require.NoError(t, err)
+	viewer, err := svc.Store.CreateUser(ctx, &store.User{Username: "mood-viewer", Role: store.RoleUser})
+	require.NoError(t, err)
+	memo, err := svc.Store.CreateMemo(ctx, &store.Memo{
+		UID: "deleted-mood-memo", CreatorID: owner.ID, Visibility: store.Private,
+		Content: "private", Payload: &storepb.MemoPayload{MoodLevel: 4},
+	})
+	require.NoError(t, err)
+	require.NoError(t, svc.Store.DeleteMemo(ctx, &store.DeleteMemo{ID: memo.ID}))
+
+	ownerStats, err := svc.GetUserStats(userCtx(ctx, owner.ID), &v1pb.GetUserStatsRequest{Name: "users/mood-owner"})
+	require.NoError(t, err)
+	require.Zero(t, ownerStats.TotalMemoCount)
+	require.Empty(t, ownerStats.MemoCreatedTimestamps)
+	require.Equal(t, []int32{4}, ownerStats.MoodLevels)
+	require.Equal(t, []string{"memos/deleted-mood-memo"}, ownerStats.MoodMemoNames)
+	require.Len(t, ownerStats.MoodCreatedTimestamps, 1)
+	require.Equal(t, memo.CreatedTs, ownerStats.MoodCreatedTimestamps[0].AsTime().Unix())
+
+	filtered, err := svc.GetUserStats(userCtx(ctx, owner.ID), &v1pb.GetUserStatsRequest{
+		Name: "users/mood-owner", Filter: `content.contains("private")`,
+	})
+	require.NoError(t, err)
+	require.Empty(t, filtered.MoodLevels)
+
+	viewerStats, err := svc.GetUserStats(userCtx(ctx, viewer.ID), &v1pb.GetUserStatsRequest{Name: "users/mood-owner"})
+	require.NoError(t, err)
+	require.Empty(t, viewerStats.MoodLevels)
+	require.Empty(t, viewerStats.MoodCreatedTimestamps)
 }
 
 func TestUserStatsMoodLevelsVisibleOnlyToOwner(t *testing.T) {

@@ -33,6 +33,7 @@ var fixtureExportTime = time.Date(2026, 9, 16, 8, 30, 0, 0, time.UTC)
 func newGoldenFixture() goldenFixture {
 	photo := []byte("not really a jpeg")
 	photoDigest := sha256.Sum256(photo)
+	moodLevel := int32(5)
 	return goldenFixture{
 		manifest: Manifest{
 			Generator:  Generator{Name: "memos", Version: "0.31.0"},
@@ -59,6 +60,7 @@ func newGoldenFixture() goldenFixture {
 				State:      "NORMAL",
 				Visibility: "SPACE",
 				Pinned:     true,
+				MoodLevel:  &moodLevel,
 				Tags:       []string{"work", "work/q3"},
 				Location:   &Location{Placeholder: "Office", Latitude: 52.52, Longitude: 13.405},
 				Space:      &Space{UID: "team-notes", Title: "Team Notes"},
@@ -190,7 +192,7 @@ func TestRoundTrip(t *testing.T) {
 // change that breaks an older archive fails here.
 func TestGoldenArchives(t *testing.T) {
 	fixture := newGoldenFixture()
-	goldenPath := filepath.Join("testdata", "1.0", "golden.zip")
+	goldenPath := filepath.Join("testdata", FormatVersion, "golden.zip")
 	if *updateGolden {
 		require.NoError(t, os.MkdirAll(filepath.Dir(goldenPath), 0o755))
 		require.NoError(t, os.WriteFile(goldenPath, writeFixture(t, fixture), 0o644))
@@ -205,6 +207,12 @@ func TestGoldenArchives(t *testing.T) {
 			archive := readArchive(t, data)
 			if filepath.Base(filepath.Dir(path)) == FormatVersion {
 				requireFixtureRoundTrip(t, fixture, archive)
+			} else if filepath.Base(filepath.Dir(path)) == "1.0" {
+				require.Equal(t, "1.0", archive.Manifest.FormatVersion)
+				require.Len(t, archive.Memos, 3)
+				for _, memo := range archive.Memos {
+					require.Nil(t, memo.MoodLevel)
+				}
 			}
 		})
 	}
@@ -330,7 +338,7 @@ func TestReaderRejectsUnsafeArchives(t *testing.T) {
 					return false
 				}
 				entry, _ := w.Create(ManifestEntry)
-				_, _ = entry.Write(bytes.ReplaceAll(content, []byte(`"formatVersion":"1.0"`), []byte(`"formatVersion":"2.0"`)))
+				_, _ = entry.Write(bytes.ReplaceAll(content, []byte(`"formatVersion":"`+FormatVersion+`"`), []byte(`"formatVersion":"2.0"`)))
 				return true
 			},
 			want: "format version 2.0 is not supported",
@@ -345,6 +353,17 @@ func TestReaderRejectsUnsafeArchives(t *testing.T) {
 				return true
 			},
 			want: "does not match the file name",
+		},
+		"invalid mood level": {
+			mutate: func(w *zip.Writer, f *zip.File, content []byte) bool {
+				if f.Name != RecordPath("Ab3kZ9q2") {
+					return false
+				}
+				entry, _ := w.Create(f.Name)
+				_, _ = entry.Write(bytes.ReplaceAll(content, []byte(`"moodLevel":5`), []byte(`"moodLevel":8`)))
+				return true
+			},
+			want: "moodLevel must be between 0 and 7",
 		},
 		"content without record": {
 			mutate: func(w *zip.Writer, f *zip.File, _ []byte) bool {

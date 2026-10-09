@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/usememos/memos/store"
+	"github.com/usememos/memos/store/db/moodhistory"
 )
 
 // DeleteSpace hard-deletes only memos directly placed in the Space. Relations
@@ -92,6 +93,11 @@ func listMySQLSpaceDeleteMemoIDs(ctx context.Context, tx *sql.Tx, spaceID int32)
 }
 
 func deleteMySQLMemoSetTx(ctx context.Context, tx *sql.Tx, memoIDs []int32) ([]*store.Attachment, error) {
+	for _, memoID := range memoIDs {
+		if err := (moodhistory.Adapter{Dialect: "mysql"}).SyncMemo(ctx, tx, memoID, true); err != nil {
+			return nil, errors.Wrap(err, "failed to preserve memo mood")
+		}
+	}
 	attachments, err := listMySQLMemoSetAttachments(ctx, tx, memoIDs)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to collect memo attachments")

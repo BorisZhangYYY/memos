@@ -176,6 +176,8 @@ func (s *APIV1Service) buildMemoArchiveRecord(ctx context.Context, writer *memoa
 		Pinned:     memo.Pinned,
 		Tags:       memo.Payload.GetTags(),
 	}
+	moodLevel := memo.Payload.GetMoodLevel()
+	record.MoodLevel = &moodLevel
 	if location := memo.Payload.GetLocation(); location != nil {
 		record.Location = &memoarchive.Location{
 			Placeholder: location.Placeholder,

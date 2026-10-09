@@ -332,9 +332,26 @@ func (s *APIV1Service) UpdateInstanceSetting(ctx context.Context, request *v1pb.
 		return nil, status.Errorf(codes.FailedPrecondition, "instance setting %q is configured by the deployment", settingKeyString)
 	}
 
+	if request.UpdateMask != nil && len(request.UpdateMask.Paths) > 0 {
+		value := request.Setting.ProtoReflect()
+		variant := value.WhichOneof(value.Descriptor().Oneofs().ByName("value"))
+		if variant == nil || string(variant.Name()) != strings.ToLower(settingKeyString)+"_setting" {
+			return nil, status.Errorf(codes.InvalidArgument, "setting value must match %s", settingKeyString)
+		}
+		existing, getErr := s.Store.GetInstanceSetting(ctx, &store.FindInstanceSetting{Name: settingKeyString})
+		if getErr != nil {
+			return nil, status.Errorf(codes.Internal, "failed to get existing instance setting: %v", getErr)
+		}
+		var existingAPI *v1pb.InstanceSetting
+		if existing != nil {
+			existingAPI = convertInstanceSettingFromStore(existing)
+		}
+		request.Setting, err = mergeInstanceSettingMask(request.Setting, existingAPI, request.UpdateMask)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid update mask: %v", err)
+		}
+	}
 	applyInstanceSettingDefaults(request.Setting)
-	// TODO: Apply update_mask if specified
-	_ = request.UpdateMask
 
 	if err := validateInstanceSetting(request.Setting); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid instance setting: %v", err)

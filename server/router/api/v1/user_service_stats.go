@@ -138,14 +138,11 @@ func (s *APIV1Service) ListAllUserStats(ctx context.Context, request *v1pb.ListA
 			stats.MemoCreatedTimestamps = append(stats.MemoCreatedTimestamps, timestamppb.New(time.Unix(memo.CreatedTs, 0)))
 			stats.MemoUpdatedTimestamps = append(stats.MemoUpdatedTimestamps, timestamppb.New(time.Unix(memo.UpdatedTs, 0)))
 
-			// Track the mood level parallel to the created timestamps (0 = no mood).
-			if currentUser != nil && currentUser.ID == memo.CreatorID {
+			// Mood history uses its own timestamps and never changes memo activity counts.
+			if currentUser != nil && currentUser.ID == memo.CreatorID && memo.Payload != nil && memo.Payload.MoodLevel >= 1 && memo.Payload.MoodLevel <= 7 {
 				moodMemoNamesByUserID[memo.CreatorID] = append(moodMemoNamesByUserID[memo.CreatorID], MemoNamePrefix+memo.UID)
-				if memo.Payload != nil {
-					moodLevelsByUserID[memo.CreatorID] = append(moodLevelsByUserID[memo.CreatorID], memo.Payload.MoodLevel)
-				} else {
-					moodLevelsByUserID[memo.CreatorID] = append(moodLevelsByUserID[memo.CreatorID], 0)
-				}
+				moodLevelsByUserID[memo.CreatorID] = append(moodLevelsByUserID[memo.CreatorID], memo.Payload.MoodLevel)
+				stats.MoodCreatedTimestamps = append(stats.MoodCreatedTimestamps, timestamppb.New(time.Unix(memo.CreatedTs, 0)))
 			}
 
 			// Count memo stats
@@ -252,6 +249,7 @@ func (s *APIV1Service) GetUserStats(ctx context.Context, request *v1pb.GetUserSt
 	totalMemoCount := int32(0)
 	moodLevels := []int32{}
 	moodMemoNames := []string{}
+	moodCreatedTimestamps := []*timestamppb.Timestamp{}
 	canViewMood := currentUser != nil && currentUser.ID == userID
 
 	limit := 1000
@@ -273,14 +271,10 @@ func (s *APIV1Service) GetUserStats(ctx context.Context, request *v1pb.GetUserSt
 		for _, memo := range memos {
 			createdTimestamps = append(createdTimestamps, timestamppb.New(time.Unix(memo.CreatedTs, 0)))
 			updatedTimestamps = append(updatedTimestamps, timestamppb.New(time.Unix(memo.UpdatedTs, 0)))
-			// Track the mood level parallel to the created timestamps (0 = no mood).
-			if canViewMood {
+			if canViewMood && memo.Payload != nil && memo.Payload.MoodLevel >= 1 && memo.Payload.MoodLevel <= 7 {
 				moodMemoNames = append(moodMemoNames, MemoNamePrefix+memo.UID)
-				if memo.Payload != nil {
-					moodLevels = append(moodLevels, memo.Payload.MoodLevel)
-				} else {
-					moodLevels = append(moodLevels, 0)
-				}
+				moodLevels = append(moodLevels, memo.Payload.MoodLevel)
+				moodCreatedTimestamps = append(moodCreatedTimestamps, timestamppb.New(time.Unix(memo.CreatedTs, 0)))
 			}
 			// Count different memo types based on content.
 			if memo.Payload != nil {
@@ -307,6 +301,17 @@ func (s *APIV1Service) GetUserStats(ctx context.Context, request *v1pb.GetUserSt
 
 		offset += limit
 	}
+	if canViewMood && request.Filter == "" {
+		deletedMoods, err := s.Store.ListDeletedMemoMoodHistory(ctx, userID)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to list deleted memo mood history: %v", err)
+		}
+		for _, mood := range deletedMoods {
+			moodLevels = append(moodLevels, mood.MoodLevel)
+			moodMemoNames = append(moodMemoNames, MemoNamePrefix+mood.MemoUID)
+			moodCreatedTimestamps = append(moodCreatedTimestamps, timestamppb.New(time.Unix(mood.CreatedTs, 0)))
+		}
+	}
 
 	userStats := &v1pb.UserStats{
 		Name:                  fmt.Sprintf("%s/stats", BuildUserName(user.Username)),
@@ -317,6 +322,7 @@ func (s *APIV1Service) GetUserStats(ctx context.Context, request *v1pb.GetUserSt
 		TotalMemoCount:        totalMemoCount,
 		MoodLevels:            moodLevels,
 		MoodMemoNames:         moodMemoNames,
+		MoodCreatedTimestamps: moodCreatedTimestamps,
 		MemoTypeStats: &v1pb.UserStats_MemoTypeStats{
 			LinkCount: linkCount,
 			CodeCount: codeCount,
